@@ -58,4 +58,9 @@ public class IngestionResult {
      * 成功时为概要信息，失败时为错误原因
      */
     private String message;
+
+    /**
+     * 原文字数（字符数）
+     */
+    private Integer originalWordCount;
 }

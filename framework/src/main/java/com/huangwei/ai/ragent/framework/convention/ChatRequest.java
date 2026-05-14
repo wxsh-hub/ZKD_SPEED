@@ -121,4 +121,14 @@ public class ChatRequest {
      * </p>
      */
     private Boolean enableTools;
+
+    /**
+     * 可选：指定使用的模型 ID
+     * <p>
+     * 对应 application.yaml 中 ai.chat.candidates 里配置的 id，
+     * 例如 "qwen-plus"、"qwen3-max"、"glm-4.7"、"qwen3-local"。
+     * 若为 {@code null} 或空白，则使用默认模型（由 ai.chat.default-model 决定）。
+     * </p>
+     */
+    private String modelId;
 }

@@ -484,25 +484,23 @@ export function IngestionPage() {
                 <CardDescription>监控执行状态与节点日志</CardDescription>
               </div>
               <div className="flex flex-1 flex-wrap items-center justify-end gap-2">
-                <Select
-                  value={taskStatus || "all"}
-                  onValueChange={(value) => {
-                    setTaskPageNo(1);
-                    setTaskStatus(value === "all" ? undefined : value);
-                  }}
+                <Button
+                  size="sm"
+                  variant={!taskStatus ? "default" : "outline"}
+                  onClick={() => { setTaskPageNo(1); setTaskStatus(undefined); }}
                 >
-                  <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="任务状态" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">全部状态</SelectItem>
-                    {STATUS_OPTIONS.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  全部
+                </Button>
+                {STATUS_OPTIONS.map((option) => (
+                  <Button
+                    key={option.value}
+                    size="sm"
+                    variant={taskStatus === option.value ? "default" : "outline"}
+                    onClick={() => { setTaskPageNo(1); setTaskStatus(option.value); }}
+                  >
+                    {option.label}
+                  </Button>
+                ))}
                 <Button variant="outline" onClick={handleTaskRefresh}>
                   <RefreshCw className="mr-2 h-4 w-4" />
                   刷新
@@ -528,6 +526,7 @@ export function IngestionPage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-[220px]">任务ID</TableHead>
+                    <TableHead className="w-[140px]">流水线</TableHead>
                     <TableHead>来源</TableHead>
                     <TableHead className="w-[120px]">状态</TableHead>
                     <TableHead className="w-[120px]">负责人</TableHead>
@@ -540,6 +539,9 @@ export function IngestionPage() {
                   {tasks.map((task) => (
                     <TableRow key={task.id}>
                       <TableCell className="font-mono text-xs">{task.id}</TableCell>
+                      <TableCell className="text-sm">
+                        {pipelineOptions.find((p) => p.id === task.pipelineId)?.name || task.pipelineId || "-"}
+                      </TableCell>
                       <TableCell>
                         <div className="text-sm">
                           <span className="font-medium">{task.sourceType || "-"}</span>

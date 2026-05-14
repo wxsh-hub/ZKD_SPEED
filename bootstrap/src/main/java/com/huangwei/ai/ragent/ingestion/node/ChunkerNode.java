@@ -19,6 +19,7 @@ package com.huangwei.ai.ragent.ingestion.node;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.huangwei.ai.ragent.core.chunk.ChunkingMode;
 import com.huangwei.ai.ragent.core.chunk.ChunkingOptions;
 import com.huangwei.ai.ragent.core.chunk.ChunkingStrategyFactory;
 import com.huangwei.ai.ragent.core.chunk.VectorChunk;
@@ -93,7 +94,10 @@ public class ChunkerNode implements IngestionNode {
     }
 
     private ChunkerSettings parseSettings(JsonNode node) {
-        ChunkerSettings settings = objectMapper.convertValue(node, ChunkerSettings.class);
+        ChunkerSettings settings = (node == null || node.isNull()) ? new ChunkerSettings() : objectMapper.convertValue(node, ChunkerSettings.class);
+        if (settings.getStrategy() == null) {
+            settings.setStrategy(ChunkingMode.FIXED_SIZE);
+        }
         if (settings.getChunkSize() == null || settings.getChunkSize() <= 0) {
             settings.setChunkSize(512);
         }

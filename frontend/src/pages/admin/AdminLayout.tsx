@@ -189,7 +189,7 @@ export function AdminLayout() {
 
   useEffect(() => {
     let active = true;
-    fetch("https://github.com/wxsh-hub/ZKD_SPEED")
+    fetch("https://api.github.com/repos/wxsh-hub/ZKD_SPEED")
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (!active) return;

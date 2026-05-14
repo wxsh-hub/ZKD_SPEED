@@ -49,6 +49,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.util.List;
+import java.util.Map;
 
 import static com.huangwei.ai.ragent.rag.constant.RAGConstant.CHAT_SYSTEM_PROMPT_PATH;
 import static com.huangwei.ai.ragent.rag.constant.RAGConstant.DEFAULT_TOP_K;
@@ -75,9 +76,19 @@ public class RAGChatServiceImpl implements RAGChatService {
     private final IntentResolver intentResolver;
     private final RetrievalEngine retrievalEngine;
 
+    private static final Map<String, String> GREETINGS = Map.ofEntries(
+            Map.entry("你好", "你好！我是企业内部知识助手「小码」，有什么可以帮你的？\n\n你可以问我：\n- 人事相关：请假、考勤、入职流程等\n- IT 支持：VPN、邮箱、打印机等\n- 行政事务：会议室、门禁、物资领用等"),
+            Map.entry("hello", "你好！我是企业内部知识助手「小码」，有什么可以帮你的？"),
+            Map.entry("hi", "你好！有什么可以帮你的？"),
+            Map.entry("在吗", "在的，有什么可以帮你的？"),
+            Map.entry("早上好", "早上好！有什么可以帮你的？"),
+            Map.entry("下午好", "下午好！有什么可以帮你的？"),
+            Map.entry("晚上好", "晚上好！有什么可以帮你的？")
+    );
+
     @Override
     @ChatRateLimit
-    public void streamChat(String question, String conversationId, Boolean deepThinking, SseEmitter emitter) {
+    public void streamChat(String question, String conversationId, Boolean deepThinking, String modelId, SseEmitter emitter) {
         String actualConversationId = StrUtil.isBlank(conversationId) ? IdUtil.getSnowflakeNextIdStr() : conversationId;
         String taskId = StrUtil.isBlank(RagTraceContext.getTaskId())
                 ? IdUtil.getSnowflakeNextIdStr()
@@ -86,6 +97,17 @@ public class RAGChatServiceImpl implements RAGChatService {
         boolean thinkingEnabled = Boolean.TRUE.equals(deepThinking);
 
         StreamCallback callback = callbackFactory.createChatEventHandler(emitter, actualConversationId, taskId);
+
+        // 常见问候快速路径 — 在任何 LLM 调用之前，零成本返回
+        String directReply = tryDirectGreeting(question);
+        if (directReply != null) {
+            String userId = UserContext.getUserId();
+            memoryService.loadAndAppend(actualConversationId, userId, ChatMessage.user(question));
+            memoryService.append(actualConversationId, userId, ChatMessage.assistant(directReply));
+            callback.onContent(directReply);
+            callback.onComplete();
+            return;
+        }
 
         String userId = UserContext.getUserId();
         List<ChatMessage> history = memoryService.loadAndAppend(actualConversationId, userId, ChatMessage.user(question));
@@ -125,6 +147,7 @@ public class RAGChatServiceImpl implements RAGChatService {
                 mergedGroup,
                 history,
                 thinkingEnabled,
+                modelId,
                 callback
         );
         taskManager.bindHandle(taskId, handle);
@@ -147,13 +170,14 @@ public class RAGChatServiceImpl implements RAGChatService {
                 .temperature(0.7D)
                 .topP(0.8D)
                 .thinking(false)
+                .modelId("qwen-plus")
                 .build();
         return llmService.streamChat(req, callback);
     }
 
     private StreamCancellationHandle streamLLMResponse(RewriteResult rewriteResult, RetrievalContext ctx,
                                                        IntentGroup intentGroup, List<ChatMessage> history,
-                                                       boolean deepThinking, StreamCallback callback) {
+                                                       boolean deepThinking, String modelId, StreamCallback callback) {
         PromptContext promptContext = PromptContext.builder()
                 .question(rewriteResult.rewrittenQuestion())
                 .mcpContext(ctx.getMcpContext())
@@ -172,10 +196,29 @@ public class RAGChatServiceImpl implements RAGChatService {
         ChatRequest chatRequest = ChatRequest.builder()
                 .messages(messages)
                 .thinking(deepThinking)
+                .modelId(modelId)
                 .temperature(ctx.hasMcp() ? 0.3D : 0D)  // MCP 场景稍微放宽温度
                 .topP(ctx.hasMcp() ? 0.8D : 1D)
                 .build();
 
         return llmService.streamChat(chatRequest, callback);
+    }
+
+    private static String tryDirectGreeting(String question) {
+        String trimmed = question.trim().toLowerCase().replaceAll("[!！.。~～]", "");
+        // 精确匹配
+        String exact = GREETINGS.get(trimmed);
+        if (exact != null) return exact;
+        // 前缀匹配：问候词后跟标点或空白（如 "你好啊"、"hello everyone"）
+        for (Map.Entry<String, String> entry : GREETINGS.entrySet()) {
+            String key = entry.getKey();
+            if (trimmed.startsWith(key) && trimmed.length() > key.length()) {
+                char next = trimmed.charAt(key.length());
+                if (Character.isWhitespace(next) || "，,。.！!?？~～、".indexOf(next) >= 0) {
+                    return entry.getValue();
+                }
+            }
+        }
+        return null;
     }
 }

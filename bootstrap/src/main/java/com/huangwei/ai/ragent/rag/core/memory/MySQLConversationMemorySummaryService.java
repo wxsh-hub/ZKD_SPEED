@@ -214,6 +214,7 @@ public class MySQLConversationMemorySummaryService implements ConversationMemory
                 .temperature(0.3D)
                 .topP(0.9D)
                 .thinking(false)
+                .modelId("qwen-plus")
                 .build();
         try {
             String result = llmService.chat(request);

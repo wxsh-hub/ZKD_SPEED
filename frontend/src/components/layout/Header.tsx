@@ -18,7 +18,7 @@ export function Header({ onToggleSidebar }: HeaderProps) {
 
   React.useEffect(() => {
     let active = true;
-    fetch("https://github.com/wxsh-hub/ZDK-Speed.git")//获取start数量
+    fetch("https://github.com/wxsh-hub/ZKD_SPEED")//获取start数量
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (!active) return;
@@ -44,8 +44,8 @@ export function Header({ onToggleSidebar }: HeaderProps) {
   }, [starCount]);
 
   return (
-    <header className="sticky top-0 z-20 bg-white">
-      <div className="flex h-16 items-center justify-between px-6">
+    <header className="sticky top-0 z-20 bg-white border-b border-[#F0F0F0]">
+      <div className="flex h-14 items-center justify-between px-6">
         <div className="flex items-center gap-2">
           <Button
             variant="ghost"
@@ -62,7 +62,7 @@ export function Header({ onToggleSidebar }: HeaderProps) {
         </div>
         <div className="flex items-center gap-2">
           <a
-            href="https://github.com/wxsh-hub/ZDK-Speed.git"
+            href="https://github.com/wxsh-hub/ZKD_SPEED"
             target="_blank"
             rel="noreferrer"
             className="flex items-center gap-2 rounded-xl border border-gray-200 px-3 py-1.5 text-sm text-gray-600 transition hover:bg-gray-100 hover:text-gray-900"

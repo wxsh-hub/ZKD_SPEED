@@ -64,7 +64,7 @@ export function ChatInput() {
         className={cn(
           "relative flex flex-col rounded-2xl border bg-white px-4 pt-3 pb-2 transition-all duration-200",
           isFocused
-            ? "border-[#D4D4D4] shadow-[0_4px_12px_rgba(0,0,0,0.06)]"
+            ? "border-[#C4B5FD] shadow-[0_4px_12px_rgba(124,58,237,0.08)]"
             : "border-[#E5E5E5] hover:border-[#D4D4D4]"
         )}
       >
@@ -107,16 +107,16 @@ export function ChatInput() {
             className={cn(
               "absolute left-0 rounded-lg border px-3 py-1.5 text-xs font-medium transition-all",
               deepThinkingEnabled
-                ? "border-[#BFDBFE] bg-[#DBEAFE] text-[#2563EB]"
+                ? "border-[#C4B5FD] bg-[#EDE9FE] text-[#7C3AED]"
                 : "border-transparent bg-[#F5F5F5] text-[#999999] hover:bg-[#EEEEEE]",
               isStreaming && "cursor-not-allowed opacity-60"
             )}
           >
             <span className="inline-flex items-center gap-2">
-              <Brain className={cn("h-3.5 w-3.5", deepThinkingEnabled && "text-[#3B82F6]")} />
+              <Brain className={cn("h-3.5 w-3.5", deepThinkingEnabled && "text-[#7C3AED]")} />
               深度思考
               {deepThinkingEnabled ? (
-                <span className="h-2 w-2 rounded-full bg-[#3B82F6] animate-pulse" />
+                <span className="h-2 w-2 rounded-full bg-[#7C3AED] animate-pulse" />
               ) : null}
             </span>
           </button>
@@ -130,7 +130,7 @@ export function ChatInput() {
               isStreaming
                 ? "bg-[#FEE2E2] text-[#EF4444] hover:bg-[#FECACA]"
                 : hasContent
-                  ? "bg-[#3B82F6] text-white hover:bg-[#2563EB]"
+                  ? "bg-[#7C3AED] text-white hover:bg-[#6D28D9]"
                   : "cursor-not-allowed bg-[#F5F5F5] text-[#CCCCCC]"
             )}
           >
@@ -139,7 +139,7 @@ export function ChatInput() {
         </div>
       </div>
       {deepThinkingEnabled ? (
-        <p className="text-xs text-[#2563EB]">
+        <p className="text-xs text-[#7C3AED]">
           <span className="inline-flex items-center gap-1.5">
             <Lightbulb className="h-3.5 w-3.5" />
             深度思考模式已开启，AI将进行更深入的分析推理

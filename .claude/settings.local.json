@@ -25,7 +25,16 @@
       "WebFetch(domain:spring.io)",
       "Bash(gh api:*)",
       "Bash(gh auth:*)",
-      "Bash(JAVA_HOME=/Library/Java/JavaVirtualMachines/zulu-17.jdk/Contents/Home mvn clean:*)"
+      "Bash(JAVA_HOME=/Library/Java/JavaVirtualMachines/zulu-17.jdk/Contents/Home mvn clean:*)",
+      "Bash(mkdir -p \"C:\\\\Users\\\\sunha\\\\Desktop\\\\11\\\\ragent-main\\\\bootstrap\\\\src\\\\main\\\\java\\\\com\\\\huangwei\\\\ai\\\\ragent\\\\novel\\\\controller\\\\request\")",
+      "Bash(mkdir -p \"C:\\\\Users\\\\sunha\\\\Desktop\\\\11\\\\ragent-main\\\\bootstrap\\\\src\\\\main\\\\java\\\\com\\\\huangwei\\\\ai\\\\ragent\\\\novel\\\\service\\\\impl\")",
+      "Bash(ls mvnw*)",
+      "Bash(ls .mvn)",
+      "Bash(where mvn *)",
+      "Bash(ls *.bat)",
+      "Bash(./mvnw compile *)",
+      "Bash(mysql *)",
+      "Bash(gh pr *)"
     ]
   }
 }

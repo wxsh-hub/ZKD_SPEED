@@ -104,6 +104,7 @@ public class ConversationMessageServiceImpl implements ConversationMessageServic
                     .conversationId(record.getConversationId())
                     .role(record.getRole())
                     .content(record.getContent())
+                    .promptSnapshot(record.getPromptSnapshot())
                     .vote(votesByMessageId.get(record.getId()))
                     .createTime(record.getCreateTime())
                     .build();

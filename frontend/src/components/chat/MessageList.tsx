@@ -163,7 +163,7 @@ export function MessageList({ messages, isLoading, isStreaming, sessionKey }: Me
       ({ className, ...props }, ref) => (
         <div
           ref={ref}
-          className={cn("mx-auto max-w-[800px] space-y-10 px-6 pt-10 pb-2 md:px-8", className)}
+          className={cn("mx-auto max-w-[800px] space-y-6 px-6 pt-6 pb-2 md:px-8", className)}
           {...props}
         />
       )
@@ -173,7 +173,7 @@ export function MessageList({ messages, isLoading, isStreaming, sessionKey }: Me
   }, []);
 
   const Footer = React.useMemo(() => {
-    const Comp = () => <div aria-hidden="true" className="h-8" />;
+    const Comp = () => <div aria-hidden="true" className="h-4" />;
     Comp.displayName = "MessageListFooter";
     return Comp;
   }, []);

@@ -70,6 +70,11 @@ public class ConversationMessageDO {
     private String content;
 
     /**
+     * 发送给LLM的完整prompt快照（仅assistant消息有值）
+     */
+    private String promptSnapshot;
+
+    /**
      * 创建时间，自动填充
      */
     @TableField(fill = FieldFill.INSERT)

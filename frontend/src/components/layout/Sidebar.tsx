@@ -3,6 +3,7 @@ import { differenceInCalendarDays, isValid } from "date-fns";
 import {
   BookOpen,
   Bot,
+  FileEdit,
   LogOut,
   MessageSquare,
   MoreHorizontal,
@@ -245,6 +246,22 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
               <span className="flex-1">
                 <span className="block text-sm font-semibold text-[#1F2937]">小说续写</span>
                 <span className="block text-xs text-[#94A3B8]">上传小说，AI续写</span>
+              </span>
+            </button>
+            <button
+              type="button"
+              className="mt-2 flex w-full items-center gap-3 rounded-2xl bg-white/90 px-4 py-3 text-left shadow-[0_10px_20px_rgba(15,23,42,0.08)] transition-all hover:-translate-y-[1px] hover:shadow-[0_16px_30px_rgba(15,23,42,0.12)]"
+              onClick={() => {
+                navigate("/imitation");
+                onClose();
+              }}
+            >
+              <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-[#10B981] to-[#059669] text-white shadow-[0_6px_14px_rgba(16,185,129,0.3)]">
+                <FileEdit className="h-4 w-4" />
+              </span>
+              <span className="flex-1">
+                <span className="block text-sm font-semibold text-[#1F2937]">文章仿写</span>
+                <span className="block text-xs text-[#94A3B8]">上传文章，AI仿写</span>
               </span>
             </button>
           </div>

@@ -10,6 +10,12 @@ import { useAuthStore } from "@/stores/authStore";
 export function LoginPage() {
   const navigate = useNavigate();
   const { login, isLoading } = useAuthStore();
+
+  // 登录页加载后预加载 ChatPage chunk，减少登录后的等待
+  React.useEffect(() => {
+    import("@/pages/ChatPage");
+  }, []);
+
   const [showPassword, setShowPassword] = React.useState(false);
   const [remember, setRemember] = React.useState(true);
   const [form, setForm] = React.useState({ username: "", password: "" });

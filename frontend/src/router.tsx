@@ -1,24 +1,39 @@
+import { Suspense, lazy } from "react";
 import { Navigate, createBrowserRouter } from "react-router-dom";
 
-import { LoginPage } from "@/pages/LoginPage";
-import { ChatPage } from "@/pages/ChatPage";
-import { NotFoundPage } from "@/pages/NotFoundPage";
-import { AdminLayout } from "@/pages/admin/AdminLayout";
-import { DashboardPage } from "@/pages/admin/dashboard/DashboardPage";
-import { KnowledgeListPage } from "@/pages/admin/knowledge/KnowledgeListPage";
-import { KnowledgeDocumentsPage } from "@/pages/admin/knowledge/KnowledgeDocumentsPage";
-import { KnowledgeChunksPage } from "@/pages/admin/knowledge/KnowledgeChunksPage";
-import { IntentTreePage } from "@/pages/admin/intent-tree/IntentTreePage";
-import { IntentListPage } from "@/pages/admin/intent-tree/IntentListPage";
-import { IntentEditPage } from "@/pages/admin/intent-tree/IntentEditPage";
-import { IngestionPage } from "@/pages/admin/ingestion/IngestionPage";
-import { RagTracePage } from "@/pages/admin/traces/RagTracePage";
-import { RagTraceDetailPage } from "@/pages/admin/traces/RagTraceDetailPage";
-import { SystemSettingsPage } from "@/pages/admin/settings/SystemSettingsPage";
-import { SampleQuestionPage } from "@/pages/admin/sample-questions/SampleQuestionPage";
-import { UserListPage } from "@/pages/admin/users/UserListPage";
-import { NovelPage } from "@/pages/NovelPage";
 import { useAuthStore } from "@/stores/authStore";
+
+const LoginPage = lazy(() => import("@/pages/LoginPage").then((m) => ({ default: m.LoginPage })));
+const ChatPage = lazy(() => import("@/pages/ChatPage").then((m) => ({ default: m.ChatPage })));
+const NotFoundPage = lazy(() => import("@/pages/NotFoundPage").then((m) => ({ default: m.NotFoundPage })));
+const NovelPage = lazy(() => import("@/pages/NovelPage").then((m) => ({ default: m.NovelPage })));
+const ImitationPage = lazy(() => import("@/pages/ImitationPage").then((m) => ({ default: m.ImitationPage })));
+const AdminLayout = lazy(() => import("@/pages/admin/AdminLayout").then((m) => ({ default: m.AdminLayout })));
+const DashboardPage = lazy(() => import("@/pages/admin/dashboard/DashboardPage").then((m) => ({ default: m.DashboardPage })));
+const KnowledgeListPage = lazy(() => import("@/pages/admin/knowledge/KnowledgeListPage").then((m) => ({ default: m.KnowledgeListPage })));
+const KnowledgeDocumentsPage = lazy(() => import("@/pages/admin/knowledge/KnowledgeDocumentsPage").then((m) => ({ default: m.KnowledgeDocumentsPage })));
+const KnowledgeChunksPage = lazy(() => import("@/pages/admin/knowledge/KnowledgeChunksPage").then((m) => ({ default: m.KnowledgeChunksPage })));
+const IntentTreePage = lazy(() => import("@/pages/admin/intent-tree/IntentTreePage").then((m) => ({ default: m.IntentTreePage })));
+const IntentListPage = lazy(() => import("@/pages/admin/intent-tree/IntentListPage").then((m) => ({ default: m.IntentListPage })));
+const IntentEditPage = lazy(() => import("@/pages/admin/intent-tree/IntentEditPage").then((m) => ({ default: m.IntentEditPage })));
+const IngestionPage = lazy(() => import("@/pages/admin/ingestion/IngestionPage").then((m) => ({ default: m.IngestionPage })));
+const RagTracePage = lazy(() => import("@/pages/admin/traces/RagTracePage").then((m) => ({ default: m.RagTracePage })));
+const RagTraceDetailPage = lazy(() => import("@/pages/admin/traces/RagTraceDetailPage").then((m) => ({ default: m.RagTraceDetailPage })));
+const SystemSettingsPage = lazy(() => import("@/pages/admin/settings/SystemSettingsPage").then((m) => ({ default: m.SystemSettingsPage })));
+const SampleQuestionPage = lazy(() => import("@/pages/admin/sample-questions/SampleQuestionPage").then((m) => ({ default: m.SampleQuestionPage })));
+const UserListPage = lazy(() => import("@/pages/admin/users/UserListPage").then((m) => ({ default: m.UserListPage })));
+
+function PageLoader() {
+  return (
+    <div className="flex h-screen items-center justify-center">
+      <div className="h-6 w-6 animate-spin rounded-full border-2 border-[#E5E7EB] border-t-[#7C3AED]" />
+    </div>
+  );
+}
+
+function LazyPage({ children }: { children: JSX.Element }) {
+  return <Suspense fallback={<PageLoader />}>{children}</Suspense>;
+}
 
 function RequireAuth({ children }: { children: JSX.Element }) {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
@@ -65,7 +80,7 @@ export const router = createBrowserRouter([
     path: "/login",
     element: (
       <RedirectIfAuth>
-        <LoginPage />
+        <LazyPage><LoginPage /></LazyPage>
       </RedirectIfAuth>
     )
   },
@@ -73,7 +88,7 @@ export const router = createBrowserRouter([
     path: "/chat",
     element: (
       <RequireAuth>
-        <ChatPage />
+        <LazyPage><ChatPage /></LazyPage>
       </RequireAuth>
     )
   },
@@ -81,7 +96,7 @@ export const router = createBrowserRouter([
     path: "/chat/:sessionId",
     element: (
       <RequireAuth>
-        <ChatPage />
+        <LazyPage><ChatPage /></LazyPage>
       </RequireAuth>
     )
   },
@@ -89,7 +104,15 @@ export const router = createBrowserRouter([
     path: "/novel",
     element: (
       <RequireAuth>
-        <NovelPage />
+        <LazyPage><NovelPage /></LazyPage>
+      </RequireAuth>
+    )
+  },
+  {
+    path: "/imitation",
+    element: (
+      <RequireAuth>
+        <LazyPage><ImitationPage /></LazyPage>
       </RequireAuth>
     )
   },
@@ -97,7 +120,7 @@ export const router = createBrowserRouter([
     path: "/admin",
     element: (
       <RequireAdmin>
-        <AdminLayout />
+        <LazyPage><AdminLayout /></LazyPage>
       </RequireAdmin>
     ),
     children: [
@@ -107,60 +130,60 @@ export const router = createBrowserRouter([
       },
       {
         path: "dashboard",
-        element: <DashboardPage />
+        element: <LazyPage><DashboardPage /></LazyPage>
       },
       {
         path: "knowledge",
-        element: <KnowledgeListPage />
+        element: <LazyPage><KnowledgeListPage /></LazyPage>
       },
       {
         path: "knowledge/:kbId",
-        element: <KnowledgeDocumentsPage />
+        element: <LazyPage><KnowledgeDocumentsPage /></LazyPage>
       },
       {
         path: "knowledge/:kbId/docs/:docId",
-        element: <KnowledgeChunksPage />
+        element: <LazyPage><KnowledgeChunksPage /></LazyPage>
       },
       {
         path: "intent-tree",
-        element: <IntentTreePage />
+        element: <LazyPage><IntentTreePage /></LazyPage>
       },
       {
         path: "intent-list",
-        element: <IntentListPage />
+        element: <LazyPage><IntentListPage /></LazyPage>
       },
       {
         path: "intent-list/:id/edit",
-        element: <IntentEditPage />
+        element: <LazyPage><IntentEditPage /></LazyPage>
       },
       {
         path: "ingestion",
-        element: <IngestionPage />
+        element: <LazyPage><IngestionPage /></LazyPage>
       },
       {
         path: "traces",
-        element: <RagTracePage />
+        element: <LazyPage><RagTracePage /></LazyPage>
       },
       {
         path: "traces/:traceId",
-        element: <RagTraceDetailPage />
+        element: <LazyPage><RagTraceDetailPage /></LazyPage>
       },
       {
         path: "settings",
-        element: <SystemSettingsPage />
+        element: <LazyPage><SystemSettingsPage /></LazyPage>
       },
       {
         path: "sample-questions",
-        element: <SampleQuestionPage />
+        element: <LazyPage><SampleQuestionPage /></LazyPage>
       },
       {
         path: "users",
-        element: <UserListPage />
+        element: <LazyPage><UserListPage /></LazyPage>
       }
     ]
   },
   {
     path: "*",
-    element: <NotFoundPage />
+    element: <LazyPage><NotFoundPage /></LazyPage>
   }
 ]);

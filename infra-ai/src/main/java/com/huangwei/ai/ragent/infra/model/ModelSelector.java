@@ -44,9 +44,18 @@ public class ModelSelector {
     private final ModelHealthStore healthStore;
 
     public List<ModelTarget> selectChatCandidates(Boolean deepThinking) {
+        return selectChatCandidates(deepThinking, null);
+    }
+
+    public List<ModelTarget> selectChatCandidates(Boolean deepThinking, String modelId) {
         AIModelProperties.ModelGroup group = properties.getChat();
         if (group == null) {
             return List.of();
+        }
+
+        // 如果指定了 modelId 且在候选列表中存在，则优先使用该模型
+        if (StrUtil.isNotBlank(modelId) && findCandidate(group.getCandidates(), modelId) != null) {
+            return selectCandidates(group, modelId, deepThinking);
         }
 
         String firstChoiceModelId = resolveFirstChoiceModel(group, deepThinking);

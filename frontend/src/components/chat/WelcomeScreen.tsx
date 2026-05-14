@@ -2,6 +2,8 @@ import * as React from "react";
 import { ArrowUpRight, BookOpen, Bot, Brain, Check, Lightbulb, Send, Square } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { FlowTag, RAG_CHAT_STEPS } from "@/components/common/FlowTag";
+import { ModelSelector } from "@/components/common/ModelSelector";
 import { listSampleQuestions } from "@/services/sampleQuestionService";
 import { useChatStore } from "@/stores/chatStore";
 
@@ -42,8 +44,15 @@ export function WelcomeScreen() {
   const [promptPresets, setPromptPresets] = React.useState<PromptPreset[]>(DEFAULT_PRESETS);
   const isComposingRef = React.useRef(false);
   const textareaRef = React.useRef<HTMLTextAreaElement | null>(null);
-  const { sendMessage, isStreaming, cancelGeneration, deepThinkingEnabled, setDeepThinkingEnabled } =
-    useChatStore();
+  const {
+    sendMessage,
+    isStreaming,
+    cancelGeneration,
+    deepThinkingEnabled,
+    setDeepThinkingEnabled,
+    selectedModelId,
+    setSelectedModelId
+  } = useChatStore();
 
   const focusInput = React.useCallback(() => {
     const el = textareaRef.current;
@@ -226,6 +235,12 @@ export function WelcomeScreen() {
                   ) : null}
                 </span>
               </button>
+              <ModelSelector
+                selectedModelId={selectedModelId}
+                onSelect={setSelectedModelId}
+                disabled={isStreaming}
+                variant="pill"
+              />
               <button
                 type="button"
                 onClick={handleSubmit}
@@ -306,6 +321,13 @@ export function WelcomeScreen() {
               );
             })}
           </div>
+        </div>
+
+        <div
+          className="mt-8 flex justify-center opacity-0 animate-fade-up"
+          style={{ animationDelay: "240ms", animationFillMode: "both" }}
+        >
+          <FlowTag title="RAG 对话实现原理" steps={RAG_CHAT_STEPS} />
         </div>
       </div>
     </div>

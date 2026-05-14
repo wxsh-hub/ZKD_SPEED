@@ -17,6 +17,7 @@ import { RagTraceDetailPage } from "@/pages/admin/traces/RagTraceDetailPage";
 import { SystemSettingsPage } from "@/pages/admin/settings/SystemSettingsPage";
 import { SampleQuestionPage } from "@/pages/admin/sample-questions/SampleQuestionPage";
 import { UserListPage } from "@/pages/admin/users/UserListPage";
+import { NovelPage } from "@/pages/NovelPage";
 import { useAuthStore } from "@/stores/authStore";
 
 function RequireAuth({ children }: { children: JSX.Element }) {
@@ -81,6 +82,14 @@ export const router = createBrowserRouter([
     element: (
       <RequireAuth>
         <ChatPage />
+      </RequireAuth>
+    )
+  },
+  {
+    path: "/novel",
+    element: (
+      <RequireAuth>
+        <NovelPage />
       </RequireAuth>
     )
   },

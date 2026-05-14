@@ -278,6 +278,7 @@ CREATE TABLE `t_message`
     `user_id`         varchar(64) NOT NULL COMMENT '用户ID',
     `role`            varchar(32) NOT NULL COMMENT '角色：system/user/assistant',
     `content`         text        NOT NULL COMMENT '消息内容',
+    `prompt_snapshot` text COMMENT '发送给LLM的完整prompt快照（仅assistant消息）',
     `create_time`     datetime DEFAULT NULL COMMENT '创建时间',
     `update_time`     datetime DEFAULT NULL COMMENT '更新时间',
     `deleted`         tinyint(4) DEFAULT '0' COMMENT '是否删除 0：正常 1：删除',
@@ -398,3 +399,35 @@ CREATE TABLE `t_user`
     PRIMARY KEY (`id`),
     UNIQUE KEY `uk_user_username` (`username`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='系统用户表';
+
+CREATE TABLE `t_novel_summary`
+(
+    `id`            bigint(20) NOT NULL COMMENT '主键ID',
+    `task_id`       varchar(64) NOT NULL COMMENT '关联的摄取任务ID',
+    `file_name`     varchar(255)         DEFAULT NULL COMMENT '源文件名',
+    `characters`    text COMMENT '主要人物摘要（性格、喜好、处事态度等）',
+    `world_setting` text COMMENT '世界观设定摘要',
+    `plot_summary`  text COMMENT '已有剧情线摘要',
+    `create_time`   datetime    NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time`   datetime    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    `deleted`       tinyint(1) NOT NULL DEFAULT '0' COMMENT '是否删除 0：正常 1：删除',
+    PRIMARY KEY (`id`),
+    KEY             `idx_task_id` (`task_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='小说摘要表（人物/世界观/剧情线）';
+
+-- ==================== 文章仿写 ====================
+
+CREATE TABLE `t_article_analysis`
+(
+    `id`            bigint(20) NOT NULL COMMENT '主键ID',
+    `task_id`       varchar(64) NOT NULL COMMENT '关联的摄取任务ID',
+    `file_name`     varchar(255)         DEFAULT NULL COMMENT '源文件名',
+    `key_points`    text COMMENT '核心论点与要点摘要',
+    `writing_style` text COMMENT '写作风格分析（用词特点、句式风格、语气等）',
+    `structure`     text COMMENT '文章结构分析（段落组织、逻辑脉络、论述层次等）',
+    `create_time`   datetime    NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time`   datetime    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    `deleted`       tinyint(1) NOT NULL DEFAULT '0' COMMENT '是否删除 0：正常 1：删除',
+    PRIMARY KEY (`id`),
+    KEY             `idx_task_id` (`task_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='文章分析表（核心论点/写作风格/文章结构）';

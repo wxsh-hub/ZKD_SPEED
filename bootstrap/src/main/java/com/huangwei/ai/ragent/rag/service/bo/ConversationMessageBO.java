@@ -50,4 +50,9 @@ public class ConversationMessageBO {
      * 消息内容
      */
     private String content;
+
+    /**
+     * 发送给LLM的完整prompt快照（仅assistant消息需要）
+     */
+    private String promptSnapshot;
 }

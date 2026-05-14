@@ -7,7 +7,6 @@ import {
   MessageSquare,
   MoreHorizontal,
   Pencil,
-  PlayCircle,
   Plus,
   Search,
   Settings,
@@ -164,13 +163,13 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       />
       <aside
         className={cn(
-          "fixed left-0 top-0 z-40 flex h-screen w-[280px] flex-shrink-0 flex-col bg-[#FAFAFA] p-3 transition-transform lg:static lg:h-screen lg:translate-x-0",
+          "fixed left-0 top-0 z-40 flex h-screen w-[260px] flex-shrink-0 flex-col bg-[#FAFAFA] p-3 transition-transform lg:static lg:h-screen lg:translate-x-0",
           isOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
         <div className="border-b border-[#F0F0F0] pb-3">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#3B82F6]">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-[#7C3AED] to-[#A855F7]">
               <Bot className="h-5 w-5 text-white" />
             </div>
             <div style={{ fontFamily: sessionTitleFont }}>
@@ -180,19 +179,19 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           </div>
         </div>
         <div className="py-3 space-y-4">
-          <div className="relative overflow-hidden rounded-2xl border border-[#E6EEF6] bg-gradient-to-br from-[#F0F9FF] via-white to-[#FEF3C7] p-3 shadow-[0_14px_30px_rgba(15,23,42,0.08)]">
+          <div className="relative overflow-hidden rounded-2xl border border-[#E6EEF6] bg-gradient-to-br from-[#F5F3FF] via-white to-[#F0F9FF] p-3 shadow-[0_14px_30px_rgba(15,23,42,0.08)]">
             <span
               aria-hidden="true"
-              className="absolute -right-10 -top-10 h-24 w-24 rounded-full bg-[#BAE6FD]/70 blur-2xl"
+              className="absolute -right-10 -top-10 h-24 w-24 rounded-full bg-[#C4B5FD]/40 blur-2xl"
             />
             <span
               aria-hidden="true"
-              className="absolute -left-12 -bottom-10 h-28 w-28 rounded-full bg-[#FDE68A]/70 blur-2xl"
+              className="absolute -left-12 -bottom-10 h-28 w-28 rounded-full bg-[#E9D5FF]/40 blur-2xl"
             />
             <div className="relative">
               <div className="flex items-center justify-between px-1">
                 <span className="text-[11px] font-semibold text-[#94A3B8]">快速开始</span>
-                <span className="rounded-full bg-white/80 px-2 py-0.5 text-[10px] font-semibold text-[#2563EB]">
+                <span className="rounded-full bg-[#EDE9FE] px-2 py-0.5 text-[10px] font-semibold text-[#7C3AED]">
                   新内容
                 </span>
               </div>
@@ -205,7 +204,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                   onClose();
                 }}
               >
-                <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-[#60A5FA] to-[#2563EB] text-white shadow-[0_6px_14px_rgba(37,99,235,0.3)]">
+                <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-[#8B5CF6] to-[#7C3AED] text-white shadow-[0_6px_14px_rgba(124,58,237,0.3)]">
                   <Plus className="h-4 w-4" />
                 </span>
                 <span className="flex-1">
@@ -216,7 +215,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
               {user?.role === "admin" ? (
                 <button
                   type="button"
-                  className="mt-2 inline-flex items-center gap-2 rounded-full border border-white/80 bg-white/70 px-3 py-1.5 text-xs font-semibold text-[#1D4ED8] transition-colors hover:bg-white"
+                  className="mt-2 inline-flex items-center gap-2 rounded-full border border-[#EDE9FE] bg-[#F5F3FF] px-3 py-1.5 text-xs font-semibold text-[#7C3AED] transition-colors hover:bg-[#EDE9FE]"
                   onClick={() => {
                     navigate("/admin");
                     onClose();
@@ -227,6 +226,27 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                 </button>
               ) : null}
             </div>
+          </div>
+          <div className="rounded-2xl border border-[#E6EEF6] bg-white p-3 shadow-[0_12px_26px_rgba(15,23,42,0.06)]">
+            <div className="px-1">
+              <span className="text-[11px] font-semibold text-[#94A3B8]">其他功能</span>
+            </div>
+            <button
+              type="button"
+              className="mt-2 flex w-full items-center gap-3 rounded-2xl bg-white/90 px-4 py-3 text-left shadow-[0_10px_20px_rgba(15,23,42,0.08)] transition-all hover:-translate-y-[1px] hover:shadow-[0_16px_30px_rgba(15,23,42,0.12)]"
+              onClick={() => {
+                navigate("/novel");
+                onClose();
+              }}
+            >
+              <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-[#F59E0B] to-[#D97706] text-white shadow-[0_6px_14px_rgba(217,119,6,0.3)]">
+                <BookOpen className="h-4 w-4" />
+              </span>
+              <span className="flex-1">
+                <span className="block text-sm font-semibold text-[#1F2937]">小说续写</span>
+                <span className="block text-xs text-[#94A3B8]">上传小说，AI续写</span>
+              </span>
+            </button>
           </div>
           <div className="rounded-2xl border border-[#E6EEF6] bg-white p-3 shadow-[0_12px_26px_rgba(15,23,42,0.06)]">
             <div className="flex items-center justify-between px-1">
@@ -240,7 +260,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                   value={query}
                   onChange={(event) => setQuery(event.target.value)}
                   placeholder="搜索对话..."
-                  className="h-10 w-full rounded-xl border border-[#E5E7EB] bg-[#F8FAFC] pl-9 pr-3 text-sm text-[#1F2937] placeholder:text-[#9CA3AF] focus:border-[#93C5FD] focus:outline-none transition-colors"
+                  className="h-10 w-full rounded-xl border border-[#E5E7EB] bg-[#F8FAFC] pl-9 pr-3 text-sm text-[#1F2937] placeholder:text-[#9CA3AF] focus:border-[#C4B5FD] focus:outline-none transition-colors"
                 />
               </div>
             </div>
@@ -276,7 +296,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                         className={cn(
                           "group my-[1px] flex min-h-[40px] cursor-pointer items-center justify-between gap-2 rounded-lg px-3 py-2 text-[14px] leading-[22px] transition-colors duration-200",
                           currentSessionId === session.id
-                            ? "bg-[#DBEAFE] text-[#2563EB]"
+                            ? "bg-[#EDE9FE] text-[#7C3AED]"
                             : "text-[#333333] hover:bg-[#F5F5F5]"
                         )}
                         role="button"
@@ -317,7 +337,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                             onBlur={() => {
                               commitRename().catch(() => null);
                             }}
-                            className="h-6 flex-1 rounded-md border border-[#E5E5E5] bg-white px-2 text-[14px] leading-[22px] text-[#333333] focus:border-[#2563EB] focus:outline-none"
+                            className="h-6 flex-1 rounded-md border border-[#E5E5E5] bg-white px-2 text-[14px] leading-[22px] text-[#333333] focus:border-[#7C3AED] focus:outline-none"
                           />
                         ) : (
                           <span className="min-w-0 flex-1 truncate font-normal">
@@ -331,7 +351,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                               className={cn(
                                 "flex h-6 w-6 items-center justify-center rounded text-[#666666] transition-opacity duration-150 hover:bg-[rgba(0,0,0,0.06)]",
                                 currentSessionId === session.id
-                                  ? "pointer-events-auto opacity-100 text-[#2563EB]"
+                                  ? "pointer-events-auto opacity-100 text-[#7C3AED]"
                                   : "pointer-events-none opacity-0 group-hover:pointer-events-auto group-hover:opacity-100"
                               )}
                               onClick={(event) => event.stopPropagation()}
@@ -389,7 +409,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                 className="flex w-full items-center gap-2 rounded-lg p-2 text-left transition-colors hover:bg-[#F5F5F5] data-[state=open]:bg-[#EEEEEE]"
                 aria-label="用户菜单"
               >
-                <div className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-[#3B82F6] text-white">
+                <div className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-[#7C3AED] to-[#A855F7] text-white">
                   {showAvatar ? (
                     <img
                       src={avatarUrl}
@@ -413,24 +433,13 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
             <DropdownMenuContent align="start" side="top" sideOffset={8} className="w-48">
               <DropdownMenuItem asChild>
                 <a
-                  href="https://github.com/wxsh-hub/ZDK-Speed.git"
+                  href="https://github.com/wxsh-hub/ZKD_SPEED"
                   target="_blank"
                   rel="noreferrer"
                   className="flex items-center"
                 >
                   <BookOpen className="mr-2 h-4 w-4" />
                   官方文档
-                </a>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <a
-                  href="https://space.bilibili.com/352177376"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="flex items-center"
-                >
-                  <PlayCircle className="mr-2 h-4 w-4" />
-                  哔哩哔哩
                 </a>
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => logout()} className="text-rose-600 focus:text-rose-600">

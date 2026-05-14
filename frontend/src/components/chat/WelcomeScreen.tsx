@@ -126,10 +126,10 @@ export function WelcomeScreen() {
   const hasContent = value.trim().length > 0;
 
   return (
-    <div className="relative flex min-h-full items-center justify-center overflow-hidden px-4 py-16 sm:px-6">
+    <div className="relative flex min-h-full items-center justify-center overflow-hidden px-4 py-10 sm:px-6">
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 bg-gradient-to-br from-[#F8FAFC] via-white to-[#EFF6FF]"
+        className="pointer-events-none absolute inset-0 bg-gradient-to-br from-[#FAFAFA] via-white to-[#F5F3FF]"
       />
       <div
         aria-hidden="true"
@@ -137,11 +137,11 @@ export function WelcomeScreen() {
       />
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute -top-32 right-[-40px] h-72 w-72 rounded-full bg-gradient-radial from-[#BFDBFE]/60 via-transparent to-transparent blur-3xl animate-float"
+        className="pointer-events-none absolute -top-32 right-[-40px] h-72 w-72 rounded-full bg-gradient-radial from-[#C4B5FD]/50 via-transparent to-transparent blur-3xl animate-float"
       />
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute -bottom-36 left-[-80px] h-80 w-80 rounded-full bg-gradient-radial from-[#FDE68A]/40 via-transparent to-transparent blur-3xl animate-float"
+        className="pointer-events-none absolute -bottom-36 left-[-80px] h-80 w-80 rounded-full bg-gradient-radial from-[#E9D5FF]/40 via-transparent to-transparent blur-3xl animate-float"
       />
 
       <div className="relative w-full max-w-[860px]">
@@ -149,7 +149,7 @@ export function WelcomeScreen() {
           className="text-center opacity-0 animate-fade-up"
           style={{ animationFillMode: "both" }}
         >
-          <span className="inline-flex items-center gap-2 rounded-full border border-white/70 bg-white/70 px-3 py-1 text-xs font-medium text-[#2563EB] shadow-sm">
+          <span className="inline-flex items-center gap-2 rounded-full border border-[#EDE9FE] bg-white/70 px-3 py-1 text-xs font-medium text-[#7C3AED] shadow-sm">
             <Bot className="h-3.5 w-3.5" />
             RAG 智能问答
           </span>
@@ -170,7 +170,7 @@ export function WelcomeScreen() {
             className={cn(
               "relative flex flex-col rounded-3xl border border-white/70 bg-white/80 px-5 pt-4 pb-3 shadow-soft backdrop-blur-xl transition-all duration-200",
               isFocused
-                ? "border-[#BFDBFE] shadow-glow"
+                ? "border-[#C4B5FD] shadow-glow"
                 : "hover:border-[#D4D4D4]"
             )}
           >
@@ -180,7 +180,7 @@ export function WelcomeScreen() {
                 value={value}
                 onChange={(event) => setValue(event.target.value)}
                 placeholder={deepThinkingEnabled ? "输入需要深度分析的问题..." : "输入你的问题..."}
-                className="max-h-40 min-h-[52px] w-full resize-none border-0 bg-transparent px-2 pt-2 pb-2 text-[15px] text-[#1F2937] placeholder:text-[#9CA3AF] focus:outline-none sm:text-base"
+                className="max-h-40 min-h-[44px] w-full resize-none border-0 bg-transparent px-2 pt-2 pb-2 text-[15px] text-[#1F2937] placeholder:text-[#9CA3AF] focus:outline-none sm:text-base"
                 rows={1}
                 onFocus={() => setIsFocused(true)}
                 onBlur={() => setIsFocused(false)}
@@ -213,16 +213,16 @@ export function WelcomeScreen() {
                 className={cn(
                   "rounded-full border px-3 py-1.5 text-xs font-medium transition-all",
                   deepThinkingEnabled
-                    ? "border-[#BFDBFE] bg-[#DBEAFE] text-[#2563EB]"
+                    ? "border-[#C4B5FD] bg-[#EDE9FE] text-[#7C3AED]"
                     : "border-transparent bg-[#F5F5F5] text-[#6B7280] hover:bg-[#EEEEEE]",
                   isStreaming && "cursor-not-allowed opacity-60"
                 )}
               >
                 <span className="inline-flex items-center gap-2">
-                  <Brain className={cn("h-3.5 w-3.5", deepThinkingEnabled && "text-[#3B82F6]")} />
+                  <Brain className={cn("h-3.5 w-3.5", deepThinkingEnabled && "text-[#7C3AED]")} />
                   深度思考
                   {deepThinkingEnabled ? (
-                    <span className="h-2 w-2 rounded-full bg-[#3B82F6] animate-pulse" />
+                    <span className="h-2 w-2 rounded-full bg-[#7C3AED] animate-pulse" />
                   ) : null}
                 </span>
               </button>
@@ -236,7 +236,7 @@ export function WelcomeScreen() {
                   isStreaming
                     ? "bg-[#FEE2E2] text-[#EF4444] hover:bg-[#FECACA]"
                     : hasContent
-                      ? "bg-[#3B82F6] text-white hover:bg-[#2563EB]"
+                      ? "bg-[#7C3AED] text-white hover:bg-[#6D28D9]"
                       : "cursor-not-allowed bg-[#F5F5F5] text-[#CCCCCC]"
                 )}
               >
@@ -245,7 +245,7 @@ export function WelcomeScreen() {
             </div>
           </div>
           {deepThinkingEnabled ? (
-            <p className="mt-3 text-xs text-[#2563EB]">
+            <p className="mt-3 text-xs text-[#7C3AED]">
               <span className="inline-flex items-center gap-1.5">
                 <Lightbulb className="h-3.5 w-3.5" />
                 深度思考模式已开启，AI将进行更深入的分析推理
@@ -285,12 +285,12 @@ export function WelcomeScreen() {
                   onClick={() => applyPreset(preset.prompt)}
                   disabled={isStreaming}
                   className={cn(
-                    "group rounded-2xl border border-white/70 bg-white/70 p-4 text-left shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-[#BFDBFE] hover:shadow-md",
+                    "group rounded-2xl border border-white/70 bg-white/70 p-4 text-left shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-[#C4B5FD] hover:shadow-md",
                     isStreaming && "cursor-not-allowed opacity-60"
                   )}
                 >
                   <div className="flex items-center gap-3">
-                    <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#EFF6FF] text-[#2563EB]">
+                    <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#EDE9FE] text-[#7C3AED]">
                       <Icon className="h-4 w-4" />
                     </span>
                     <div>
@@ -300,7 +300,7 @@ export function WelcomeScreen() {
                   </div>
                   <div className="mt-3 flex items-center gap-2 text-xs text-[#94A3B8]">
                     <span className="min-w-0 flex-1 truncate">推荐问法：{preset.prompt}</span>
-                    <ArrowUpRight className="h-3.5 w-3.5 text-[#CBD5F5] transition-colors group-hover:text-[#3B82F6]" />
+                    <ArrowUpRight className="h-3.5 w-3.5 text-[#CBD5F5] transition-colors group-hover:text-[#7C3AED]" />
                   </div>
                 </button>
               );

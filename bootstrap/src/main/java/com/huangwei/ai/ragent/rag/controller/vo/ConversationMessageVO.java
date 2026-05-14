@@ -54,6 +54,11 @@ public class ConversationMessageVO {
     private String content;
 
     /**
+     * 发送给LLM的完整prompt快照（仅assistant消息有值）
+     */
+    private String promptSnapshot;
+
+    /**
      * 反馈值：1=点赞，-1=点踩，null=未反馈
      */
     private Integer vote;

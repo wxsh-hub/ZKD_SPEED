@@ -189,7 +189,7 @@ export function AdminLayout() {
 
   useEffect(() => {
     let active = true;
-    fetch("https://github.com/wxsh-hub/ZDK-Speed.git")
+    fetch("https://github.com/wxsh-hub/ZKD_SPEED")
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (!active) return;
@@ -683,7 +683,7 @@ export function AdminLayout() {
                 返回聊天
               </Button>
               <a
-                href="https://github.com/wxsh-hub/ZDK-Speed.git"
+                href="https://github.com/wxsh-hub/ZKD_SPEED"
                 target="_blank"
                 rel="noreferrer"
                 className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
@@ -705,7 +705,7 @@ export function AdminLayout() {
                     <Avatar
                       name={user?.username || "管理员"}
                       src={showAvatar ? avatarUrl : undefined}
-                      className="h-8 w-8 border-slate-200 bg-indigo-50 text-xs font-semibold text-indigo-600"
+                      className="h-8 w-8 border-slate-200 bg-purple-50 text-xs font-semibold text-purple-600"
                     />
                     <span className="hidden sm:inline">{user?.username || "管理员"}</span>
                     <ChevronDown className="h-4 w-4 text-slate-400" />

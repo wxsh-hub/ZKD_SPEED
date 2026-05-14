@@ -478,8 +478,8 @@ const KPISection = ({ overview }: { overview: DashboardOverview | null }) => {
       label: "活跃用户",
       change: toChange(kpis?.activeUsers.deltaPct),
       icon: <Activity className="h-5 w-5" />,
-      iconBg: "#DBEAFE",
-      iconColor: "#2563EB"
+      iconBg: "#EDE9FE",
+      iconColor: "#7C3AED"
     },
     {
       value: formatNumber(kpis?.sessions24h.value),
@@ -724,15 +724,15 @@ const SimpleAreaChart = ({
           >
             <defs>
               <linearGradient id="trafficGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" stopColor="#3B82F6" stopOpacity="0.25" />
-                <stop offset="100%" stopColor="#3B82F6" stopOpacity="0.02" />
+                <stop offset="0%" stopColor="#8B5CF6" stopOpacity="0.25" />
+                <stop offset="100%" stopColor="#8B5CF6" stopOpacity="0.02" />
               </linearGradient>
             </defs>
             <path d={areaPath} fill="url(#trafficGradient)" />
             <path
                 d={linePath}
                 fill="none"
-                stroke="#3B82F6"
+                stroke="#8B5CF6"
                 strokeWidth="2"
                 vectorEffect="non-scaling-stroke"
             />
@@ -748,7 +748,7 @@ const SimpleAreaChart = ({
                 />
                 {/* 圆点 */}
                 <div
-                    className="pointer-events-none absolute h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-blue-500 bg-white shadow-sm"
+                    className="pointer-events-none absolute h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-purple-500 bg-white shadow-sm"
                     style={{ left: tooltip.x, top: tooltip.y }}
                 />
                 {/* 标签 */}
@@ -761,7 +761,7 @@ const SimpleAreaChart = ({
                 >
                   <div className="font-medium">{tooltip.label}</div>
                   <div className="flex items-center gap-1">
-                    <span className="h-2 w-2 rounded-sm bg-blue-400" />
+                    <span className="h-2 w-2 rounded-sm bg-purple-400" />
                     <span>
                   {valueLabel}: {tooltip.value}
                 </span>
@@ -1207,7 +1207,7 @@ const TYPE_ICON: Record<InsightCardData["type"], typeof Info> = {
 
 const TYPE_STYLE: Record<InsightCardData["type"], string> = {
   anomaly: "bg-red-50 text-red-600",
-  trend: "bg-blue-50 text-blue-600",
+  trend: "bg-purple-50 text-purple-600",
   recommendation: "bg-amber-50 text-amber-600"
 };
 

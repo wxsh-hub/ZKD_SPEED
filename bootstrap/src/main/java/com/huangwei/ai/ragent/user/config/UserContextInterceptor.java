@@ -27,6 +27,7 @@ import jakarta.servlet.DispatcherType;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
@@ -50,6 +51,7 @@ import org.springframework.web.servlet.HandlerInterceptor;
  * @see UserContext
  * @see LoginUser
  */
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class UserContextInterceptor implements HandlerInterceptor {
@@ -71,6 +73,7 @@ public class UserContextInterceptor implements HandlerInterceptor {
 
         String loginId = StpUtil.getLoginIdAsString();
         UserDO user = userMapper.selectById(Long.parseLong(loginId));
+        log.info("UserContextInterceptor 查询用户: loginId={}, username={}, role={}, avatar={}", loginId, user.getUsername(), user.getRole(), user.getAvatar());
 
         UserContext.set(
                 LoginUser.builder()

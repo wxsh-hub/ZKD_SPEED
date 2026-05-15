@@ -1,0 +1,841 @@
+2026-05-15 14:12:56.662 [] [main] INFO  c.h.ai.ragent.RagentApplication - Starting RagentApplication using Java 21.0.10 with PID 37264 (C:\Users\sunha\Desktop\11\ragent-screenshot\bootstrap\target\classes started by sunha in C:\Users\sunha\Desktop\11\ragent-screenshot\bootstrap)
+2026-05-15 14:12:56.675 [] [main] INFO  c.h.ai.ragent.RagentApplication - No active profile set, falling back to 1 default profile: "default"
+2026-05-15 14:12:56.681 [] [background-preinit] INFO  o.h.validator.internal.util.Version - HV000001: Hibernate Validator 8.0.3.Final
+2026-05-15 14:13:00.685 [] [main] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Multiple Spring Data modules found, entering strict repository configuration mode
+2026-05-15 14:13:00.693 [] [main] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2026-05-15 14:13:01.035 [] [main] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 295 ms. Found 0 Redis repository interfaces.
+2026-05-15 14:13:04.126 [] [main] INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat initialized with port 9092 (http)
+2026-05-15 14:13:04.169 [] [main] INFO  o.a.coyote.http11.Http11NioProtocol - Initializing ProtocolHandler ["http-nio-9092"]
+2026-05-15 14:13:04.175 [] [main] INFO  o.a.catalina.core.StandardService - Starting service [Tomcat]
+2026-05-15 14:13:04.176 [] [main] INFO  o.a.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/10.1.48]
+2026-05-15 14:13:04.581 [] [main] INFO  o.a.c.c.C.[.[.[/api/ragent] - Initializing Spring embedded WebApplicationContext
+2026-05-15 14:13:04.583 [] [main] INFO  o.s.b.w.s.c.ServletWebServerApplicationContext - Root WebApplicationContext: initialization completed in 7761 ms
+2026-05-15 14:13:13.764 [] [main] INFO  org.redisson.Version - Redisson 4.0.0
+2026-05-15 14:13:15.147 [] [redisson-netty-1-4] INFO  o.r.connection.ConnectionsHolder - 1 connections initialized for 127.0.0.1/127.0.0.1:6379
+2026-05-15 14:13:15.789 [] [redisson-netty-1-19] INFO  o.r.connection.ConnectionsHolder - 24 connections initialized for 127.0.0.1/127.0.0.1:6379
+2026-05-15 14:13:17.942 [] [main] INFO  com.zaxxer.hikari.HikariDataSource - RagentHikariPool - Starting...
+2026-05-15 14:13:18.754 [] [main] INFO  com.zaxxer.hikari.pool.HikariPool - RagentHikariPool - Added connection com.mysql.cj.jdbc.ConnectionImpl@bf6de66
+2026-05-15 14:13:18.759 [] [main] INFO  com.zaxxer.hikari.HikariDataSource - RagentHikariPool - Start completed.
+2026-05-15 14:13:18.886 [] [main] INFO  c.h.a.r.r.c.i.DefaultIntentClassifier - 意图分类器初始化完成
+2026-05-15 14:13:18.983 [] [main] INFO  c.h.a.r.r.c.r.QueryTermMappingService - 查询归一化映射规则加载完成, 共加载 0 条规则
+2026-05-15 14:13:19.044 [] [main] INFO  c.h.a.r.r.c.m.DefaultMCPToolRegistry - MCP 工具注册跳过, 未发现任何工具执行器
+2026-05-15 14:13:19.045 [] [main] INFO  c.h.a.r.r.c.m.DefaultMCPToolRegistry - MCP 工具自动注册完成, 共注册 0 个工具
+2026-05-15 14:13:19.321 [] [main] INFO  c.h.a.r.r.c.m.c.MCPClientAutoConfiguration - 连接 MCP Server: name=default, url=http://localhost:9099
+2026-05-15 14:13:22.390 [] [main] INFO  c.h.a.r.r.c.m.c.MCPClientAutoConfiguration - MCP Server [default] 返回 1 个工具
+2026-05-15 14:13:22.392 [] [main] INFO  c.h.a.r.r.c.m.DefaultMCPToolRegistry - MCP 工具注册成功, toolId: sales_query
+2026-05-15 14:13:22.393 [] [main] INFO  c.h.a.r.r.c.m.c.MCPClientAutoConfiguration - 注册远程 MCP 工具: toolId=sales_query, server=default
+2026-05-15 14:13:22.570 [] [main] INFO  c.h.a.r.f.d.SnowflakeIdInitializer - 分布式Snowflake初始化完成, workerId: 13, datacenterId: 0
+2026-05-15 14:13:23.678 [] [main] INFO  c.b.m.e.s.MybatisPlusApplicationContextAware - Register ApplicationContext instances org.springframework.boot.web.servlet.context.AnnotationConfigServletWebServerApplicationContext@2c177f9e
+2026-05-15 14:13:24.382 [] [main] INFO  o.a.coyote.http11.Http11NioProtocol - Starting ProtocolHandler ["http-nio-9092"]
+2026-05-15 14:13:24.416 [] [main] INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat started on port 9092 (http) with context path '/api/ragent'
+2026-05-15 14:13:24.453 [] [main] INFO  c.h.ai.ragent.RagentApplication - Started RagentApplication in 29.216 seconds (process running for 31.222)
+2026-05-15 14:13:24.464 [] [main] INFO  c.h.a.r.f.log.LogAutoConfiguration - 数据库日志落库 Worker 已启动
+2026-05-15 14:13:35.883 [] [http-nio-9092-exec-1] INFO  o.a.c.c.C.[.[.[/api/ragent] - Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-05-15 14:13:35.884 [] [http-nio-9092-exec-1] INFO  o.s.web.servlet.DispatcherServlet - Initializing Servlet 'dispatcherServlet'
+2026-05-15 14:13:35.890 [] [http-nio-9092-exec-1] INFO  o.s.web.servlet.DispatcherServlet - Completed initialization in 5 ms
+2026-05-15 14:13:45.839 [2055169747753947136] [http-nio-9092-exec-2] INFO  c.h.a.r.u.c.UserContextInterceptor - UserContextInterceptor 查询用户: loginId=2001523723396308993, username=admin, role=admin, avatar=https://hw-blog-app.oss-cn-guangzhou.aliyuncs.com/head/OIP-C.jpg
+2026-05-15 14:13:45.865 [2055169747753947136] [http-nio-9092-exec-2] INFO  c.h.a.r.n.s.impl.NovelServiceImpl - 小说文件上传，pipelineId=1001, fileName=test_novel2.txt
+2026-05-15 14:13:46.479 [2055169747753947136] [http-nio-9092-exec-2] INFO  c.h.a.r.i.engine.IngestionEngine - 流水线从节点开始执行: parser
+2026-05-15 14:13:46.480 [2055169747753947136] [http-nio-9092-exec-2] INFO  c.h.a.r.i.engine.IngestionEngine - 开始执行节点: parser
+2026-05-15 14:13:46.736 [2055169747753947136] [http-nio-9092-exec-2] INFO  c.h.a.r.i.engine.IngestionEngine - 节点 parser 执行完成，耗时 249ms: 解析文本长度=402
+2026-05-15 14:13:46.739 [2055169747753947136] [http-nio-9092-exec-2] INFO  c.h.a.r.i.engine.IngestionEngine - 开始执行节点: chunker
+2026-05-15 14:14:12.034 [2055169747753947136] [http-nio-9092-exec-2] INFO  c.h.a.r.i.engine.IngestionEngine - 节点 chunker 执行完成，耗时 25295ms: 已分块 1 段
+2026-05-15 14:14:12.034 [2055169747753947136] [http-nio-9092-exec-2] INFO  c.h.a.r.i.engine.IngestionEngine - 开始执行节点: indexer
+2026-05-15 14:14:13.375 [2055169747753947136] [http-nio-9092-exec-2] INFO  c.h.a.r.ingestion.node.IndexerNode - Milvus 写入成功，集合=rag_default_store，行数=1
+2026-05-15 14:14:13.375 [2055169747753947136] [http-nio-9092-exec-2] INFO  c.h.a.r.i.engine.IngestionEngine - 节点 indexer 执行完成，耗时 1340ms: 已写入 1 个分块到集合 rag_default_store
+2026-05-15 14:14:13.376 [2055169747753947136] [http-nio-9092-exec-2] INFO  c.h.a.r.i.engine.IngestionEngine - 流水线执行完成，共执行 3 个节点
+2026-05-15 14:14:40.944 [2055169747753947136] [http-nio-9092-exec-2] INFO  c.h.a.r.n.s.impl.NovelServiceImpl - 小说摘要提取完成，taskId=2055169750744485888, fileName=test_novel2.txt
+2026-05-15 14:15:02.846 [2055170071055093760] [http-nio-9092-exec-3] INFO  c.h.a.r.u.c.UserContextInterceptor - UserContextInterceptor 查询用户: loginId=2001523723396308993, username=admin, role=admin, avatar=https://hw-blog-app.oss-cn-guangzhou.aliyuncs.com/head/OIP-C.jpg
+2026-05-15 14:15:02.848 [2055170071055093760] [http-nio-9092-exec-3] INFO  c.h.a.r.i.s.i.ImitationServiceImpl - 文章仿写文件上传，pipelineId=1001, fileName=test_article.txt
+2026-05-15 14:15:02.872 [2055170071055093760] [http-nio-9092-exec-3] INFO  c.h.a.r.i.engine.IngestionEngine - 流水线从节点开始执行: parser
+2026-05-15 14:15:02.873 [2055170071055093760] [http-nio-9092-exec-3] INFO  c.h.a.r.i.engine.IngestionEngine - 开始执行节点: parser
+2026-05-15 14:15:02.882 [2055170071055093760] [http-nio-9092-exec-3] INFO  c.h.a.r.i.engine.IngestionEngine - 节点 parser 执行完成，耗时 9ms: 解析文本长度=59
+2026-05-15 14:15:02.883 [2055170071055093760] [http-nio-9092-exec-3] INFO  c.h.a.r.i.engine.IngestionEngine - 开始执行节点: chunker
+2026-05-15 14:15:03.516 [2055170071055093760] [http-nio-9092-exec-3] INFO  c.h.a.r.i.engine.IngestionEngine - 节点 chunker 执行完成，耗时 632ms: 已分块 1 段
+2026-05-15 14:15:03.517 [2055170071055093760] [http-nio-9092-exec-3] INFO  c.h.a.r.i.engine.IngestionEngine - 开始执行节点: indexer
+2026-05-15 14:15:03.591 [2055170071055093760] [http-nio-9092-exec-3] INFO  c.h.a.r.ingestion.node.IndexerNode - Milvus 写入成功，集合=rag_default_store，行数=1
+2026-05-15 14:15:03.592 [2055170071055093760] [http-nio-9092-exec-3] INFO  c.h.a.r.i.engine.IngestionEngine - 节点 indexer 执行完成，耗时 75ms: 已写入 1 个分块到集合 rag_default_store
+2026-05-15 14:15:03.592 [2055170071055093760] [http-nio-9092-exec-3] INFO  c.h.a.r.i.engine.IngestionEngine - 流水线执行完成，共执行 3 个节点
+2026-05-15 14:15:24.731 [2055170071055093760] [http-nio-9092-exec-3] INFO  c.h.a.r.i.s.i.ImitationServiceImpl - 文章分析提取完成，taskId=2055170071294169088, fileName=test_article.txt
+2026-05-15 14:15:34.019 [2055170201896407040] [http-nio-9092-exec-4] INFO  c.h.a.r.u.c.UserContextInterceptor - UserContextInterceptor 查询用户: loginId=2001523723396308993, username=admin, role=admin, avatar=https://hw-blog-app.oss-cn-guangzhou.aliyuncs.com/head/OIP-C.jpg
+2026-05-15 14:15:34.037 [2055170201896407040] [http-nio-9092-exec-4] ERROR c.h.a.r.f.web.GlobalExceptionHandler - [POST] http://localhost:9092/api/ragent/novel/continue traceId=2055170201896407040
+org.springframework.http.converter.HttpMessageNotReadableException: JSON parse error: Invalid UTF-8 middle byte 0xf7
+	at org.springframework.http.converter.json.AbstractJackson2HttpMessageConverter.readJavaType(AbstractJackson2HttpMessageConverter.java:408)
+	at org.springframework.http.converter.json.AbstractJackson2HttpMessageConverter.read(AbstractJackson2HttpMessageConverter.java:356)
+	at org.springframework.web.servlet.mvc.method.annotation.AbstractMessageConverterMethodArgumentResolver.readWithMessageConverters(AbstractMessageConverterMethodArgumentResolver.java:204)
+	at org.springframework.web.servlet.mvc.method.annotation.RequestResponseBodyMethodProcessor.readWithMessageConverters(RequestResponseBodyMethodProcessor.java:176)
+	at org.springframework.web.servlet.mvc.method.annotation.RequestResponseBodyMethodProcessor.resolveArgument(RequestResponseBodyMethodProcessor.java:150)
+	at org.springframework.web.method.support.HandlerMethodArgumentResolverComposite.resolveArgument(HandlerMethodArgumentResolverComposite.java:122)
+	at org.springframework.web.method.support.InvocableHandlerMethod.getMethodArgumentValues(InvocableHandlerMethod.java:227)
+	at org.springframework.web.method.support.InvocableHandlerMethod.invokeForRequest(InvocableHandlerMethod.java:181)
+	at org.springframework.web.servlet.mvc.method.annotation.ServletInvocableHandlerMethod.invokeAndHandle(ServletInvocableHandlerMethod.java:118)
+	at org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.invokeHandlerMethod(RequestMappingHandlerAdapter.java:991)
+	at org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.handleInternal(RequestMappingHandlerAdapter.java:896)
+	at org.springframework.web.servlet.mvc.method.AbstractHandlerMethodAdapter.handle(AbstractHandlerMethodAdapter.java:87)
+	at org.springframework.web.servlet.DispatcherServlet.doDispatch(DispatcherServlet.java:1089)
+	at org.springframework.web.servlet.DispatcherServlet.doService(DispatcherServlet.java:979)
+	at org.springframework.web.servlet.FrameworkServlet.processRequest(FrameworkServlet.java:1014)
+	at org.springframework.web.servlet.FrameworkServlet.doPost(FrameworkServlet.java:914)
+	at jakarta.servlet.http.HttpServlet.service(HttpServlet.java:547)
+	at org.springframework.web.servlet.FrameworkServlet.service(FrameworkServlet.java:885)
+	at jakarta.servlet.http.HttpServlet.service(HttpServlet.java:614)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:193)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:138)
+	at org.apache.tomcat.websocket.server.WsFilter.doFilter(WsFilter.java:51)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:162)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:138)
+	at com.huangwei.ai.ragent.rag.config.Utf8ResponseFilter.doFilter(Utf8ResponseFilter.java:66)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:162)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:138)
+	at cn.dev33.satoken.filter.SaFirewallCheckFilterForJakartaServlet.doFilter(SaFirewallCheckFilterForJakartaServlet.java:69)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:162)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:138)
+	at cn.dev33.satoken.filter.SaTokenCorsFilterForJakartaServlet.doFilter(SaTokenCorsFilterForJakartaServlet.java:52)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:162)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:138)
+	at cn.dev33.satoken.filter.SaTokenContextFilterForJakartaServlet.doFilter(SaTokenContextFilterForJakartaServlet.java:40)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:162)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:138)
+	at org.springframework.web.filter.RequestContextFilter.doFilterInternal(RequestContextFilter.java:100)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:162)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:138)
+	at org.springframework.web.filter.FormContentFilter.doFilterInternal(FormContentFilter.java:93)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:162)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:138)
+	at com.huangwei.ai.ragent.framework.trace.TraceFilter.doFilterInternal(TraceFilter.java:53)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:162)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:138)
+	at org.springframework.web.filter.CharacterEncodingFilter.doFilterInternal(CharacterEncodingFilter.java:201)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:162)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:138)
+	at org.apache.catalina.core.StandardWrapperValve.invoke(StandardWrapperValve.java:165)
+	at org.apache.catalina.core.StandardContextValve.invoke(StandardContextValve.java:88)
+	at org.apache.catalina.authenticator.AuthenticatorBase.invoke(AuthenticatorBase.java:482)
+	at org.apache.catalina.core.StandardHostValve.invoke(StandardHostValve.java:113)
+	at org.apache.catalina.valves.ErrorReportValve.invoke(ErrorReportValve.java:83)
+	at org.apache.catalina.core.StandardEngineValve.invoke(StandardEngineValve.java:72)
+	at org.apache.catalina.connector.CoyoteAdapter.service(CoyoteAdapter.java:342)
+	at org.apache.coyote.http11.Http11Processor.service(Http11Processor.java:399)
+	at org.apache.coyote.AbstractProcessorLight.process(AbstractProcessorLight.java:63)
+	at org.apache.coyote.AbstractProtocol$ConnectionHandler.process(AbstractProtocol.java:903)
+	at org.apache.tomcat.util.net.NioEndpoint$SocketProcessor.doRun(NioEndpoint.java:1774)
+	at org.apache.tomcat.util.net.SocketProcessorBase.run(SocketProcessorBase.java:52)
+	at org.apache.tomcat.util.threads.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:973)
+	at org.apache.tomcat.util.threads.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:491)
+	at org.apache.tomcat.util.threads.TaskThread$WrappingRunnable.run(TaskThread.java:63)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+Caused by: com.fasterxml.jackson.databind.JsonMappingException: Invalid UTF-8 middle byte 0xf7
+ at [Source: REDACTED (`StreamReadFeature.INCLUDE_SOURCE_IN_LOCATION` disabled); line: 1, column: 17] (through reference chain: com.huangwei.ai.ragent.novel.controller.request.NovelContinueRequest["direction"])
+	at com.fasterxml.jackson.databind.JsonMappingException.wrapWithPath(JsonMappingException.java:400)
+	at com.fasterxml.jackson.databind.JsonMappingException.wrapWithPath(JsonMappingException.java:359)
+	at com.fasterxml.jackson.databind.deser.BeanDeserializerBase.wrapAndThrow(BeanDeserializerBase.java:1966)
+	at com.fasterxml.jackson.databind.deser.BeanDeserializer.deserializeFromObject(BeanDeserializer.java:394)
+	at com.fasterxml.jackson.databind.deser.BeanDeserializer.deserialize(BeanDeserializer.java:177)
+	at com.fasterxml.jackson.databind.deser.DefaultDeserializationContext.readRootValue(DefaultDeserializationContext.java:342)
+	at com.fasterxml.jackson.databind.ObjectReader._bindAndClose(ObjectReader.java:2130)
+	at com.fasterxml.jackson.databind.ObjectReader.readValue(ObjectReader.java:1500)
+	at org.springframework.http.converter.json.AbstractJackson2HttpMessageConverter.readJavaType(AbstractJackson2HttpMessageConverter.java:397)
+	... 67 common frames omitted
+Caused by: com.fasterxml.jackson.core.JsonParseException: Invalid UTF-8 middle byte 0xf7
+ at [Source: REDACTED (`StreamReadFeature.INCLUDE_SOURCE_IN_LOCATION` disabled); line: 1, column: 17]
+	at com.fasterxml.jackson.core.JsonParser._constructError(JsonParser.java:2596)
+	at com.fasterxml.jackson.core.JsonParser._constructReadException(JsonParser.java:2622)
+	at com.fasterxml.jackson.core.base.ParserMinimalBase._reportError(ParserMinimalBase.java:820)
+	at com.fasterxml.jackson.core.json.UTF8StreamJsonParser._reportInvalidOther(UTF8StreamJsonParser.java:3679)
+	at com.fasterxml.jackson.core.json.UTF8StreamJsonParser._reportInvalidOther(UTF8StreamJsonParser.java:3686)
+	at com.fasterxml.jackson.core.json.UTF8StreamJsonParser._decodeUtf8_2(UTF8StreamJsonParser.java:3460)
+	at com.fasterxml.jackson.core.json.UTF8StreamJsonParser._finishString2(UTF8StreamJsonParser.java:2570)
+	at com.fasterxml.jackson.core.json.UTF8StreamJsonParser._finishAndReturnString(UTF8StreamJsonParser.java:2520)
+	at com.fasterxml.jackson.core.json.UTF8StreamJsonParser.getText(UTF8StreamJsonParser.java:294)
+	at com.fasterxml.jackson.databind.deser.std.StringDeserializer.deserialize(StringDeserializer.java:42)
+	at com.fasterxml.jackson.databind.deser.std.StringDeserializer.deserialize(StringDeserializer.java:11)
+	at com.fasterxml.jackson.databind.deser.impl.MethodProperty.deserializeAndSet(MethodProperty.java:129)
+	at com.fasterxml.jackson.databind.deser.BeanDeserializer.deserializeFromObject(BeanDeserializer.java:392)
+	... 72 common frames omitted
+2026-05-15 14:15:34.050 [2055170201896407040] [http-nio-9092-exec-4] WARN  o.s.w.s.m.m.a.ExceptionHandlerExceptionResolver - Failure in @ExceptionHandler com.huangwei.ai.ragent.framework.web.GlobalExceptionHandler#defaultErrorHandler(HttpServletRequest, Throwable)
+org.springframework.web.HttpMediaTypeNotAcceptableException: No acceptable representation
+	at org.springframework.web.servlet.mvc.method.annotation.AbstractMessageConverterMethodProcessor.writeWithMessageConverters(AbstractMessageConverterMethodProcessor.java:291)
+	at org.springframework.web.servlet.mvc.method.annotation.RequestResponseBodyMethodProcessor.handleReturnValue(RequestResponseBodyMethodProcessor.java:208)
+	at org.springframework.web.method.support.HandlerMethodReturnValueHandlerComposite.handleReturnValue(HandlerMethodReturnValueHandlerComposite.java:78)
+	at org.springframework.web.servlet.mvc.method.annotation.ServletInvocableHandlerMethod.invokeAndHandle(ServletInvocableHandlerMethod.java:136)
+	at org.springframework.web.servlet.mvc.method.annotation.ExceptionHandlerExceptionResolver.doResolveHandlerMethodException(ExceptionHandlerExceptionResolver.java:471)
+	at org.springframework.web.servlet.handler.AbstractHandlerMethodExceptionResolver.doResolveException(AbstractHandlerMethodExceptionResolver.java:73)
+	at org.springframework.web.servlet.handler.AbstractHandlerExceptionResolver.resolveException(AbstractHandlerExceptionResolver.java:182)
+	at org.springframework.web.servlet.handler.HandlerExceptionResolverComposite.resolveException(HandlerExceptionResolverComposite.java:80)
+	at org.springframework.web.servlet.DispatcherServlet.processHandlerException(DispatcherServlet.java:1360)
+	at org.springframework.web.servlet.DispatcherServlet.processDispatchResult(DispatcherServlet.java:1161)
+	at org.springframework.web.servlet.DispatcherServlet.doDispatch(DispatcherServlet.java:1106)
+	at org.springframework.web.servlet.DispatcherServlet.doService(DispatcherServlet.java:979)
+	at org.springframework.web.servlet.FrameworkServlet.processRequest(FrameworkServlet.java:1014)
+	at org.springframework.web.servlet.FrameworkServlet.doPost(FrameworkServlet.java:914)
+	at jakarta.servlet.http.HttpServlet.service(HttpServlet.java:547)
+	at org.springframework.web.servlet.FrameworkServlet.service(FrameworkServlet.java:885)
+	at jakarta.servlet.http.HttpServlet.service(HttpServlet.java:614)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:193)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:138)
+	at org.apache.tomcat.websocket.server.WsFilter.doFilter(WsFilter.java:51)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:162)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:138)
+	at com.huangwei.ai.ragent.rag.config.Utf8ResponseFilter.doFilter(Utf8ResponseFilter.java:66)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:162)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:138)
+	at cn.dev33.satoken.filter.SaFirewallCheckFilterForJakartaServlet.doFilter(SaFirewallCheckFilterForJakartaServlet.java:69)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:162)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:138)
+	at cn.dev33.satoken.filter.SaTokenCorsFilterForJakartaServlet.doFilter(SaTokenCorsFilterForJakartaServlet.java:52)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:162)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:138)
+	at cn.dev33.satoken.filter.SaTokenContextFilterForJakartaServlet.doFilter(SaTokenContextFilterForJakartaServlet.java:40)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:162)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:138)
+	at org.springframework.web.filter.RequestContextFilter.doFilterInternal(RequestContextFilter.java:100)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:162)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:138)
+	at org.springframework.web.filter.FormContentFilter.doFilterInternal(FormContentFilter.java:93)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:162)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:138)
+	at com.huangwei.ai.ragent.framework.trace.TraceFilter.doFilterInternal(TraceFilter.java:53)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:162)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:138)
+	at org.springframework.web.filter.CharacterEncodingFilter.doFilterInternal(CharacterEncodingFilter.java:201)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:162)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:138)
+	at org.apache.catalina.core.StandardWrapperValve.invoke(StandardWrapperValve.java:165)
+	at org.apache.catalina.core.StandardContextValve.invoke(StandardContextValve.java:88)
+	at org.apache.catalina.authenticator.AuthenticatorBase.invoke(AuthenticatorBase.java:482)
+	at org.apache.catalina.core.StandardHostValve.invoke(StandardHostValve.java:113)
+	at org.apache.catalina.valves.ErrorReportValve.invoke(ErrorReportValve.java:83)
+	at org.apache.catalina.core.StandardEngineValve.invoke(StandardEngineValve.java:72)
+	at org.apache.catalina.connector.CoyoteAdapter.service(CoyoteAdapter.java:342)
+	at org.apache.coyote.http11.Http11Processor.service(Http11Processor.java:399)
+	at org.apache.coyote.AbstractProcessorLight.process(AbstractProcessorLight.java:63)
+	at org.apache.coyote.AbstractProtocol$ConnectionHandler.process(AbstractProtocol.java:903)
+	at org.apache.tomcat.util.net.NioEndpoint$SocketProcessor.doRun(NioEndpoint.java:1774)
+	at org.apache.tomcat.util.net.SocketProcessorBase.run(SocketProcessorBase.java:52)
+	at org.apache.tomcat.util.threads.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:973)
+	at org.apache.tomcat.util.threads.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:491)
+	at org.apache.tomcat.util.threads.TaskThread$WrappingRunnable.run(TaskThread.java:63)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+2026-05-15 14:15:34.053 [2055170201896407040] [http-nio-9092-exec-4] WARN  o.s.w.s.m.s.DefaultHandlerExceptionResolver - Resolved [org.springframework.http.converter.HttpMessageNotReadableException: JSON parse error: Invalid UTF-8 middle byte 0xf7]
+2026-05-15 14:15:50.960 [2055170272935333888] [http-nio-9092-exec-5] INFO  c.h.a.r.u.c.UserContextInterceptor - UserContextInterceptor 查询用户: loginId=2001523723396308993, username=admin, role=admin, avatar=https://hw-blog-app.oss-cn-guangzhou.aliyuncs.com/head/OIP-C.jpg
+2026-05-15 14:16:33.066 [2055170449507143680] [http-nio-9092-exec-7] INFO  c.h.a.r.u.c.UserContextInterceptor - UserContextInterceptor 查询用户: loginId=2001523723396308993, username=admin, role=admin, avatar=https://hw-blog-app.oss-cn-guangzhou.aliyuncs.com/head/OIP-C.jpg
+2026-05-15 14:22:12.745 [] [background-preinit] INFO  o.h.validator.internal.util.Version - HV000001: Hibernate Validator 8.0.3.Final
+2026-05-15 14:22:12.974 [] [main] INFO  c.h.ai.ragent.RagentApplication - Starting RagentApplication using Java 21.0.10 with PID 2424 (C:\Users\sunha\Desktop\11\ragent-screenshot\bootstrap\target\classes started by sunha in C:\Users\sunha\Desktop\11\ragent-screenshot\bootstrap)
+2026-05-15 14:22:12.979 [] [main] INFO  c.h.ai.ragent.RagentApplication - No active profile set, falling back to 1 default profile: "default"
+2026-05-15 14:22:18.562 [] [main] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Multiple Spring Data modules found, entering strict repository configuration mode
+2026-05-15 14:22:18.573 [] [main] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2026-05-15 14:22:19.165 [] [main] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 525 ms. Found 0 Redis repository interfaces.
+2026-05-15 14:22:25.338 [] [main] INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat initialized with port 9092 (http)
+2026-05-15 14:22:25.418 [] [main] INFO  o.a.coyote.http11.Http11NioProtocol - Initializing ProtocolHandler ["http-nio-9092"]
+2026-05-15 14:22:25.426 [] [main] INFO  o.a.catalina.core.StandardService - Starting service [Tomcat]
+2026-05-15 14:22:25.428 [] [main] INFO  o.a.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/10.1.48]
+2026-05-15 14:24:55.111 [] [background-preinit] INFO  o.h.validator.internal.util.Version - HV000001: Hibernate Validator 8.0.3.Final
+2026-05-15 14:24:55.391 [] [main] INFO  c.h.ai.ragent.RagentApplication - Starting RagentApplication using Java 21.0.10 with PID 1580 (C:\Users\sunha\Desktop\11\ragent-screenshot\bootstrap\target\classes started by sunha in C:\Users\sunha\Desktop\11\ragent-screenshot\bootstrap)
+2026-05-15 14:24:55.393 [] [main] INFO  c.h.ai.ragent.RagentApplication - No active profile set, falling back to 1 default profile: "default"
+2026-05-15 14:25:01.677 [] [main] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Multiple Spring Data modules found, entering strict repository configuration mode
+2026-05-15 14:25:01.693 [] [main] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2026-05-15 14:25:02.318 [] [main] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 556 ms. Found 0 Redis repository interfaces.
+2026-05-15 14:25:36.561 [] [main] INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat initialized with port 9092 (http)
+2026-05-15 14:25:36.992 [] [main] INFO  o.a.coyote.http11.Http11NioProtocol - Initializing ProtocolHandler ["http-nio-9092"]
+2026-05-15 14:25:37.060 [] [main] INFO  o.a.catalina.core.StandardService - Starting service [Tomcat]
+2026-05-15 14:25:37.070 [] [main] INFO  o.a.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/10.1.48]
+2026-05-15 14:25:43.143 [] [main] INFO  o.a.c.c.C.[.[.[/api/ragent] - Initializing Spring embedded WebApplicationContext
+2026-05-15 14:25:43.157 [] [main] INFO  o.s.b.w.s.c.ServletWebServerApplicationContext - Root WebApplicationContext: initialization completed in 47584 ms
+2026-05-15 14:28:07.559 [] [main] INFO  org.redisson.Version - Redisson 4.0.0
+2026-05-15 14:28:14.891 [] [redisson-netty-1-5] INFO  o.r.connection.ConnectionsHolder - 1 connections initialized for 127.0.0.1/127.0.0.1:6379
+2026-05-15 14:28:17.487 [] [redisson-netty-1-19] INFO  o.r.connection.ConnectionsHolder - 24 connections initialized for 127.0.0.1/127.0.0.1:6379
+2026-05-15 14:28:30.956 [] [main] INFO  com.zaxxer.hikari.HikariDataSource - RagentHikariPool - Starting...
+2026-05-15 14:28:34.639 [] [main] INFO  com.zaxxer.hikari.pool.HikariPool - RagentHikariPool - Added connection com.mysql.cj.jdbc.ConnectionImpl@11105fbe
+2026-05-15 14:28:34.654 [] [main] INFO  com.zaxxer.hikari.HikariDataSource - RagentHikariPool - Start completed.
+2026-05-15 14:28:35.105 [] [main] INFO  c.h.a.r.r.c.i.DefaultIntentClassifier - 意图分类器初始化完成
+2026-05-15 14:28:35.577 [] [main] INFO  c.h.a.r.r.c.r.QueryTermMappingService - 查询归一化映射规则加载完成, 共加载 0 条规则
+2026-05-15 14:28:35.853 [] [main] INFO  c.h.a.r.r.c.m.DefaultMCPToolRegistry - MCP 工具注册跳过, 未发现任何工具执行器
+2026-05-15 14:28:35.853 [] [main] INFO  c.h.a.r.r.c.m.DefaultMCPToolRegistry - MCP 工具自动注册完成, 共注册 0 个工具
+2026-05-15 14:28:37.287 [] [main] INFO  c.h.a.r.r.c.m.c.MCPClientAutoConfiguration - 连接 MCP Server: name=default, url=http://localhost:9099
+2026-05-15 14:29:10.078 [] [main] INFO  c.h.a.r.r.c.m.c.MCPClientAutoConfiguration - MCP Server [default] 返回 1 个工具
+2026-05-15 14:29:10.115 [] [main] INFO  c.h.a.r.r.c.m.DefaultMCPToolRegistry - MCP 工具注册成功, toolId: sales_query
+2026-05-15 14:29:10.124 [] [main] INFO  c.h.a.r.r.c.m.c.MCPClientAutoConfiguration - 注册远程 MCP 工具: toolId=sales_query, server=default
+2026-05-15 14:29:11.087 [] [main] INFO  c.h.a.r.f.d.SnowflakeIdInitializer - 分布式Snowflake初始化完成, workerId: 16, datacenterId: 0
+2026-05-15 14:29:16.667 [] [main] INFO  c.b.m.e.s.MybatisPlusApplicationContextAware - Register ApplicationContext instances org.springframework.boot.web.servlet.context.AnnotationConfigServletWebServerApplicationContext@2c177f9e
+2026-05-15 14:29:24.584 [] [main] INFO  o.a.coyote.http11.Http11NioProtocol - Starting ProtocolHandler ["http-nio-9092"]
+2026-05-15 14:29:25.261 [] [main] INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat started on port 9092 (http) with context path '/api/ragent'
+2026-05-15 14:29:25.610 [] [main] INFO  c.h.ai.ragent.RagentApplication - Started RagentApplication in 273.822 seconds (process running for 277.495)
+2026-05-15 14:29:25.615 [] [main] INFO  c.h.a.r.f.log.LogAutoConfiguration - 数据库日志落库 Worker 已启动
+2026-05-15 14:30:03.118 [] [background-preinit] INFO  o.h.validator.internal.util.Version - HV000001: Hibernate Validator 8.0.3.Final
+2026-05-15 14:30:03.918 [] [main] INFO  c.h.ai.ragent.RagentApplication - Starting RagentApplication using Java 21.0.10 with PID 21084 (C:\Users\sunha\Desktop\11\ragent-screenshot\bootstrap\target\classes started by sunha in C:\Users\sunha\Desktop\11\ragent-screenshot\bootstrap)
+2026-05-15 14:30:03.937 [] [main] INFO  c.h.ai.ragent.RagentApplication - No active profile set, falling back to 1 default profile: "default"
+2026-05-15 14:30:10.559 [] [main] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Multiple Spring Data modules found, entering strict repository configuration mode
+2026-05-15 14:30:10.576 [] [main] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2026-05-15 14:30:11.189 [] [main] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 543 ms. Found 0 Redis repository interfaces.
+2026-05-15 14:30:15.216 [] [main] INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat initialized with port 9092 (http)
+2026-05-15 14:30:15.311 [] [main] INFO  o.a.coyote.http11.Http11NioProtocol - Initializing ProtocolHandler ["http-nio-9092"]
+2026-05-15 14:30:15.324 [] [main] INFO  o.a.catalina.core.StandardService - Starting service [Tomcat]
+2026-05-15 14:30:15.327 [] [main] INFO  o.a.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/10.1.48]
+2026-05-15 14:30:16.351 [] [main] INFO  o.a.c.c.C.[.[.[/api/ragent] - Initializing Spring embedded WebApplicationContext
+2026-05-15 14:30:16.353 [] [main] INFO  o.s.b.w.s.c.ServletWebServerApplicationContext - Root WebApplicationContext: initialization completed in 12013 ms
+2026-05-15 14:30:33.046 [] [main] INFO  org.redisson.Version - Redisson 4.0.0
+2026-05-15 14:30:42.812 [] [redisson-netty-1-10] INFO  o.r.connection.ConnectionsHolder - 1 connections initialized for 127.0.0.1/127.0.0.1:6379
+2026-05-15 14:30:44.461 [] [redisson-netty-1-23] INFO  o.r.connection.ConnectionsHolder - 24 connections initialized for 127.0.0.1/127.0.0.1:6379
+2026-05-15 14:30:45.444 [] [http-nio-9092-exec-1] INFO  o.a.c.c.C.[.[.[/api/ragent] - Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-05-15 14:30:45.446 [] [http-nio-9092-exec-1] INFO  o.s.web.servlet.DispatcherServlet - Initializing Servlet 'dispatcherServlet'
+2026-05-15 14:30:45.460 [] [http-nio-9092-exec-1] INFO  o.s.web.servlet.DispatcherServlet - Completed initialization in 9 ms
+2026-05-15 14:30:47.947 [] [main] INFO  com.zaxxer.hikari.HikariDataSource - RagentHikariPool - Starting...
+2026-05-15 14:30:49.090 [] [main] INFO  com.zaxxer.hikari.pool.HikariPool - RagentHikariPool - Added connection com.mysql.cj.jdbc.ConnectionImpl@2b960c2b
+2026-05-15 14:30:49.096 [] [main] INFO  com.zaxxer.hikari.HikariDataSource - RagentHikariPool - Start completed.
+2026-05-15 14:30:49.240 [] [main] INFO  c.h.a.r.r.c.i.DefaultIntentClassifier - 意图分类器初始化完成
+2026-05-15 14:30:49.338 [] [main] INFO  c.h.a.r.r.c.r.QueryTermMappingService - 查询归一化映射规则加载完成, 共加载 0 条规则
+2026-05-15 14:30:49.410 [] [main] INFO  c.h.a.r.r.c.m.DefaultMCPToolRegistry - MCP 工具注册跳过, 未发现任何工具执行器
+2026-05-15 14:30:49.412 [] [main] INFO  c.h.a.r.r.c.m.DefaultMCPToolRegistry - MCP 工具自动注册完成, 共注册 0 个工具
+2026-05-15 14:30:49.709 [] [main] INFO  c.h.a.r.r.c.m.c.MCPClientAutoConfiguration - 连接 MCP Server: name=default, url=http://localhost:9099
+2026-05-15 14:30:50.242 [] [main] INFO  c.h.a.r.r.c.m.c.MCPClientAutoConfiguration - MCP Server [default] 返回 1 个工具
+2026-05-15 14:30:50.246 [] [main] INFO  c.h.a.r.r.c.m.DefaultMCPToolRegistry - MCP 工具注册成功, toolId: sales_query
+2026-05-15 14:30:50.247 [] [main] INFO  c.h.a.r.r.c.m.c.MCPClientAutoConfiguration - 注册远程 MCP 工具: toolId=sales_query, server=default
+2026-05-15 14:30:50.708 [] [main] INFO  c.h.a.r.f.d.SnowflakeIdInitializer - 分布式Snowflake初始化完成, workerId: 17, datacenterId: 0
+2026-05-15 14:30:59.691 [] [main] INFO  c.b.m.e.s.MybatisPlusApplicationContextAware - Register ApplicationContext instances org.springframework.boot.web.servlet.context.AnnotationConfigServletWebServerApplicationContext@2c177f9e
+2026-05-15 14:31:03.518 [] [main] INFO  o.a.coyote.http11.Http11NioProtocol - Starting ProtocolHandler ["http-nio-9092"]
+2026-05-15 14:31:03.546 [] [main] WARN  o.s.b.w.s.c.AnnotationConfigServletWebServerApplicationContext - Exception encountered during context initialization - cancelling refresh attempt: org.springframework.context.ApplicationContextException: Failed to start bean 'webServerStartStop'
+2026-05-15 14:31:03.899 [] [main] INFO  com.zaxxer.hikari.HikariDataSource - RagentHikariPool - Shutdown initiated...
+2026-05-15 14:31:03.942 [] [main] INFO  com.zaxxer.hikari.HikariDataSource - RagentHikariPool - Shutdown completed.
+2026-05-15 14:31:04.018 [] [main] INFO  o.s.b.a.l.ConditionEvaluationReportLogger - 
+
+Error starting ApplicationContext. To display the condition evaluation report re-run your application with 'debug' enabled.
+2026-05-15 14:31:04.361 [] [main] ERROR o.s.b.d.LoggingFailureAnalysisReporter - 
+
+***************************
+APPLICATION FAILED TO START
+***************************
+
+Description:
+
+Web server failed to start. Port 9092 was already in use.
+
+Action:
+
+Identify and stop the process that's listening on port 9092 or configure this application to listen on another port.
+
+2026-05-15 14:31:10.439 [2055174127622356992] [http-nio-9092-exec-2] INFO  c.h.a.r.u.c.UserContextInterceptor - UserContextInterceptor 查询用户: loginId=2001523723396308993, username=admin, role=admin, avatar=https://hw-blog-app.oss-cn-guangzhou.aliyuncs.com/head/OIP-C.jpg
+2026-05-15 14:31:10.570 [2055174127622356992] [http-nio-9092-exec-2] INFO  c.h.a.r.n.s.impl.NovelServiceImpl - 小说文件上传，pipelineId=1001, fileName=test_novel2.txt
+2026-05-15 14:31:12.172 [2055174127622356992] [http-nio-9092-exec-2] INFO  c.h.a.r.i.engine.IngestionEngine - 流水线从节点开始执行: parser
+2026-05-15 14:31:12.177 [2055174127622356992] [http-nio-9092-exec-2] INFO  c.h.a.r.i.engine.IngestionEngine - 开始执行节点: parser
+2026-05-15 14:31:12.681 [2055174127622356992] [http-nio-9092-exec-2] INFO  c.h.a.r.i.engine.IngestionEngine - 节点 parser 执行完成，耗时 491ms: 解析文本长度=402
+2026-05-15 14:31:12.682 [2055174127622356992] [http-nio-9092-exec-2] INFO  c.h.a.r.i.engine.IngestionEngine - 开始执行节点: chunker
+2026-05-15 14:31:14.546 [2055174127622356992] [http-nio-9092-exec-2] INFO  c.h.a.r.i.engine.IngestionEngine - 节点 chunker 执行完成，耗时 1862ms: 已分块 1 段
+2026-05-15 14:31:14.552 [2055174127622356992] [http-nio-9092-exec-2] INFO  c.h.a.r.i.engine.IngestionEngine - 开始执行节点: indexer
+2026-05-15 14:31:15.589 [2055174127622356992] [http-nio-9092-exec-2] INFO  c.h.a.r.ingestion.node.IndexerNode - Milvus 写入成功，集合=rag_default_store，行数=1
+2026-05-15 14:31:15.615 [2055174127622356992] [http-nio-9092-exec-2] INFO  c.h.a.r.i.engine.IngestionEngine - 节点 indexer 执行完成，耗时 1063ms: 已写入 1 个分块到集合 rag_default_store
+2026-05-15 14:31:15.616 [2055174127622356992] [http-nio-9092-exec-2] INFO  c.h.a.r.i.engine.IngestionEngine - 流水线执行完成，共执行 3 个节点
+2026-05-15 14:31:37.090 [2055174127622356992] [http-nio-9092-exec-2] INFO  c.h.a.r.n.s.impl.NovelServiceImpl - 小说摘要提取完成，taskId=2055174136661082112, fileName=test_novel2.txt
+2026-05-15 14:31:37.531 [2055174242881830912] [http-nio-9092-exec-3] INFO  c.h.a.r.u.c.UserContextInterceptor - UserContextInterceptor 查询用户: loginId=2001523723396308993, username=admin, role=admin, avatar=https://hw-blog-app.oss-cn-guangzhou.aliyuncs.com/head/OIP-C.jpg
+2026-05-15 14:31:37.557 [2055174242881830912] [http-nio-9092-exec-3] INFO  c.h.a.r.i.s.i.ImitationServiceImpl - 文章仿写文件上传，pipelineId=1001, fileName=test_article.txt
+2026-05-15 14:31:37.650 [2055174242881830912] [http-nio-9092-exec-3] INFO  c.h.a.r.i.engine.IngestionEngine - 流水线从节点开始执行: parser
+2026-05-15 14:31:37.651 [2055174242881830912] [http-nio-9092-exec-3] INFO  c.h.a.r.i.engine.IngestionEngine - 开始执行节点: parser
+2026-05-15 14:31:37.723 [2055174242881830912] [http-nio-9092-exec-3] INFO  c.h.a.r.i.engine.IngestionEngine - 节点 parser 执行完成，耗时 64ms: 解析文本长度=59
+2026-05-15 14:31:37.728 [2055174242881830912] [http-nio-9092-exec-3] INFO  c.h.a.r.i.engine.IngestionEngine - 开始执行节点: chunker
+2026-05-15 14:31:38.573 [2055174242881830912] [http-nio-9092-exec-3] INFO  c.h.a.r.i.engine.IngestionEngine - 节点 chunker 执行完成，耗时 836ms: 已分块 1 段
+2026-05-15 14:31:38.578 [2055174242881830912] [http-nio-9092-exec-3] INFO  c.h.a.r.i.engine.IngestionEngine - 开始执行节点: indexer
+2026-05-15 14:31:38.688 [2055174242881830912] [http-nio-9092-exec-3] INFO  c.h.a.r.ingestion.node.IndexerNode - Milvus 写入成功，集合=rag_default_store，行数=1
+2026-05-15 14:31:38.696 [2055174242881830912] [http-nio-9092-exec-3] INFO  c.h.a.r.i.engine.IngestionEngine - 节点 indexer 执行完成，耗时 114ms: 已写入 1 个分块到集合 rag_default_store
+2026-05-15 14:31:38.715 [2055174242881830912] [http-nio-9092-exec-3] INFO  c.h.a.r.i.engine.IngestionEngine - 流水线执行完成，共执行 3 个节点
+2026-05-15 14:31:38.855 [2055174242881830912] [http-nio-9092-exec-3] WARN  c.h.a.r.i.s.i.ImitationServiceImpl - 未从 Milvus 查询到 chunk，taskId=2055174243657777152
+2026-05-15 14:31:58.389 [2055174330534395904] [http-nio-9092-exec-4] INFO  c.h.a.r.u.c.UserContextInterceptor - UserContextInterceptor 查询用户: loginId=2001523723396308993, username=admin, role=admin, avatar=https://hw-blog-app.oss-cn-guangzhou.aliyuncs.com/head/OIP-C.jpg
+2026-05-15 14:32:09.103 [] [model_stream_executor_0] WARN  c.h.a.r.n.s.impl.NovelServiceImpl - SSE 发送失败
+org.springframework.web.context.request.async.AsyncRequestNotUsableException: ServletOutputStream failed to flush: java.io.IOException: 你的主机中的软件中止了一个已建立的连接。
+	at org.springframework.web.context.request.async.StandardServletAsyncWebRequest$LifecycleHttpServletResponse.handleIOException(StandardServletAsyncWebRequest.java:346)
+	at org.springframework.web.context.request.async.StandardServletAsyncWebRequest$LifecycleServletOutputStream.flush(StandardServletAsyncWebRequest.java:418)
+	at org.springframework.util.StreamUtils.copy(StreamUtils.java:137)
+	at org.springframework.http.converter.StringHttpMessageConverter.writeInternal(StringHttpMessageConverter.java:128)
+	at org.springframework.http.converter.StringHttpMessageConverter.writeInternal(StringHttpMessageConverter.java:44)
+	at org.springframework.http.converter.AbstractHttpMessageConverter.write(AbstractHttpMessageConverter.java:235)
+	at org.springframework.web.servlet.mvc.method.annotation.ResponseBodyEmitterReturnValueHandler$DefaultSseEmitterHandler.sendInternal(ResponseBodyEmitterReturnValueHandler.java:315)
+	at org.springframework.web.servlet.mvc.method.annotation.ResponseBodyEmitterReturnValueHandler$DefaultSseEmitterHandler.send(ResponseBodyEmitterReturnValueHandler.java:302)
+	at org.springframework.web.servlet.mvc.method.annotation.ResponseBodyEmitter.sendInternal(ResponseBodyEmitter.java:256)
+	at org.springframework.web.servlet.mvc.method.annotation.ResponseBodyEmitter.send(ResponseBodyEmitter.java:243)
+	at org.springframework.web.servlet.mvc.method.annotation.SseEmitter.send(SseEmitter.java:129)
+	at com.huangwei.ai.ragent.novel.service.impl.NovelServiceImpl$1.onContent(NovelServiceImpl.java:176)
+	at com.huangwei.ai.ragent.infra.chat.RoutingLLMService$ProbeBufferingCallback.dispatch(RoutingLLMService.java:294)
+	at com.huangwei.ai.ragent.infra.chat.RoutingLLMService$ProbeBufferingCallback.bufferOrDispatch(RoutingLLMService.java:288)
+	at com.huangwei.ai.ragent.infra.chat.RoutingLLMService$ProbeBufferingCallback.onContent(RoutingLLMService.java:235)
+	at com.huangwei.ai.ragent.infra.chat.BaiLianChatClient.doStream(BaiLianChatClient.java:147)
+	at com.huangwei.ai.ragent.infra.chat.BaiLianChatClient.lambda$streamChat$0(BaiLianChatClient.java:109)
+	at com.huangwei.ai.ragent.infra.chat.StreamAsyncExecutor.lambda$submit$0(StreamAsyncExecutor.java:47)
+	at java.base/java.util.concurrent.CompletableFuture$AsyncRun.run(CompletableFuture.java:1804)
+	at com.alibaba.ttl.TtlRunnable.run(TtlRunnable.java:60)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+Caused by: org.apache.catalina.connector.ClientAbortException: java.io.IOException: 你的主机中的软件中止了一个已建立的连接。
+	at org.apache.catalina.connector.OutputBuffer.doFlush(OutputBuffer.java:302)
+	at org.apache.catalina.connector.OutputBuffer.flush(OutputBuffer.java:264)
+	at org.apache.catalina.connector.CoyoteOutputStream.flush(CoyoteOutputStream.java:130)
+	at org.springframework.web.context.request.async.StandardServletAsyncWebRequest$LifecycleServletOutputStream.flush(StandardServletAsyncWebRequest.java:415)
+	... 21 common frames omitted
+Caused by: java.io.IOException: 你的主机中的软件中止了一个已建立的连接。
+	at java.base/sun.nio.ch.SocketDispatcher.write0(Native Method)
+	at java.base/sun.nio.ch.SocketDispatcher.write(SocketDispatcher.java:54)
+	at java.base/sun.nio.ch.IOUtil.writeFromNativeBuffer(IOUtil.java:137)
+	at java.base/sun.nio.ch.IOUtil.write(IOUtil.java:102)
+	at java.base/sun.nio.ch.IOUtil.write(IOUtil.java:58)
+	at java.base/sun.nio.ch.SocketChannelImpl.write(SocketChannelImpl.java:542)
+	at org.apache.tomcat.util.net.NioChannel.write(NioChannel.java:125)
+	at org.apache.tomcat.util.net.NioEndpoint$NioSocketWrapper.doWrite(NioEndpoint.java:1413)
+	at org.apache.tomcat.util.net.SocketWrapperBase.doWrite(SocketWrapperBase.java:732)
+	at org.apache.tomcat.util.net.SocketWrapperBase.flushBlocking(SocketWrapperBase.java:698)
+	at org.apache.tomcat.util.net.SocketWrapperBase.flush(SocketWrapperBase.java:683)
+	at org.apache.coyote.http11.Http11OutputBuffer$SocketOutputBuffer.flush(Http11OutputBuffer.java:574)
+	at org.apache.coyote.http11.filters.ChunkedOutputFilter.flush(ChunkedOutputFilter.java:154)
+	at org.apache.coyote.http11.Http11OutputBuffer.flush(Http11OutputBuffer.java:216)
+	at org.apache.coyote.http11.Http11Processor.flush(Http11Processor.java:1273)
+	at org.apache.coyote.AbstractProcessor.action(AbstractProcessor.java:408)
+	at org.apache.coyote.Response.action(Response.java:201)
+	at org.apache.catalina.connector.OutputBuffer.doFlush(OutputBuffer.java:298)
+	... 24 common frames omitted
+2026-05-15 14:32:09.117 [] [model_stream_executor_0] WARN  c.h.a.r.n.s.impl.NovelServiceImpl - SSE 发送失败
+java.lang.IllegalStateException: ResponseBodyEmitter has already completed
+	at org.springframework.util.Assert.state(Assert.java:101)
+	at org.springframework.web.servlet.mvc.method.annotation.ResponseBodyEmitter.send(ResponseBodyEmitter.java:241)
+	at org.springframework.web.servlet.mvc.method.annotation.SseEmitter.send(SseEmitter.java:129)
+	at com.huangwei.ai.ragent.novel.service.impl.NovelServiceImpl$1.onContent(NovelServiceImpl.java:176)
+	at com.huangwei.ai.ragent.infra.chat.RoutingLLMService$ProbeBufferingCallback.dispatch(RoutingLLMService.java:294)
+	at com.huangwei.ai.ragent.infra.chat.RoutingLLMService$ProbeBufferingCallback.bufferOrDispatch(RoutingLLMService.java:288)
+	at com.huangwei.ai.ragent.infra.chat.RoutingLLMService$ProbeBufferingCallback.onContent(RoutingLLMService.java:235)
+	at com.huangwei.ai.ragent.infra.chat.BaiLianChatClient.doStream(BaiLianChatClient.java:147)
+	at com.huangwei.ai.ragent.infra.chat.BaiLianChatClient.lambda$streamChat$0(BaiLianChatClient.java:109)
+	at com.huangwei.ai.ragent.infra.chat.StreamAsyncExecutor.lambda$submit$0(StreamAsyncExecutor.java:47)
+	at java.base/java.util.concurrent.CompletableFuture$AsyncRun.run(CompletableFuture.java:1804)
+	at com.alibaba.ttl.TtlRunnable.run(TtlRunnable.java:60)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+2026-05-15 14:32:09.123 [] [model_stream_executor_0] WARN  c.h.a.r.n.s.impl.NovelServiceImpl - SSE 发送失败
+java.lang.IllegalStateException: ResponseBodyEmitter has already completed
+	at org.springframework.util.Assert.state(Assert.java:101)
+	at org.springframework.web.servlet.mvc.method.annotation.ResponseBodyEmitter.send(ResponseBodyEmitter.java:241)
+	at org.springframework.web.servlet.mvc.method.annotation.SseEmitter.send(SseEmitter.java:129)
+	at com.huangwei.ai.ragent.novel.service.impl.NovelServiceImpl$1.onContent(NovelServiceImpl.java:176)
+	at com.huangwei.ai.ragent.infra.chat.RoutingLLMService$ProbeBufferingCallback.dispatch(RoutingLLMService.java:294)
+	at com.huangwei.ai.ragent.infra.chat.RoutingLLMService$ProbeBufferingCallback.bufferOrDispatch(RoutingLLMService.java:288)
+	at com.huangwei.ai.ragent.infra.chat.RoutingLLMService$ProbeBufferingCallback.onContent(RoutingLLMService.java:235)
+	at com.huangwei.ai.ragent.infra.chat.BaiLianChatClient.doStream(BaiLianChatClient.java:147)
+	at com.huangwei.ai.ragent.infra.chat.BaiLianChatClient.lambda$streamChat$0(BaiLianChatClient.java:109)
+	at com.huangwei.ai.ragent.infra.chat.StreamAsyncExecutor.lambda$submit$0(StreamAsyncExecutor.java:47)
+	at java.base/java.util.concurrent.CompletableFuture$AsyncRun.run(CompletableFuture.java:1804)
+	at com.alibaba.ttl.TtlRunnable.run(TtlRunnable.java:60)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+2026-05-15 14:32:09.128 [] [model_stream_executor_0] WARN  c.h.a.r.n.s.impl.NovelServiceImpl - SSE 发送失败
+java.lang.IllegalStateException: ResponseBodyEmitter has already completed
+	at org.springframework.util.Assert.state(Assert.java:101)
+	at org.springframework.web.servlet.mvc.method.annotation.ResponseBodyEmitter.send(ResponseBodyEmitter.java:241)
+	at org.springframework.web.servlet.mvc.method.annotation.SseEmitter.send(SseEmitter.java:129)
+	at com.huangwei.ai.ragent.novel.service.impl.NovelServiceImpl$1.onContent(NovelServiceImpl.java:176)
+	at com.huangwei.ai.ragent.infra.chat.RoutingLLMService$ProbeBufferingCallback.dispatch(RoutingLLMService.java:294)
+	at com.huangwei.ai.ragent.infra.chat.RoutingLLMService$ProbeBufferingCallback.bufferOrDispatch(RoutingLLMService.java:288)
+	at com.huangwei.ai.ragent.infra.chat.RoutingLLMService$ProbeBufferingCallback.onContent(RoutingLLMService.java:235)
+	at com.huangwei.ai.ragent.infra.chat.BaiLianChatClient.doStream(BaiLianChatClient.java:147)
+	at com.huangwei.ai.ragent.infra.chat.BaiLianChatClient.lambda$streamChat$0(BaiLianChatClient.java:109)
+	at com.huangwei.ai.ragent.infra.chat.StreamAsyncExecutor.lambda$submit$0(StreamAsyncExecutor.java:47)
+	at java.base/java.util.concurrent.CompletableFuture$AsyncRun.run(CompletableFuture.java:1804)
+	at com.alibaba.ttl.TtlRunnable.run(TtlRunnable.java:60)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+2026-05-15 14:32:09.138 [] [model_stream_executor_0] WARN  c.h.a.r.n.s.impl.NovelServiceImpl - SSE 发送失败
+java.lang.IllegalStateException: ResponseBodyEmitter has already completed
+	at org.springframework.util.Assert.state(Assert.java:101)
+	at org.springframework.web.servlet.mvc.method.annotation.ResponseBodyEmitter.send(ResponseBodyEmitter.java:241)
+	at org.springframework.web.servlet.mvc.method.annotation.SseEmitter.send(SseEmitter.java:129)
+	at com.huangwei.ai.ragent.novel.service.impl.NovelServiceImpl$1.onContent(NovelServiceImpl.java:176)
+	at com.huangwei.ai.ragent.infra.chat.RoutingLLMService$ProbeBufferingCallback.dispatch(RoutingLLMService.java:294)
+	at com.huangwei.ai.ragent.infra.chat.RoutingLLMService$ProbeBufferingCallback.bufferOrDispatch(RoutingLLMService.java:288)
+	at com.huangwei.ai.ragent.infra.chat.RoutingLLMService$ProbeBufferingCallback.onContent(RoutingLLMService.java:235)
+	at com.huangwei.ai.ragent.infra.chat.BaiLianChatClient.doStream(BaiLianChatClient.java:147)
+	at com.huangwei.ai.ragent.infra.chat.BaiLianChatClient.lambda$streamChat$0(BaiLianChatClient.java:109)
+	at com.huangwei.ai.ragent.infra.chat.StreamAsyncExecutor.lambda$submit$0(StreamAsyncExecutor.java:47)
+	at java.base/java.util.concurrent.CompletableFuture$AsyncRun.run(CompletableFuture.java:1804)
+	at com.alibaba.ttl.TtlRunnable.run(TtlRunnable.java:60)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+2026-05-15 14:32:09.140 [] [model_stream_executor_0] WARN  c.h.a.r.n.s.impl.NovelServiceImpl - SSE 发送失败
+java.lang.IllegalStateException: ResponseBodyEmitter has already completed
+	at org.springframework.util.Assert.state(Assert.java:101)
+	at org.springframework.web.servlet.mvc.method.annotation.ResponseBodyEmitter.send(ResponseBodyEmitter.java:241)
+	at org.springframework.web.servlet.mvc.method.annotation.SseEmitter.send(SseEmitter.java:129)
+	at com.huangwei.ai.ragent.novel.service.impl.NovelServiceImpl$1.onContent(NovelServiceImpl.java:176)
+	at com.huangwei.ai.ragent.infra.chat.RoutingLLMService$ProbeBufferingCallback.dispatch(RoutingLLMService.java:294)
+	at com.huangwei.ai.ragent.infra.chat.RoutingLLMService$ProbeBufferingCallback.bufferOrDispatch(RoutingLLMService.java:288)
+	at com.huangwei.ai.ragent.infra.chat.RoutingLLMService$ProbeBufferingCallback.onContent(RoutingLLMService.java:235)
+	at com.huangwei.ai.ragent.infra.chat.BaiLianChatClient.doStream(BaiLianChatClient.java:147)
+	at com.huangwei.ai.ragent.infra.chat.BaiLianChatClient.lambda$streamChat$0(BaiLianChatClient.java:109)
+	at com.huangwei.ai.ragent.infra.chat.StreamAsyncExecutor.lambda$submit$0(StreamAsyncExecutor.java:47)
+	at java.base/java.util.concurrent.CompletableFuture$AsyncRun.run(CompletableFuture.java:1804)
+	at com.alibaba.ttl.TtlRunnable.run(TtlRunnable.java:60)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+2026-05-15 14:32:09.145 [] [model_stream_executor_0] WARN  c.h.a.r.n.s.impl.NovelServiceImpl - SSE 发送失败
+java.lang.IllegalStateException: ResponseBodyEmitter has already completed
+	at org.springframework.util.Assert.state(Assert.java:101)
+	at org.springframework.web.servlet.mvc.method.annotation.ResponseBodyEmitter.send(ResponseBodyEmitter.java:241)
+	at org.springframework.web.servlet.mvc.method.annotation.SseEmitter.send(SseEmitter.java:129)
+	at com.huangwei.ai.ragent.novel.service.impl.NovelServiceImpl$1.onContent(NovelServiceImpl.java:176)
+	at com.huangwei.ai.ragent.infra.chat.RoutingLLMService$ProbeBufferingCallback.dispatch(RoutingLLMService.java:294)
+	at com.huangwei.ai.ragent.infra.chat.RoutingLLMService$ProbeBufferingCallback.bufferOrDispatch(RoutingLLMService.java:288)
+	at com.huangwei.ai.ragent.infra.chat.RoutingLLMService$ProbeBufferingCallback.onContent(RoutingLLMService.java:235)
+	at com.huangwei.ai.ragent.infra.chat.BaiLianChatClient.doStream(BaiLianChatClient.java:147)
+	at com.huangwei.ai.ragent.infra.chat.BaiLianChatClient.lambda$streamChat$0(BaiLianChatClient.java:109)
+	at com.huangwei.ai.ragent.infra.chat.StreamAsyncExecutor.lambda$submit$0(StreamAsyncExecutor.java:47)
+	at java.base/java.util.concurrent.CompletableFuture$AsyncRun.run(CompletableFuture.java:1804)
+	at com.alibaba.ttl.TtlRunnable.run(TtlRunnable.java:60)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+2026-05-15 14:32:09.235 [] [model_stream_executor_0] WARN  c.h.a.r.n.s.impl.NovelServiceImpl - SSE 发送失败
+java.lang.IllegalStateException: ResponseBodyEmitter has already completed
+	at org.springframework.util.Assert.state(Assert.java:101)
+	at org.springframework.web.servlet.mvc.method.annotation.ResponseBodyEmitter.send(ResponseBodyEmitter.java:241)
+	at org.springframework.web.servlet.mvc.method.annotation.SseEmitter.send(SseEmitter.java:129)
+	at com.huangwei.ai.ragent.novel.service.impl.NovelServiceImpl$1.onContent(NovelServiceImpl.java:176)
+	at com.huangwei.ai.ragent.infra.chat.RoutingLLMService$ProbeBufferingCallback.dispatch(RoutingLLMService.java:294)
+	at com.huangwei.ai.ragent.infra.chat.RoutingLLMService$ProbeBufferingCallback.bufferOrDispatch(RoutingLLMService.java:288)
+	at com.huangwei.ai.ragent.infra.chat.RoutingLLMService$ProbeBufferingCallback.onContent(RoutingLLMService.java:235)
+	at com.huangwei.ai.ragent.infra.chat.BaiLianChatClient.doStream(BaiLianChatClient.java:147)
+	at com.huangwei.ai.ragent.infra.chat.BaiLianChatClient.lambda$streamChat$0(BaiLianChatClient.java:109)
+	at com.huangwei.ai.ragent.infra.chat.StreamAsyncExecutor.lambda$submit$0(StreamAsyncExecutor.java:47)
+	at java.base/java.util.concurrent.CompletableFuture$AsyncRun.run(CompletableFuture.java:1804)
+	at com.alibaba.ttl.TtlRunnable.run(TtlRunnable.java:60)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+2026-05-15 14:32:09.277 [] [http-nio-9092-exec-5] ERROR c.h.a.r.f.web.GlobalExceptionHandler - [POST] http://localhost:9092/api/ragent/novel/continue traceId=null
+java.io.IOException: 你的主机中的软件中止了一个已建立的连接。
+	at java.base/sun.nio.ch.SocketDispatcher.write0(Native Method)
+	at java.base/sun.nio.ch.SocketDispatcher.write(SocketDispatcher.java:54)
+	at java.base/sun.nio.ch.IOUtil.writeFromNativeBuffer(IOUtil.java:137)
+	at java.base/sun.nio.ch.IOUtil.write(IOUtil.java:102)
+	at java.base/sun.nio.ch.IOUtil.write(IOUtil.java:58)
+	at java.base/sun.nio.ch.SocketChannelImpl.write(SocketChannelImpl.java:542)
+	at org.apache.tomcat.util.net.NioChannel.write(NioChannel.java:125)
+	at org.apache.tomcat.util.net.NioEndpoint$NioSocketWrapper.doWrite(NioEndpoint.java:1413)
+	at org.apache.tomcat.util.net.SocketWrapperBase.doWrite(SocketWrapperBase.java:732)
+	at org.apache.tomcat.util.net.SocketWrapperBase.flushBlocking(SocketWrapperBase.java:698)
+	at org.apache.tomcat.util.net.SocketWrapperBase.flush(SocketWrapperBase.java:683)
+	at org.apache.coyote.http11.Http11OutputBuffer$SocketOutputBuffer.flush(Http11OutputBuffer.java:574)
+	at org.apache.coyote.http11.filters.ChunkedOutputFilter.flush(ChunkedOutputFilter.java:154)
+	at org.apache.coyote.http11.Http11OutputBuffer.flush(Http11OutputBuffer.java:216)
+	at org.apache.coyote.http11.Http11Processor.flush(Http11Processor.java:1273)
+	at org.apache.coyote.AbstractProcessor.action(AbstractProcessor.java:408)
+	at org.apache.coyote.Response.action(Response.java:201)
+	at org.apache.catalina.connector.OutputBuffer.doFlush(OutputBuffer.java:298)
+	at org.apache.catalina.connector.OutputBuffer.flush(OutputBuffer.java:264)
+	at org.apache.catalina.connector.CoyoteOutputStream.flush(CoyoteOutputStream.java:130)
+	at org.springframework.web.context.request.async.StandardServletAsyncWebRequest$LifecycleServletOutputStream.flush(StandardServletAsyncWebRequest.java:415)
+	at org.springframework.util.StreamUtils.copy(StreamUtils.java:137)
+	at org.springframework.http.converter.StringHttpMessageConverter.writeInternal(StringHttpMessageConverter.java:128)
+	at org.springframework.http.converter.StringHttpMessageConverter.writeInternal(StringHttpMessageConverter.java:44)
+	at org.springframework.http.converter.AbstractHttpMessageConverter.write(AbstractHttpMessageConverter.java:235)
+	at org.springframework.web.servlet.mvc.method.annotation.ResponseBodyEmitterReturnValueHandler$DefaultSseEmitterHandler.sendInternal(ResponseBodyEmitterReturnValueHandler.java:315)
+	at org.springframework.web.servlet.mvc.method.annotation.ResponseBodyEmitterReturnValueHandler$DefaultSseEmitterHandler.send(ResponseBodyEmitterReturnValueHandler.java:302)
+	at org.springframework.web.servlet.mvc.method.annotation.ResponseBodyEmitter.sendInternal(ResponseBodyEmitter.java:256)
+	at org.springframework.web.servlet.mvc.method.annotation.ResponseBodyEmitter.send(ResponseBodyEmitter.java:243)
+	at org.springframework.web.servlet.mvc.method.annotation.SseEmitter.send(SseEmitter.java:129)
+	at com.huangwei.ai.ragent.novel.service.impl.NovelServiceImpl$1.onContent(NovelServiceImpl.java:176)
+	at com.huangwei.ai.ragent.infra.chat.RoutingLLMService$ProbeBufferingCallback.dispatch(RoutingLLMService.java:294)
+	at com.huangwei.ai.ragent.infra.chat.RoutingLLMService$ProbeBufferingCallback.bufferOrDispatch(RoutingLLMService.java:288)
+	at com.huangwei.ai.ragent.infra.chat.RoutingLLMService$ProbeBufferingCallback.onContent(RoutingLLMService.java:235)
+	at com.huangwei.ai.ragent.infra.chat.BaiLianChatClient.doStream(BaiLianChatClient.java:147)
+	at com.huangwei.ai.ragent.infra.chat.BaiLianChatClient.lambda$streamChat$0(BaiLianChatClient.java:109)
+	at com.huangwei.ai.ragent.infra.chat.StreamAsyncExecutor.lambda$submit$0(StreamAsyncExecutor.java:47)
+	at java.base/java.util.concurrent.CompletableFuture$AsyncRun.run(CompletableFuture.java:1804)
+	at com.alibaba.ttl.TtlRunnable.run(TtlRunnable.java:60)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+2026-05-15 14:32:09.285 [] [http-nio-9092-exec-5] WARN  o.s.w.s.m.m.a.ExceptionHandlerExceptionResolver - Failure in @ExceptionHandler com.huangwei.ai.ragent.framework.web.GlobalExceptionHandler#defaultErrorHandler(HttpServletRequest, Throwable)
+org.springframework.http.converter.HttpMessageNotWritableException: No converter for [class com.huangwei.ai.ragent.framework.convention.Result] with preset Content-Type 'text/event-stream;charset=UTF-8'
+	at org.springframework.web.servlet.mvc.method.annotation.AbstractMessageConverterMethodProcessor.writeWithMessageConverters(AbstractMessageConverterMethodProcessor.java:365)
+	at org.springframework.web.servlet.mvc.method.annotation.RequestResponseBodyMethodProcessor.handleReturnValue(RequestResponseBodyMethodProcessor.java:208)
+	at org.springframework.web.method.support.HandlerMethodReturnValueHandlerComposite.handleReturnValue(HandlerMethodReturnValueHandlerComposite.java:78)
+	at org.springframework.web.servlet.mvc.method.annotation.ServletInvocableHandlerMethod.invokeAndHandle(ServletInvocableHandlerMethod.java:136)
+	at org.springframework.web.servlet.mvc.method.annotation.ExceptionHandlerExceptionResolver.doResolveHandlerMethodException(ExceptionHandlerExceptionResolver.java:471)
+	at org.springframework.web.servlet.handler.AbstractHandlerMethodExceptionResolver.doResolveException(AbstractHandlerMethodExceptionResolver.java:73)
+	at org.springframework.web.servlet.handler.AbstractHandlerExceptionResolver.resolveException(AbstractHandlerExceptionResolver.java:182)
+	at org.springframework.web.servlet.handler.HandlerExceptionResolverComposite.resolveException(HandlerExceptionResolverComposite.java:80)
+	at org.springframework.web.servlet.DispatcherServlet.processHandlerException(DispatcherServlet.java:1360)
+	at org.springframework.web.servlet.DispatcherServlet.processDispatchResult(DispatcherServlet.java:1161)
+	at org.springframework.web.servlet.DispatcherServlet.doDispatch(DispatcherServlet.java:1106)
+	at org.springframework.web.servlet.DispatcherServlet.doService(DispatcherServlet.java:979)
+	at org.springframework.web.servlet.FrameworkServlet.processRequest(FrameworkServlet.java:1014)
+	at org.springframework.web.servlet.FrameworkServlet.doPost(FrameworkServlet.java:914)
+	at jakarta.servlet.http.HttpServlet.service(HttpServlet.java:547)
+	at org.springframework.web.servlet.FrameworkServlet.service(FrameworkServlet.java:885)
+	at jakarta.servlet.http.HttpServlet.service(HttpServlet.java:614)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:193)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:138)
+	at org.springframework.web.filter.RequestContextFilter.doFilterInternal(RequestContextFilter.java:100)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:162)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:138)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:101)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:162)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:138)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:101)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:162)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:138)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:101)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:162)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:138)
+	at org.apache.catalina.core.ApplicationDispatcher.invoke(ApplicationDispatcher.java:610)
+	at org.apache.catalina.core.ApplicationDispatcher.doDispatch(ApplicationDispatcher.java:538)
+	at org.apache.catalina.core.ApplicationDispatcher.dispatch(ApplicationDispatcher.java:509)
+	at org.apache.catalina.core.AsyncContextImpl$AsyncRunnable.run(AsyncContextImpl.java:599)
+	at org.apache.catalina.core.AsyncContextImpl.doInternalDispatch(AsyncContextImpl.java:342)
+	at org.apache.catalina.core.StandardWrapperValve.invoke(StandardWrapperValve.java:163)
+	at org.apache.catalina.core.StandardContextValve.invoke(StandardContextValve.java:88)
+	at org.apache.catalina.authenticator.AuthenticatorBase.invoke(AuthenticatorBase.java:482)
+	at org.apache.catalina.core.StandardHostValve.invoke(StandardHostValve.java:113)
+	at org.apache.catalina.valves.ErrorReportValve.invoke(ErrorReportValve.java:83)
+	at org.apache.catalina.core.StandardEngineValve.invoke(StandardEngineValve.java:72)
+	at org.apache.catalina.connector.CoyoteAdapter.asyncDispatch(CoyoteAdapter.java:237)
+	at org.apache.coyote.AbstractProcessor.dispatch(AbstractProcessor.java:243)
+	at org.apache.coyote.AbstractProcessorLight.process(AbstractProcessorLight.java:57)
+	at org.apache.coyote.AbstractProtocol$ConnectionHandler.process(AbstractProtocol.java:903)
+	at org.apache.tomcat.util.net.NioEndpoint$SocketProcessor.doRun(NioEndpoint.java:1774)
+	at org.apache.tomcat.util.net.SocketProcessorBase.run(SocketProcessorBase.java:52)
+	at org.apache.tomcat.util.threads.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:973)
+	at org.apache.tomcat.util.threads.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:491)
+	at org.apache.tomcat.util.threads.TaskThread$WrappingRunnable.run(TaskThread.java:63)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+2026-05-15 14:32:09.289 [] [http-nio-9092-exec-5] ERROR o.a.c.c.C.[.[.[.[dispatcherServlet] - Servlet.service() for servlet [dispatcherServlet] threw exception
+java.io.IOException: 你的主机中的软件中止了一个已建立的连接。
+	at java.base/sun.nio.ch.SocketDispatcher.write0(Native Method)
+	at java.base/sun.nio.ch.SocketDispatcher.write(SocketDispatcher.java:54)
+	at java.base/sun.nio.ch.IOUtil.writeFromNativeBuffer(IOUtil.java:137)
+	at java.base/sun.nio.ch.IOUtil.write(IOUtil.java:102)
+	at java.base/sun.nio.ch.IOUtil.write(IOUtil.java:58)
+	at java.base/sun.nio.ch.SocketChannelImpl.write(SocketChannelImpl.java:542)
+	at org.apache.tomcat.util.net.NioChannel.write(NioChannel.java:125)
+	at org.apache.tomcat.util.net.NioEndpoint$NioSocketWrapper.doWrite(NioEndpoint.java:1413)
+	at org.apache.tomcat.util.net.SocketWrapperBase.doWrite(SocketWrapperBase.java:732)
+	at org.apache.tomcat.util.net.SocketWrapperBase.flushBlocking(SocketWrapperBase.java:698)
+	at org.apache.tomcat.util.net.SocketWrapperBase.flush(SocketWrapperBase.java:683)
+	at org.apache.coyote.http11.Http11OutputBuffer$SocketOutputBuffer.flush(Http11OutputBuffer.java:574)
+	at org.apache.coyote.http11.filters.ChunkedOutputFilter.flush(ChunkedOutputFilter.java:154)
+	at org.apache.coyote.http11.Http11OutputBuffer.flush(Http11OutputBuffer.java:216)
+	at org.apache.coyote.http11.Http11Processor.flush(Http11Processor.java:1273)
+	at org.apache.coyote.AbstractProcessor.action(AbstractProcessor.java:408)
+	at org.apache.coyote.Response.action(Response.java:201)
+	at org.apache.catalina.connector.OutputBuffer.doFlush(OutputBuffer.java:298)
+	at org.apache.catalina.connector.OutputBuffer.flush(OutputBuffer.java:264)
+	at org.apache.catalina.connector.CoyoteOutputStream.flush(CoyoteOutputStream.java:130)
+	at org.springframework.web.context.request.async.StandardServletAsyncWebRequest$LifecycleServletOutputStream.flush(StandardServletAsyncWebRequest.java:415)
+	at org.springframework.util.StreamUtils.copy(StreamUtils.java:137)
+	at org.springframework.http.converter.StringHttpMessageConverter.writeInternal(StringHttpMessageConverter.java:128)
+	at org.springframework.http.converter.StringHttpMessageConverter.writeInternal(StringHttpMessageConverter.java:44)
+	at org.springframework.http.converter.AbstractHttpMessageConverter.write(AbstractHttpMessageConverter.java:235)
+	at org.springframework.web.servlet.mvc.method.annotation.ResponseBodyEmitterReturnValueHandler$DefaultSseEmitterHandler.sendInternal(ResponseBodyEmitterReturnValueHandler.java:315)
+	at org.springframework.web.servlet.mvc.method.annotation.ResponseBodyEmitterReturnValueHandler$DefaultSseEmitterHandler.send(ResponseBodyEmitterReturnValueHandler.java:302)
+	at org.springframework.web.servlet.mvc.method.annotation.ResponseBodyEmitter.sendInternal(ResponseBodyEmitter.java:256)
+	at org.springframework.web.servlet.mvc.method.annotation.ResponseBodyEmitter.send(ResponseBodyEmitter.java:243)
+	at org.springframework.web.servlet.mvc.method.annotation.SseEmitter.send(SseEmitter.java:129)
+	at com.huangwei.ai.ragent.novel.service.impl.NovelServiceImpl$1.onContent(NovelServiceImpl.java:176)
+	at com.huangwei.ai.ragent.infra.chat.RoutingLLMService$ProbeBufferingCallback.dispatch(RoutingLLMService.java:294)
+	at com.huangwei.ai.ragent.infra.chat.RoutingLLMService$ProbeBufferingCallback.bufferOrDispatch(RoutingLLMService.java:288)
+	at com.huangwei.ai.ragent.infra.chat.RoutingLLMService$ProbeBufferingCallback.onContent(RoutingLLMService.java:235)
+	at com.huangwei.ai.ragent.infra.chat.BaiLianChatClient.doStream(BaiLianChatClient.java:147)
+	at com.huangwei.ai.ragent.infra.chat.BaiLianChatClient.lambda$streamChat$0(BaiLianChatClient.java:109)
+	at com.huangwei.ai.ragent.infra.chat.StreamAsyncExecutor.lambda$submit$0(StreamAsyncExecutor.java:47)
+	at java.base/java.util.concurrent.CompletableFuture$AsyncRun.run(CompletableFuture.java:1804)
+	at com.alibaba.ttl.TtlRunnable.run(TtlRunnable.java:60)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+2026-05-15 14:32:09.307 [] [http-nio-9092-exec-5] ERROR o.a.c.c.C.[.[.[.[dispatcherServlet] - Servlet.service() for servlet [dispatcherServlet] in context with path [/api/ragent] threw exception
+java.io.IOException: 你的主机中的软件中止了一个已建立的连接。
+	at java.base/sun.nio.ch.SocketDispatcher.write0(Native Method)
+	at java.base/sun.nio.ch.SocketDispatcher.write(SocketDispatcher.java:54)
+	at java.base/sun.nio.ch.IOUtil.writeFromNativeBuffer(IOUtil.java:137)
+	at java.base/sun.nio.ch.IOUtil.write(IOUtil.java:102)
+	at java.base/sun.nio.ch.IOUtil.write(IOUtil.java:58)
+	at java.base/sun.nio.ch.SocketChannelImpl.write(SocketChannelImpl.java:542)
+	at org.apache.tomcat.util.net.NioChannel.write(NioChannel.java:125)
+	at org.apache.tomcat.util.net.NioEndpoint$NioSocketWrapper.doWrite(NioEndpoint.java:1413)
+	at org.apache.tomcat.util.net.SocketWrapperBase.doWrite(SocketWrapperBase.java:732)
+	at org.apache.tomcat.util.net.SocketWrapperBase.flushBlocking(SocketWrapperBase.java:698)
+	at org.apache.tomcat.util.net.SocketWrapperBase.flush(SocketWrapperBase.java:683)
+	at org.apache.coyote.http11.Http11OutputBuffer$SocketOutputBuffer.flush(Http11OutputBuffer.java:574)
+	at org.apache.coyote.http11.filters.ChunkedOutputFilter.flush(ChunkedOutputFilter.java:154)
+	at org.apache.coyote.http11.Http11OutputBuffer.flush(Http11OutputBuffer.java:216)
+	at org.apache.coyote.http11.Http11Processor.flush(Http11Processor.java:1273)
+	at org.apache.coyote.AbstractProcessor.action(AbstractProcessor.java:408)
+	at org.apache.coyote.Response.action(Response.java:201)
+	at org.apache.catalina.connector.OutputBuffer.doFlush(OutputBuffer.java:298)
+	at org.apache.catalina.connector.OutputBuffer.flush(OutputBuffer.java:264)
+	at org.apache.catalina.connector.CoyoteOutputStream.flush(CoyoteOutputStream.java:130)
+	at org.springframework.web.context.request.async.StandardServletAsyncWebRequest$LifecycleServletOutputStream.flush(StandardServletAsyncWebRequest.java:415)
+	at org.springframework.util.StreamUtils.copy(StreamUtils.java:137)
+	at org.springframework.http.converter.StringHttpMessageConverter.writeInternal(StringHttpMessageConverter.java:128)
+	at org.springframework.http.converter.StringHttpMessageConverter.writeInternal(StringHttpMessageConverter.java:44)
+	at org.springframework.http.converter.AbstractHttpMessageConverter.write(AbstractHttpMessageConverter.java:235)
+	at org.springframework.web.servlet.mvc.method.annotation.ResponseBodyEmitterReturnValueHandler$DefaultSseEmitterHandler.sendInternal(ResponseBodyEmitterReturnValueHandler.java:315)
+	at org.springframework.web.servlet.mvc.method.annotation.ResponseBodyEmitterReturnValueHandler$DefaultSseEmitterHandler.send(ResponseBodyEmitterReturnValueHandler.java:302)
+	at org.springframework.web.servlet.mvc.method.annotation.ResponseBodyEmitter.sendInternal(ResponseBodyEmitter.java:256)
+	at org.springframework.web.servlet.mvc.method.annotation.ResponseBodyEmitter.send(ResponseBodyEmitter.java:243)
+	at org.springframework.web.servlet.mvc.method.annotation.SseEmitter.send(SseEmitter.java:129)
+	at com.huangwei.ai.ragent.novel.service.impl.NovelServiceImpl$1.onContent(NovelServiceImpl.java:176)
+	at com.huangwei.ai.ragent.infra.chat.RoutingLLMService$ProbeBufferingCallback.dispatch(RoutingLLMService.java:294)
+	at com.huangwei.ai.ragent.infra.chat.RoutingLLMService$ProbeBufferingCallback.bufferOrDispatch(RoutingLLMService.java:288)
+	at com.huangwei.ai.ragent.infra.chat.RoutingLLMService$ProbeBufferingCallback.onContent(RoutingLLMService.java:235)
+	at com.huangwei.ai.ragent.infra.chat.BaiLianChatClient.doStream(BaiLianChatClient.java:147)
+	at com.huangwei.ai.ragent.infra.chat.BaiLianChatClient.lambda$streamChat$0(BaiLianChatClient.java:109)
+	at com.huangwei.ai.ragent.infra.chat.StreamAsyncExecutor.lambda$submit$0(StreamAsyncExecutor.java:47)
+	at java.base/java.util.concurrent.CompletableFuture$AsyncRun.run(CompletableFuture.java:1804)
+	at com.alibaba.ttl.TtlRunnable.run(TtlRunnable.java:60)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+2026-05-15 14:32:09.405 [] [model_stream_executor_0] WARN  c.h.a.r.n.s.impl.NovelServiceImpl - SSE 发送失败
+java.lang.IllegalStateException: ResponseBodyEmitter has already completed
+	at org.springframework.util.Assert.state(Assert.java:101)
+	at org.springframework.web.servlet.mvc.method.annotation.ResponseBodyEmitter.send(ResponseBodyEmitter.java:241)
+	at org.springframework.web.servlet.mvc.method.annotation.SseEmitter.send(SseEmitter.java:129)
+	at com.huangwei.ai.ragent.novel.service.impl.NovelServiceImpl$1.onContent(NovelServiceImpl.java:176)
+	at com.huangwei.ai.ragent.infra.chat.RoutingLLMService$ProbeBufferingCallback.dispatch(RoutingLLMService.java:294)
+	at com.huangwei.ai.ragent.infra.chat.RoutingLLMService$ProbeBufferingCallback.bufferOrDispatch(RoutingLLMService.java:288)
+	at com.huangwei.ai.ragent.infra.chat.RoutingLLMService$ProbeBufferingCallback.onContent(RoutingLLMService.java:235)
+	at com.huangwei.ai.ragent.infra.chat.BaiLianChatClient.doStream(BaiLianChatClient.java:147)
+	at com.huangwei.ai.ragent.infra.chat.BaiLianChatClient.lambda$streamChat$0(BaiLianChatClient.java:109)
+	at com.huangwei.ai.ragent.infra.chat.StreamAsyncExecutor.lambda$submit$0(StreamAsyncExecutor.java:47)
+	at java.base/java.util.concurrent.CompletableFuture$AsyncRun.run(CompletableFuture.java:1804)
+	at com.alibaba.ttl.TtlRunnable.run(TtlRunnable.java:60)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+2026-05-15 14:32:09.508 [] [model_stream_executor_0] WARN  c.h.a.r.n.s.impl.NovelServiceImpl - SSE 发送失败
+java.lang.IllegalStateException: ResponseBodyEmitter has already completed
+	at org.springframework.util.Assert.state(Assert.java:101)
+	at org.springframework.web.servlet.mvc.method.annotation.ResponseBodyEmitter.send(ResponseBodyEmitter.java:241)
+	at org.springframework.web.servlet.mvc.method.annotation.SseEmitter.send(SseEmitter.java:129)
+	at com.huangwei.ai.ragent.novel.service.impl.NovelServiceImpl$1.onContent(NovelServiceImpl.java:176)
+	at com.huangwei.ai.ragent.infra.chat.RoutingLLMService$ProbeBufferingCallback.dispatch(RoutingLLMService.java:294)
+	at com.huangwei.ai.ragent.infra.chat.RoutingLLMService$ProbeBufferingCallback.bufferOrDispatch(RoutingLLMService.java:288)
+	at com.huangwei.ai.ragent.infra.chat.RoutingLLMService$ProbeBufferingCallback.onContent(RoutingLLMService.java:235)
+	at com.huangwei.ai.ragent.infra.chat.BaiLianChatClient.doStream(BaiLianChatClient.java:147)
+	at com.huangwei.ai.ragent.infra.chat.BaiLianChatClient.lambda$streamChat$0(BaiLianChatClient.java:109)
+	at com.huangwei.ai.ragent.infra.chat.StreamAsyncExecutor.lambda$submit$0(StreamAsyncExecutor.java:47)
+	at java.base/java.util.concurrent.CompletableFuture$AsyncRun.run(CompletableFuture.java:1804)
+	at com.alibaba.ttl.TtlRunnable.run(TtlRunnable.java:60)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+2026-05-15 14:32:09.602 [] [model_stream_executor_0] WARN  c.h.a.r.n.s.impl.NovelServiceImpl - SSE 发送失败
+java.lang.IllegalStateException: ResponseBodyEmitter has already completed
+	at org.springframework.util.Assert.state(Assert.java:101)
+	at org.springframework.web.servlet.mvc.method.annotation.ResponseBodyEmitter.send(ResponseBodyEmitter.java:241)
+	at org.springframework.web.servlet.mvc.method.annotation.SseEmitter.send(SseEmitter.java:129)
+	at com.huangwei.ai.ragent.novel.service.impl.NovelServiceImpl$1.onContent(NovelServiceImpl.java:176)
+	at com.huangwei.ai.ragent.infra.chat.RoutingLLMService$ProbeBufferingCallback.dispatch(RoutingLLMService.java:294)
+	at com.huangwei.ai.ragent.infra.chat.RoutingLLMService$ProbeBufferingCallback.bufferOrDispatch(RoutingLLMService.java:288)
+	at com.huangwei.ai.ragent.infra.chat.RoutingLLMService$ProbeBufferingCallback.onContent(RoutingLLMService.java:235)
+	at com.huangwei.ai.ragent.infra.chat.BaiLianChatClient.doStream(BaiLianChatClient.java:147)
+	at com.huangwei.ai.ragent.infra.chat.BaiLianChatClient.lambda$streamChat$0(BaiLianChatClient.java:109)
+	at com.huangwei.ai.ragent.infra.chat.StreamAsyncExecutor.lambda$submit$0(StreamAsyncExecutor.java:47)
+	at java.base/java.util.concurrent.CompletableFuture$AsyncRun.run(CompletableFuture.java:1804)
+	at com.alibaba.ttl.TtlRunnable.run(TtlRunnable.java:60)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+2026-05-15 14:32:09.745 [] [model_stream_executor_0] WARN  c.h.a.r.n.s.impl.NovelServiceImpl - SSE 发送失败
+java.lang.IllegalStateException: ResponseBodyEmitter has already completed
+	at org.springframework.util.Assert.state(Assert.java:101)
+	at org.springframework.web.servlet.mvc.method.annotation.ResponseBodyEmitter.send(ResponseBodyEmitter.java:241)
+	at org.springframework.web.servlet.mvc.method.annotation.SseEmitter.send(SseEmitter.java:129)
+	at com.huangwei.ai.ragent.novel.service.impl.NovelServiceImpl$1.onContent(NovelServiceImpl.java:176)
+	at com.huangwei.ai.ragent.infra.chat.RoutingLLMService$ProbeBufferingCallback.dispatch(RoutingLLMService.java:294)
+	at com.huangwei.ai.ragent.infra.chat.RoutingLLMService$ProbeBufferingCallback.bufferOrDispatch(RoutingLLMService.java:288)
+	at com.huangwei.ai.ragent.infra.chat.RoutingLLMService$ProbeBufferingCallback.onContent(RoutingLLMService.java:235)
+	at com.huangwei.ai.ragent.infra.chat.BaiLianChatClient.doStream(BaiLianChatClient.java:147)
+	at com.huangwei.ai.ragent.infra.chat.BaiLianChatClient.lambda$streamChat$0(BaiLianChatClient.java:109)
+	at com.huangwei.ai.ragent.infra.chat.StreamAsyncExecutor.lambda$submit$0(StreamAsyncExecutor.java:47)
+	at java.base/java.util.concurrent.CompletableFuture$AsyncRun.run(CompletableFuture.java:1804)
+	at com.alibaba.ttl.TtlRunnable.run(TtlRunnable.java:60)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+2026-05-15 14:32:09.961 [] [model_stream_executor_0] WARN  c.h.a.r.n.s.impl.NovelServiceImpl - SSE 发送失败
+java.lang.IllegalStateException: ResponseBodyEmitter has already completed
+	at org.springframework.util.Assert.state(Assert.java:101)
+	at org.springframework.web.servlet.mvc.method.annotation.ResponseBodyEmitter.send(ResponseBodyEmitter.java:241)
+	at org.springframework.web.servlet.mvc.method.annotation.SseEmitter.send(SseEmitter.java:129)
+	at com.huangwei.ai.ragent.novel.service.impl.NovelServiceImpl$1.onContent(NovelServiceImpl.java:176)
+	at com.huangwei.ai.ragent.infra.chat.RoutingLLMService$ProbeBufferingCallback.dispatch(RoutingLLMService.java:294)
+	at com.huangwei.ai.ragent.infra.chat.RoutingLLMService$ProbeBufferingCallback.bufferOrDispatch(RoutingLLMService.java:288)
+	at com.huangwei.ai.ragent.infra.chat.RoutingLLMService$ProbeBufferingCallback.onContent(RoutingLLMService.java:235)
+	at com.huangwei.ai.ragent.infra.chat.BaiLianChatClient.doStream(BaiLianChatClient.java:147)
+	at com.huangwei.ai.ragent.infra.chat.BaiLianChatClient.lambda$streamChat$0(BaiLianChatClient.java:109)
+	at com.huangwei.ai.ragent.infra.chat.StreamAsyncExecutor.lambda$submit$0(StreamAsyncExecutor.java:47)
+	at java.base/java.util.concurrent.CompletableFuture$AsyncRun.run(CompletableFuture.java:1804)
+	at com.alibaba.ttl.TtlRunnable.run(TtlRunnable.java:60)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+2026-05-15 14:32:10.047 [] [model_stream_executor_0] WARN  c.h.a.r.n.s.impl.NovelServiceImpl - SSE 发送失败
+java.lang.IllegalStateException: ResponseBodyEmitter has already completed
+	at org.springframework.util.Assert.state(Assert.java:101)
+	at org.springframework.web.servlet.mvc.method.annotation.ResponseBodyEmitter.send(ResponseBodyEmitter.java:241)
+	at org.springframework.web.servlet.mvc.method.annotation.SseEmitter.send(SseEmitter.java:129)
+	at com.huangwei.ai.ragent.novel.service.impl.NovelServiceImpl$1.onContent(NovelServiceImpl.java:176)
+	at com.huangwei.ai.ragent.infra.chat.RoutingLLMService$ProbeBufferingCallback.dispatch(RoutingLLMService.java:294)
+	at com.huangwei.ai.ragent.infra.chat.RoutingLLMService$ProbeBufferingCallback.bufferOrDispatch(RoutingLLMService.java:288)
+	at com.huangwei.ai.ragent.infra.chat.RoutingLLMService$ProbeBufferingCallback.onContent(RoutingLLMService.java:235)
+	at com.huangwei.ai.ragent.infra.chat.BaiLianChatClient.doStream(BaiLianChatClient.java:147)
+	at com.huangwei.ai.ragent.infra.chat.BaiLianChatClient.lambda$streamChat$0(BaiLianChatClient.java:109)
+	at com.huangwei.ai.ragent.infra.chat.StreamAsyncExecutor.lambda$submit$0(StreamAsyncExecutor.java:47)
+	at java.base/java.util.concurrent.CompletableFuture$AsyncRun.run(CompletableFuture.java:1804)
+	at com.alibaba.ttl.TtlRunnable.run(TtlRunnable.java:60)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+2026-05-15 14:32:10.136 [] [model_stream_executor_0] WARN  c.h.a.r.n.s.impl.NovelServiceImpl - SSE 发送失败
+java.lang.IllegalStateException: ResponseBodyEmitter has already completed
+	at org.springframework.util.Assert.state(Assert.java:101)
+	at org.springframework.web.servlet.mvc.method.annotation.ResponseBodyEmitter.send(ResponseBodyEmitter.java:241)
+	at org.springframework.web.servlet.mvc.method.annotation.SseEmitter.send(SseEmitter.java:129)
+	at com.huangwei.ai.ragent.novel.service.impl.NovelServiceImpl$1.onContent(NovelServiceImpl.java:176)
+	at com.huangwei.ai.ragent.infra.chat.RoutingLLMService$ProbeBufferingCallback.dispatch(RoutingLLMService.java:294)
+	at com.huangwei.ai.ragent.infra.chat.RoutingLLMService$ProbeBufferingCallback.bufferOrDispatch(RoutingLLMService.java:288)
+	at com.huangwei.ai.ragent.infra.chat.RoutingLLMService$ProbeBufferingCallback.onContent(RoutingLLMService.java:235)
+	at com.huangwei.ai.ragent.infra.chat.BaiLianChatClient.doStream(BaiLianChatClient.java:147)
+	at com.huangwei.ai.ragent.infra.chat.BaiLianChatClient.lambda$streamChat$0(BaiLianChatClient.java:109)
+	at com.huangwei.ai.ragent.infra.chat.StreamAsyncExecutor.lambda$submit$0(StreamAsyncExecutor.java:47)
+	at java.base/java.util.concurrent.CompletableFuture$AsyncRun.run(CompletableFuture.java:1804)
+	at com.alibaba.ttl.TtlRunnable.run(TtlRunnable.java:60)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+2026-05-15 14:32:10.205 [] [model_stream_executor_0] WARN  c.h.a.r.n.s.impl.NovelServiceImpl - SSE 完成信号发送失败
+java.lang.IllegalStateException: ResponseBodyEmitter has already completed
+	at org.springframework.util.Assert.state(Assert.java:101)
+	at org.springframework.web.servlet.mvc.method.annotation.ResponseBodyEmitter.send(ResponseBodyEmitter.java:241)
+	at org.springframework.web.servlet.mvc.method.annotation.SseEmitter.send(SseEmitter.java:129)
+	at com.huangwei.ai.ragent.novel.service.impl.NovelServiceImpl$1.onComplete(NovelServiceImpl.java:199)
+	at com.huangwei.ai.ragent.infra.chat.RoutingLLMService$ProbeBufferingCallback.dispatch(RoutingLLMService.java:296)
+	at com.huangwei.ai.ragent.infra.chat.RoutingLLMService$ProbeBufferingCallback.bufferOrDispatch(RoutingLLMService.java:288)
+	at com.huangwei.ai.ragent.infra.chat.RoutingLLMService$ProbeBufferingCallback.onComplete(RoutingLLMService.java:247)
+	at com.huangwei.ai.ragent.infra.chat.BaiLianChatClient.doStream(BaiLianChatClient.java:150)
+	at com.huangwei.ai.ragent.infra.chat.BaiLianChatClient.lambda$streamChat$0(BaiLianChatClient.java:109)
+	at com.huangwei.ai.ragent.infra.chat.StreamAsyncExecutor.lambda$submit$0(StreamAsyncExecutor.java:47)
+	at java.base/java.util.concurrent.CompletableFuture$AsyncRun.run(CompletableFuture.java:1804)
+	at com.alibaba.ttl.TtlRunnable.run(TtlRunnable.java:60)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+	at java.base/java.lang.Thread.run(Thread.java:1583)

@@ -44,6 +44,16 @@ public class ConversationVO {
     private String title;
 
     /**
+     * 父会话ID
+     */
+    private String parentId;
+
+    /**
+     * 分叉点消息ID
+     */
+    private Long branchFromMessageId;
+
+    /**
      * 最后活动时间
      */
     private Date lastTime;

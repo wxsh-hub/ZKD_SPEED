@@ -59,4 +59,15 @@ public interface ConversationService {
      * @param conversationId 会话 ID
      */
     void delete(String conversationId);
+
+    /**
+     * 从指定消息处分叉会话
+     * 复制该消息及之前的所有历史消息到新会话
+     *
+     * @param sourceConversationId 源会话ID
+     * @param messageId            消息ID（包含该消息及之前的消息）
+     * @param userId               用户ID
+     * @return 新会话视图对象
+     */
+    ConversationVO fork(String sourceConversationId, String messageId, String userId);
 }

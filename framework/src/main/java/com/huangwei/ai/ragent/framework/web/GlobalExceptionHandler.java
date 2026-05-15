@@ -24,6 +24,7 @@ import cn.hutool.core.util.StrUtil;
 import com.huangwei.ai.ragent.framework.convention.Result;
 import com.huangwei.ai.ragent.framework.errorcode.BaseErrorCode;
 import com.huangwei.ai.ragent.framework.exception.AbstractException;
+import com.huangwei.ai.ragent.framework.trace.RagTraceContext;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -54,8 +55,9 @@ public class GlobalExceptionHandler {
         String exceptionStr = Optional.ofNullable(firstFieldError)
                 .map(FieldError::getDefaultMessage)
                 .orElse(StrUtil.EMPTY);
-        log.error("[{}] {} [ex] {}", request.getMethod(), getUrl(request), exceptionStr);
-        return Results.failure(BaseErrorCode.CLIENT_ERROR.code(), exceptionStr);
+        String traceId = RagTraceContext.getTraceId();
+        log.error("[{}] {} traceId={} [ex] {}", request.getMethod(), getUrl(request), traceId, exceptionStr);
+        return Results.failure(BaseErrorCode.CLIENT_ERROR.code(), exceptionStr, traceId);
     }
 
     /**
@@ -63,9 +65,10 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(value = {AbstractException.class})
     public Result<Void> abstractException(HttpServletRequest request, AbstractException ex) {
+        String traceId = RagTraceContext.getTraceId();
         if (ex.getCause() != null) {
-            log.error("[{}] {} [ex] {}", request.getMethod(), request.getRequestURL().toString(), ex, ex.getCause());
-            return Results.failure(ex);
+            log.error("[{}] {} traceId={} [ex] {}", request.getMethod(), getUrl(request), traceId, ex.getMessage(), ex.getCause());
+            return Results.failure(ex, traceId);
         }
         StringBuilder stackTraceBuilder = new StringBuilder();
         stackTraceBuilder.append(ex.getClass().getName()).append(": ").append(ex.getErrorMessage()).append("\n");
@@ -73,8 +76,8 @@ public class GlobalExceptionHandler {
         for (int i = 0; i < Math.min(5, stackTrace.length); i++) {
             stackTraceBuilder.append("\tat ").append(stackTrace[i]).append("\n");
         }
-        log.error("[{}] {} [ex] {} \n\n{}", request.getMethod(), request.getRequestURL().toString(), ex, stackTraceBuilder);
-        return Results.failure(ex);
+        log.error("[{}] {} traceId={} [ex] {}\n{}", request.getMethod(), getUrl(request), traceId, ex.getMessage(), stackTraceBuilder);
+        return Results.failure(ex, traceId);
     }
 
     /**
@@ -82,8 +85,9 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(value = NotLoginException.class)
     public Result<Void> notLoginException(HttpServletRequest request, NotLoginException ex) {
-        log.warn("[{}] {} [auth] not-login: {}", request.getMethod(), getUrl(request), ex.getMessage());
-        return Results.failure(BaseErrorCode.CLIENT_ERROR.code(), "未登录或登录已过期");
+        String traceId = RagTraceContext.getTraceId();
+        log.warn("[{}] {} traceId={} [auth] not-login: {}", request.getMethod(), getUrl(request), traceId, ex.getMessage());
+        return Results.failure(BaseErrorCode.CLIENT_ERROR.code(), "未登录或登录已过期", traceId);
     }
 
     /**
@@ -91,8 +95,9 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(value = NotRoleException.class)
     public Result<Void> notRoleException(HttpServletRequest request, NotRoleException ex) {
-        log.warn("[{}] {} [auth] no-role: {}", request.getMethod(), getUrl(request), ex.getMessage());
-        return Results.failure(BaseErrorCode.CLIENT_ERROR.code(), "权限不足");
+        String traceId = RagTraceContext.getTraceId();
+        log.warn("[{}] {} traceId={} [auth] no-role: {}", request.getMethod(), getUrl(request), traceId, ex.getMessage());
+        return Results.failure(BaseErrorCode.CLIENT_ERROR.code(), "权限不足", traceId);
     }
 
     /**
@@ -100,8 +105,9 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(value = Throwable.class)
     public Result<Void> defaultErrorHandler(HttpServletRequest request, Throwable throwable) {
-        log.error("[{}] {} ", request.getMethod(), getUrl(request), throwable);
-        return Results.failure();
+        String traceId = RagTraceContext.getTraceId();
+        log.error("[{}] {} traceId={}", request.getMethod(), getUrl(request), traceId, throwable);
+        return Results.failure(traceId);
     }
 
     private String getUrl(HttpServletRequest request) {

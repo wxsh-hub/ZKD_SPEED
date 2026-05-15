@@ -1,6 +1,7 @@
 import * as React from "react";
 import { ArrowUpRight, BookOpen, Bot, Brain, Check, Lightbulb, Send, Square } from "lucide-react";
 
+import { BranchExplainer } from "@/components/chat/BranchExplainer";
 import { cn } from "@/lib/utils";
 import { FlowTag, RAG_CHAT_STEPS } from "@/components/common/FlowTag";
 import { ModelSelector } from "@/components/common/ModelSelector";
@@ -135,7 +136,7 @@ export function WelcomeScreen() {
   const hasContent = value.trim().length > 0;
 
   return (
-    <div className="relative flex min-h-full items-center justify-center overflow-hidden px-4 py-10 sm:px-6">
+    <div className="relative flex min-h-full items-start justify-center overflow-y-auto px-4 py-10 sm:px-6">
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 bg-gradient-to-br from-[#FAFAFA] via-white to-[#F5F3FF]"
@@ -162,17 +163,17 @@ export function WelcomeScreen() {
             <Bot className="h-3.5 w-3.5" />
             RAG 智能问答
           </span>
-          <h1 className="mt-4 font-display text-4xl leading-tight tracking-tight text-[#111827] sm:text-5xl md:text-6xl">
+          <h1 className="mt-3 font-display text-4xl leading-tight tracking-tight text-[#111827] sm:text-5xl md:text-6xl">
             把问题变成
             <span className="text-gradient">清晰答案</span>
           </h1>
-          <p className="mt-4 text-base text-[#4B5563] sm:text-lg">
+          <p className="mt-3 text-base text-[#4B5563] sm:text-lg">
             结构化提问、知识检索与深度思考，一次对话给出可执行方案
           </p>
         </div>
 
         <div
-          className="mt-10 opacity-0 animate-fade-up"
+          className="mt-8 opacity-0 animate-fade-up"
           style={{ animationDelay: "80ms", animationFillMode: "both" }}
         >
           <div
@@ -282,7 +283,7 @@ export function WelcomeScreen() {
         </div>
 
         <div
-          className="mt-10 opacity-0 animate-fade-up"
+          className="mt-8 opacity-0 animate-fade-up"
           style={{ animationDelay: "160ms", animationFillMode: "both" }}
         >
           <div className="flex items-center justify-center gap-2 text-xs uppercase tracking-[0.24em] text-[#94A3B8]">
@@ -324,10 +325,17 @@ export function WelcomeScreen() {
         </div>
 
         <div
-          className="mt-8 flex justify-center opacity-0 animate-fade-up"
+          className="mt-6 flex justify-center pb-6 opacity-0 animate-fade-up"
           style={{ animationDelay: "240ms", animationFillMode: "both" }}
         >
-          <FlowTag title="RAG 对话实现原理" steps={RAG_CHAT_STEPS} />
+          <FlowTag title="RAG 对话实现原理" steps={RAG_CHAT_STEPS} defaultExpanded />
+        </div>
+
+        <div
+          className="mt-3 pb-10 opacity-0 animate-fade-up"
+          style={{ animationDelay: "320ms", animationFillMode: "both" }}
+        >
+          <BranchExplainer />
         </div>
       </div>
     </div>

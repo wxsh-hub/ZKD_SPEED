@@ -6,7 +6,8 @@ import {
   listMessages,
   listSessions,
   deleteSession as deleteSessionRequest,
-  renameSession as renameSessionRequest
+  renameSession as renameSessionRequest,
+  forkConversation as forkConversationRequest
 } from "@/services/sessionService";
 import { stopTask, submitFeedback } from "@/services/chatService";
 import { buildQuery } from "@/utils/helpers";
@@ -19,9 +20,11 @@ interface ChatState {
   messages: Message[];
   isLoading: boolean;
   sessionsLoaded: boolean;
+  sessionsCacheTime: number | null;
   inputFocusKey: number;
   isStreaming: boolean;
   isCreatingNew: boolean;
+  isForking: boolean;
   deepThinkingEnabled: boolean;
   selectedModelId: string;
   thinkingStartAt: number | null;
@@ -34,14 +37,17 @@ interface ChatState {
   deleteSession: (sessionId: string) => Promise<void>;
   renameSession: (sessionId: string, title: string) => Promise<void>;
   selectSession: (sessionId: string) => Promise<void>;
+  forkFromMessage: (messageId: string) => Promise<string>;
+  finishForking: () => void;
   updateSessionTitle: (sessionId: string, title: string) => void;
   setDeepThinkingEnabled: (enabled: boolean) => void;
   setSelectedModelId: (modelId: string) => void;
   sendMessage: (content: string) => Promise<void>;
   cancelGeneration: () => void;
-  appendStreamContent: (delta: string) => void;
+  appendStreamContent: (delta: string, modelId?: string) => void;
   appendThinkingContent: (delta: string) => void;
   submitFeedback: (messageId: string, feedback: FeedbackValue) => Promise<void>;
+  branchFromMessage: (messageId: string) => Promise<string | null>;
 }
 
 function mapVoteToFeedback(vote?: number | null): FeedbackValue {
@@ -79,9 +85,11 @@ export const useChatStore = create<ChatState>((set, get) => ({
   messages: [],
   isLoading: false,
   sessionsLoaded: false,
+  sessionsCacheTime: null,
   inputFocusKey: 0,
   isStreaming: false,
   isCreatingNew: false,
+  isForking: false,
   deepThinkingEnabled: false,
   selectedModelId: "",
   thinkingStartAt: null,
@@ -90,21 +98,32 @@ export const useChatStore = create<ChatState>((set, get) => ({
   streamingMessageId: null,
   cancelRequested: false,
   fetchSessions: async () => {
+    const { sessionsLoaded, sessionsCacheTime, sessions } = get();
+    const now = Date.now();
+    const CACHE_DURATION = 5 * 60 * 1000; // 5分钟缓存
+
+    // 如果缓存未过期，直接返回
+    if (sessionsLoaded && sessionsCacheTime && (now - sessionsCacheTime) < CACHE_DURATION && sessions.length > 0) {
+      return;
+    }
+
     set({ isLoading: true });
     try {
       const data = await listSessions();
-      const sessions = data
+      const newSessions = data
         .map((item) => ({
         id: item.conversationId,
         title: item.title || "新对话",
-        lastTime: item.lastTime
+        lastTime: item.lastTime,
+        parentId: item.parentId ?? null,
+        branchFromMessageId: item.branchFromMessageId ?? null
         }))
         .sort((a, b) => {
           const timeA = a.lastTime ? new Date(a.lastTime).getTime() : 0;
           const timeB = b.lastTime ? new Date(b.lastTime).getTime() : 0;
           return timeB - timeA;
         });
-      set({ sessions });
+      set({ sessions: newSessions, sessionsCacheTime: now });
     } catch (error) {
       toast.error((error as Error).message || "加载会话失败");
     } finally {
@@ -143,11 +162,25 @@ export const useChatStore = create<ChatState>((set, get) => ({
   deleteSession: async (sessionId) => {
     try {
       await deleteSessionRequest(sessionId);
-      set((state) => ({
-        sessions: state.sessions.filter((session) => session.id !== sessionId),
-        messages: state.currentSessionId === sessionId ? [] : state.messages,
-        currentSessionId: state.currentSessionId === sessionId ? null : state.currentSessionId
-      }));
+      set((state) => {
+        // 收集要删除的ID：自身 + 所有后代
+        const idsToRemove = new Set<string>([sessionId]);
+        let changed = true;
+        while (changed) {
+          changed = false;
+          for (const s of state.sessions) {
+            if (s.parentId && idsToRemove.has(s.parentId) && !idsToRemove.has(s.id)) {
+              idsToRemove.add(s.id);
+              changed = true;
+            }
+          }
+        }
+        return {
+          sessions: state.sessions.filter((s) => !idsToRemove.has(s.id)),
+          messages: idsToRemove.has(state.currentSessionId ?? "") ? [] : state.messages,
+          currentSessionId: idsToRemove.has(state.currentSessionId ?? "") ? null : state.currentSessionId
+        };
+      });
       toast.success("删除成功");
     } catch (error) {
       toast.error((error as Error).message || "删除会话失败");
@@ -168,12 +201,72 @@ export const useChatStore = create<ChatState>((set, get) => ({
       toast.error((error as Error).message || "重命名失败");
     }
   },
+  forkFromMessage: async (messageId) => {
+    const currentSessionId = get().currentSessionId;
+    if (!currentSessionId) {
+      toast.error("当前没有活跃会话");
+      return "";
+    }
+
+    set({ isForking: true });
+
+    // 安全超时：防止 isForking 卡住
+    const forkTimeout = setTimeout(() => {
+      if (get().isForking) {
+        set({ isForking: false });
+      }
+    }, 15000);
+
+    try {
+      const newSession = await forkConversationRequest(currentSessionId, messageId);
+      const newSessionId = newSession.conversationId;
+
+      // 预加载分支消息，避免切换时出现空白
+      const messagesData = await listMessages(newSessionId);
+      const mapped: Message[] = messagesData.map((item) => ({
+        id: String(item.id),
+        role: item.role === "assistant" ? "assistant" : "user",
+        content: item.content,
+        createdAt: item.createTime,
+        feedback: mapVoteToFeedback(item.vote),
+        status: "done"
+      }));
+
+      // 原子切换：同时设置会话ID和消息，Virtuoso不会看到空数组
+      // 注意：isForking 保持 true，由 handleFork 调用 finishForking() 重置
+      set((state) => ({
+        sessions: upsertSession(state.sessions, {
+          id: newSessionId,
+          title: newSession.title || "新对话",
+          lastTime: new Date().toISOString(),
+          parentId: newSession.parentId ?? currentSessionId,
+          branchFromMessageId: newSession.branchFromMessageId ?? messageId
+        }),
+        currentSessionId: newSessionId,
+        messages: mapped,
+        isLoading: false
+      }));
+
+      clearTimeout(forkTimeout);
+      toast.success("分支创建成功");
+      return newSessionId;
+    } catch (error) {
+      clearTimeout(forkTimeout);
+      set({ isForking: false });
+      toast.error((error as Error).message || "创建分支失败");
+      return "";
+    }
+  },
+  finishForking: () => {
+    set({ isForking: false });
+  },
   selectSession: async (sessionId) => {
     if (!sessionId) return;
     if (get().currentSessionId === sessionId && get().messages.length > 0) return;
     if (get().isStreaming) {
       get().cancelGeneration();
     }
+    if (get().isForking) return;
     set({
       isLoading: true,
       currentSessionId: sessionId,
@@ -296,7 +389,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
       onMessage: (payload: MessageDeltaPayload) => {
         if (!payload || typeof payload !== "object") return;
         if (payload.type !== "response") return;
-        get().appendStreamContent(payload.delta);
+        get().appendStreamContent(payload.delta, payload.modelId);
       },
       onThinking: (payload: MessageDeltaPayload) => {
         if (!payload || typeof payload !== "object") return;
@@ -467,7 +560,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
       stopTask(streamTaskId).catch(() => null);
     }
   },
-  appendStreamContent: (delta) => {
+  appendStreamContent: (delta, modelId) => {
     if (!delta) return;
     set((state) => {
       const shouldFinalizeThinking = state.thinkingStartAt != null;
@@ -480,6 +573,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
           return {
             ...message,
             content: message.content + delta,
+            modelId: modelId || message.modelId,
             isThinking: shouldFinalizeThinking ? false : message.isThinking,
             thinkingDuration:
               shouldFinalizeThinking && !message.thinkingDuration ? duration : message.thinkingDuration
@@ -528,5 +622,36 @@ export const useChatStore = create<ChatState>((set, get) => ({
       }));
       toast.error((error as Error).message || "反馈保存失败");
     }
+  },
+  branchFromMessage: async (messageId) => {
+    const state = get();
+    const messageIndex = state.messages.findIndex((m) => m.id === messageId);
+    if (messageIndex < 0) {
+      toast.error("未找到该消息");
+      return null;
+    }
+    const branchMessages = state.messages.slice(0, messageIndex + 1);
+    if (branchMessages.length === 0) {
+      toast.error("没有可分支的消息");
+      return null;
+    }
+    set({
+      currentSessionId: null,
+      messages: branchMessages.map((m) => ({
+        ...m,
+        status: "done" as const
+      })),
+      isStreaming: false,
+      isLoading: false,
+      isCreatingNew: true,
+      deepThinkingEnabled: false,
+      thinkingStartAt: null,
+      streamTaskId: null,
+      streamAbort: null,
+      streamingMessageId: null,
+      cancelRequested: false
+    });
+    toast.success("已创建对话分支，发送消息即可继续");
+    return null;
   }
 }));

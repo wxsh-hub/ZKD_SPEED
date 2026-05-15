@@ -3,6 +3,7 @@ import { differenceInCalendarDays, isValid } from "date-fns";
 import {
   BookOpen,
   Bot,
+  ChevronRight,
   FileEdit,
   LogOut,
   MessageSquare,
@@ -61,8 +62,10 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const [deleteTarget, setDeleteTarget] = React.useState<{
     id: string;
     title: string;
+    hasChildren?: boolean;
   } | null>(null);
   const [avatarFailed, setAvatarFailed] = React.useState(false);
+  const [expandedParents, setExpandedParents] = React.useState<Set<string>>(new Set());
   const renameInputRef = React.useRef<HTMLInputElement | null>(null);
 
   React.useEffect(() => {
@@ -74,15 +77,68 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const filteredSessions = React.useMemo(() => {
     const keyword = query.trim().toLowerCase();
     if (!keyword) return sessions;
-    return sessions.filter((session) => {
+    const matched = sessions.filter((session) => {
       const title = (session.title || "新对话").toLowerCase();
       return title.includes(keyword) || session.id.toLowerCase().includes(keyword);
     });
+    // 搜索时，如果子分支匹配，自动包含其父会话
+    const matchedIds = new Set(matched.map((s) => s.id));
+    for (const session of matched) {
+      if (session.parentId && !matchedIds.has(session.parentId)) {
+        const parent = sessions.find((s) => s.id === session.parentId);
+        if (parent) {
+          matched.push(parent);
+          matchedIds.add(parent.id);
+        }
+      }
+    }
+    return matched;
   }, [query, sessions]);
+
+  const { rootSessions, childrenMap } = React.useMemo(() => {
+    const roots: typeof filteredSessions = [];
+    const children = new Map<string, typeof filteredSessions>();
+
+    for (const session of filteredSessions) {
+      if (session.parentId) {
+        const list = children.get(session.parentId) || [];
+        list.push(session);
+        children.set(session.parentId, list);
+      } else {
+        roots.push(session);
+      }
+    }
+
+    // 搜索时自动展开有匹配子分支的父会话
+    if (query.trim()) {
+      for (const [parentId] of children) {
+        setExpandedParents((prev) => {
+          if (prev.has(parentId)) return prev;
+          const next = new Set(prev);
+          next.add(parentId);
+          return next;
+        });
+      }
+    }
+
+    return { rootSessions: roots, childrenMap: children };
+  }, [filteredSessions, query]);
+
+  const toggleExpand = React.useCallback((id: string) => {
+    setExpandedParents((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  }, []);
 
   const groupedSessions = React.useMemo(() => {
     const now = new Date();
-    const groups = new Map<string, typeof filteredSessions>();
+    const groups = new Map<string, typeof rootSessions>();
     const order: string[] = [];
 
     const resolveLabel = (value?: string) => {
@@ -95,7 +151,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       return "更早";
     };
 
-    filteredSessions.forEach((session) => {
+    rootSessions.forEach((session) => {
       const label = resolveLabel(session.lastTime);
       if (!groups.has(label)) {
         groups.set(label, []);
@@ -108,7 +164,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       label,
       items: groups.get(label) || []
     }));
-  }, [filteredSessions]);
+  }, [rootSessions]);
 
   React.useEffect(() => {
     if (renamingId) {
@@ -307,107 +363,237 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                     <p className="mb-1.5 pl-3 text-[12px] font-normal leading-[18px] text-[#999999]">
                       {group.label}
                     </p>
-                    {group.items.map((session) => (
-                      <div
-                        key={session.id}
-                        className={cn(
-                          "group my-[1px] flex min-h-[40px] cursor-pointer items-center justify-between gap-2 rounded-lg px-3 py-2 text-[14px] leading-[22px] transition-colors duration-200",
-                          currentSessionId === session.id
-                            ? "bg-[#EDE9FE] text-[#7C3AED]"
-                            : "text-[#333333] hover:bg-[#F5F5F5]"
-                        )}
-                        role="button"
-                        tabIndex={0}
-                        onClick={() => {
-                          if (renamingId === session.id) return;
-                          if (renamingId) {
-                            cancelRename();
-                          }
-                          selectSession(session.id).catch(() => null);
-                          navigate(`/chat/${session.id}`);
-                          onClose();
-                        }}
-                        onKeyDown={(event) => {
-                          if (event.key === "Enter") {
-                            selectSession(session.id).catch(() => null);
-                            navigate(`/chat/${session.id}`);
-                            onClose();
-                          }
-                        }}
-                      >
-                        {renamingId === session.id ? (
-                          <input
-                            ref={renameInputRef}
-                            value={renameValue}
-                            onChange={(event) => setRenameValue(event.target.value)}
-                            onClick={(event) => event.stopPropagation()}
-                            onKeyDown={(event) => {
-                              if (event.key === "Enter") {
-                                event.preventDefault();
-                                commitRename().catch(() => null);
-                              }
-                              if (event.key === "Escape") {
-                                event.preventDefault();
+                    {group.items.map((session) => {
+                      const childSessions = childrenMap.get(session.id) || [];
+                      const hasChildren = childSessions.length > 0;
+                      const isExpanded = expandedParents.has(session.id);
+
+                      return (
+                        <React.Fragment key={session.id}>
+                          <div
+                            className={cn(
+                              "group my-[1px] flex min-h-[40px] cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-[14px] leading-[22px] transition-colors duration-200",
+                              currentSessionId === session.id
+                                ? "bg-[#EDE9FE] text-[#7C3AED]"
+                                : "text-[#333333] hover:bg-[#F5F5F5]"
+                            )}
+                            role="button"
+                            tabIndex={0}
+                            onClick={() => {
+                              if (renamingId === session.id) return;
+                              if (renamingId) {
                                 cancelRename();
                               }
+                              selectSession(session.id).catch(() => null);
+                              navigate(`/chat/${session.id}`);
+                              onClose();
                             }}
-                            onBlur={() => {
-                              commitRename().catch(() => null);
+                            onKeyDown={(event) => {
+                              if (event.key === "Enter") {
+                                selectSession(session.id).catch(() => null);
+                                navigate(`/chat/${session.id}`);
+                                onClose();
+                              }
                             }}
-                            className="h-6 flex-1 rounded-md border border-[#E5E5E5] bg-white px-2 text-[14px] leading-[22px] text-[#333333] focus:border-[#7C3AED] focus:outline-none"
-                          />
-                        ) : (
-                          <span className="min-w-0 flex-1 truncate font-normal">
-                            {session.title || "新对话"}
-                          </span>
-                        )}
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <button
-                              type="button"
-                              className={cn(
-                                "flex h-6 w-6 items-center justify-center rounded text-[#666666] transition-opacity duration-150 hover:bg-[rgba(0,0,0,0.06)]",
-                                currentSessionId === session.id
-                                  ? "pointer-events-auto opacity-100 text-[#7C3AED]"
-                                  : "pointer-events-none opacity-0 group-hover:pointer-events-auto group-hover:opacity-100"
-                              )}
-                              onClick={(event) => event.stopPropagation()}
-                              aria-label="会话操作"
-                            >
-                              <MoreHorizontal className="h-4 w-4" />
-                            </button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent
-                            align="start"
-                            className="min-w-[120px] rounded-lg border-0 bg-white p-0 py-1 shadow-[0_4px_16px_rgba(0,0,0,0.12)]"
                           >
-                            <DropdownMenuItem
-                              onClick={(event) => {
-                                event.stopPropagation();
-                                startRename(session.id, session.title || "新对话");
+                            {hasChildren ? (
+                              <button
+                                type="button"
+                                className="flex h-4 w-4 shrink-0 items-center justify-center"
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  toggleExpand(session.id);
+                                }}
+                              >
+                                <ChevronRight
+                                  className={cn(
+                                    "h-3 w-3 transition-transform",
+                                    isExpanded && "rotate-90"
+                                  )}
+                                />
+                              </button>
+                            ) : (
+                              <span className="w-4 shrink-0" />
+                            )}
+                            {renamingId === session.id ? (
+                              <input
+                                ref={renameInputRef}
+                                value={renameValue}
+                                onChange={(event) => setRenameValue(event.target.value)}
+                                onClick={(event) => event.stopPropagation()}
+                                onKeyDown={(event) => {
+                                  if (event.key === "Enter") {
+                                    event.preventDefault();
+                                    commitRename().catch(() => null);
+                                  }
+                                  if (event.key === "Escape") {
+                                    event.preventDefault();
+                                    cancelRename();
+                                  }
+                                }}
+                                onBlur={() => {
+                                  commitRename().catch(() => null);
+                                }}
+                                className="h-6 flex-1 rounded-md border border-[#E5E5E5] bg-white px-2 text-[14px] leading-[22px] text-[#333333] focus:border-[#7C3AED] focus:outline-none"
+                              />
+                            ) : (
+                              <span className="min-w-0 flex-1 truncate font-normal">
+                                {session.title || "新对话"}
+                              </span>
+                            )}
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <button
+                                  type="button"
+                                  className={cn(
+                                    "flex h-6 w-6 items-center justify-center rounded text-[#666666] transition-opacity duration-150 hover:bg-[rgba(0,0,0,0.06)]",
+                                    currentSessionId === session.id
+                                      ? "pointer-events-auto opacity-100 text-[#7C3AED]"
+                                      : "pointer-events-none opacity-0 group-hover:pointer-events-auto group-hover:opacity-100"
+                                  )}
+                                  onClick={(event) => event.stopPropagation()}
+                                  aria-label="会话操作"
+                                >
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent
+                                align="start"
+                                className="min-w-[120px] rounded-lg border-0 bg-white p-0 py-1 shadow-[0_4px_16px_rgba(0,0,0,0.12)]"
+                              >
+                                <DropdownMenuItem
+                                  onClick={(event) => {
+                                    event.stopPropagation();
+                                    startRename(session.id, session.title || "新对话");
+                                  }}
+                                  className="px-4 py-2 text-[14px] text-[#333333] focus:bg-[#F5F5F5] focus:text-[#333333] data-[highlighted]:bg-[#F5F5F5] data-[highlighted]:text-[#333333]"
+                                >
+                                  <Pencil className="mr-2 h-4 w-4" />
+                                  重命名
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={(event) => {
+                                    event.stopPropagation();
+                                    setDeleteTarget({
+                                      id: session.id,
+                                      title: session.title || "新对话",
+                                      hasChildren
+                                    });
+                                  }}
+                                  className="px-4 py-2 text-[14px] text-[#FF4D4F] focus:bg-[#F5F5F5] focus:text-[#FF4D4F] data-[highlighted]:bg-[#F5F5F5] data-[highlighted]:text-[#FF4D4F]"
+                                >
+                                  <Trash2 className="mr-2 h-4 w-4" />
+                                  删除
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
+                          {isExpanded && childSessions.map((child) => (
+                            <div
+                              key={child.id}
+                              className={cn(
+                                "group my-[1px] flex min-h-[36px] cursor-pointer items-center gap-2 rounded-lg pl-10 pr-3 py-1.5 text-[13px] leading-[20px] transition-colors duration-200",
+                                currentSessionId === child.id
+                                  ? "bg-[#EDE9FE] text-[#7C3AED]"
+                                  : "text-[#555] hover:bg-[#F5F5F5]"
+                              )}
+                              role="button"
+                              tabIndex={0}
+                              onClick={() => {
+                                if (renamingId === child.id) return;
+                                if (renamingId) {
+                                  cancelRename();
+                                }
+                                selectSession(child.id).catch(() => null);
+                                navigate(`/chat/${child.id}`);
+                                onClose();
                               }}
-                              className="px-4 py-2 text-[14px] text-[#333333] focus:bg-[#F5F5F5] focus:text-[#333333] data-[highlighted]:bg-[#F5F5F5] data-[highlighted]:text-[#333333]"
-                            >
-                              <Pencil className="mr-2 h-4 w-4" />
-                              重命名
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={(event) => {
-                                event.stopPropagation();
-                                setDeleteTarget({
-                                  id: session.id,
-                                  title: session.title || "新对话"
-                                });
+                              onKeyDown={(event) => {
+                                if (event.key === "Enter") {
+                                  selectSession(child.id).catch(() => null);
+                                  navigate(`/chat/${child.id}`);
+                                  onClose();
+                                }
                               }}
-                              className="px-4 py-2 text-[14px] text-[#FF4D4F] focus:bg-[#F5F5F5] focus:text-[#FF4D4F] data-[highlighted]:bg-[#F5F5F5] data-[highlighted]:text-[#FF4D4F]"
                             >
-                              <Trash2 className="mr-2 h-4 w-4" />
-                              删除
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-                    ))}
+                              {renamingId === child.id ? (
+                                <input
+                                  ref={renameInputRef}
+                                  value={renameValue}
+                                  onChange={(event) => setRenameValue(event.target.value)}
+                                  onClick={(event) => event.stopPropagation()}
+                                  onKeyDown={(event) => {
+                                    if (event.key === "Enter") {
+                                      event.preventDefault();
+                                      commitRename().catch(() => null);
+                                    }
+                                    if (event.key === "Escape") {
+                                      event.preventDefault();
+                                      cancelRename();
+                                    }
+                                  }}
+                                  onBlur={() => {
+                                    commitRename().catch(() => null);
+                                  }}
+                                  className="h-6 flex-1 rounded-md border border-[#E5E5E5] bg-white px-2 text-[13px] leading-[20px] text-[#333333] focus:border-[#7C3AED] focus:outline-none"
+                                />
+                              ) : (
+                                <span className="min-w-0 flex-1 truncate font-normal">
+                                  {child.title || "分支"}
+                                </span>
+                              )}
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <button
+                                    type="button"
+                                    className={cn(
+                                      "flex h-6 w-6 items-center justify-center rounded text-[#666666] transition-opacity duration-150 hover:bg-[rgba(0,0,0,0.06)]",
+                                      currentSessionId === child.id
+                                        ? "pointer-events-auto opacity-100 text-[#7C3AED]"
+                                        : "pointer-events-none opacity-0 group-hover:pointer-events-auto group-hover:opacity-100"
+                                    )}
+                                    onClick={(event) => event.stopPropagation()}
+                                    aria-label="会话操作"
+                                  >
+                                    <MoreHorizontal className="h-4 w-4" />
+                                  </button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent
+                                  align="start"
+                                  className="min-w-[120px] rounded-lg border-0 bg-white p-0 py-1 shadow-[0_4px_16px_rgba(0,0,0,0.12)]"
+                                >
+                                  <DropdownMenuItem
+                                    onClick={(event) => {
+                                      event.stopPropagation();
+                                      startRename(child.id, child.title || "分支");
+                                    }}
+                                    className="px-4 py-2 text-[14px] text-[#333333] focus:bg-[#F5F5F5] focus:text-[#333333] data-[highlighted]:bg-[#F5F5F5] data-[highlighted]:text-[#333333]"
+                                  >
+                                    <Pencil className="mr-2 h-4 w-4" />
+                                    重命名
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    onClick={(event) => {
+                                      event.stopPropagation();
+                                      const grandChildren = childrenMap.get(child.id) || [];
+                                      setDeleteTarget({
+                                        id: child.id,
+                                        title: child.title || "分支",
+                                        hasChildren: grandChildren.length > 0
+                                      });
+                                    }}
+                                    className="px-4 py-2 text-[14px] text-[#FF4D4F] focus:bg-[#F5F5F5] focus:text-[#FF4D4F] data-[highlighted]:bg-[#F5F5F5] data-[highlighted]:text-[#FF4D4F]"
+                                  >
+                                    <Trash2 className="mr-2 h-4 w-4" />
+                                    删除
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </div>
+                          ))}
+                        </React.Fragment>
+                      );
+                    })}
                   </div>
                 ))}
               </div>
@@ -476,7 +662,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           <AlertDialogHeader>
             <AlertDialogTitle>删除该会话？</AlertDialogTitle>
             <AlertDialogDescription>
-              [{deleteTarget?.title || "该会话"}] 将被永久删除，无法恢复。
+              [{deleteTarget?.title || "该会话"}] {deleteTarget?.hasChildren ? "及其所有分支" : ""}将被永久删除，无法恢复。
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

@@ -16,6 +16,7 @@ export function ChatPage() {
     currentSessionId,
     sessions,
     isCreatingNew,
+    isForking,
     fetchSessions,
     selectSession,
     createSession
@@ -26,6 +27,9 @@ export function ChatPage() {
     if (!sessionId) return false;
     return sessions.some((session) => session.id === sessionId);
   }, [sessionId, sessions]);
+
+  // 当 currentSessionId 变化且与 URL 不同步时，更新 URL
+  const lastNavigatedRef = React.useRef<string | null>(null);
 
   React.useEffect(() => {
     let active = true;
@@ -42,13 +46,22 @@ export function ChatPage() {
   }, [fetchSessions]);
 
   React.useEffect(() => {
+    if (isForking) return;
     if (sessionId) {
       if (sessionsReady && !sessionExists) {
+        // 会话不存在时，检查是否是当前会话（可能是刚创建的分支）
+        if (currentSessionId === sessionId) {
+          // 是当前会话，不需要重新创建
+          return;
+        }
         createSession().catch(() => null);
         navigate("/chat", { replace: true });
         return;
       }
-      selectSession(sessionId).catch(() => null);
+      // 只有当 sessionId 确实变化了才调用 selectSession
+      if (currentSessionId !== sessionId) {
+        selectSession(sessionId).catch(() => null);
+      }
       return;
     }
     if (!sessionsReady) {
@@ -66,6 +79,7 @@ export function ChatPage() {
     sessionsReady,
     sessionExists,
     isCreatingNew,
+    isForking,
     currentSessionId,
     selectSession,
     createSession,
@@ -73,7 +87,9 @@ export function ChatPage() {
   ]);
 
   React.useEffect(() => {
-    if (currentSessionId && currentSessionId !== sessionId) {
+    // 只有当 currentSessionId 确实变化了，且不是我们刚刚导航过的，才更新 URL
+    if (currentSessionId && currentSessionId !== sessionId && lastNavigatedRef.current !== currentSessionId) {
+      lastNavigatedRef.current = currentSessionId;
       navigate(`/chat/${currentSessionId}`, { replace: true });
     }
   }, [currentSessionId, sessionId, navigate]);

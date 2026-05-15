@@ -46,6 +46,10 @@ public class ConversationDO {
 
     private String title;
 
+    private String parentId;
+
+    private Long branchFromMessageId;
+
     private Date lastTime;
 
     @TableField(fill = FieldFill.INSERT)

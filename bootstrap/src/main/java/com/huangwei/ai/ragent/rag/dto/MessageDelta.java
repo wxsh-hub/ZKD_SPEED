@@ -21,7 +21,14 @@ package com.huangwei.ai.ragent.rag.dto;
  * 消息增量记录类
  * 用于表示消息的类型和增量数据
  */
-public record MessageDelta(String type, String delta) {
+public record MessageDelta(String type, String delta, String modelId) {
+
+    /**
+     * 构造函数（不带模型信息）
+     */
+    public MessageDelta(String type, String delta) {
+        this(type, delta, null);
+    }
 
     /**
      * 消息类型
@@ -35,5 +42,12 @@ public record MessageDelta(String type, String delta) {
      */
     public String delta() {
         return delta;
+    }
+
+    /**
+     * 模型ID（可选，用于标识使用了哪个模型）
+     */
+    public String modelId() {
+        return modelId;
     }
 }

@@ -15,12 +15,26 @@
  * limitations under the License.
  */
 
-package com.huangwei.ai.ragent.imitation.dao.mapper;
+package com.huangwei.ai.ragent.framework.log;
 
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.huangwei.ai.ragent.imitation.dao.entity.ArticleAnalysisDO;
-import org.apache.ibatis.annotations.Mapper;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.ApplicationArguments;
+import org.springframework.boot.ApplicationRunner;
+import org.springframework.stereotype.Component;
 
-@Mapper
-public interface ArticleAnalysisMapper extends BaseMapper<ArticleAnalysisDO> {
+@Slf4j
+@Component
+public class LogAutoConfiguration implements ApplicationRunner {
+
+    private final SystemLogMapper systemLogMapper;
+
+    public LogAutoConfiguration(SystemLogMapper systemLogMapper) {
+        this.systemLogMapper = systemLogMapper;
+    }
+
+    @Override
+    public void run(ApplicationArguments args) {
+        DatabaseLogAppender.startWorker(systemLogMapper);
+        log.info("数据库日志落库 Worker 已启动");
+    }
 }

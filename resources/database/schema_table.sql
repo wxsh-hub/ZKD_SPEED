@@ -431,3 +431,26 @@ CREATE TABLE `t_article_analysis`
     PRIMARY KEY (`id`),
     KEY             `idx_task_id` (`task_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='文章分析表（核心论点/写作风格/文章结构）';
+
+-- ==================== 系统日志 ====================
+
+CREATE TABLE `t_system_log`
+(
+    `id`              bigint(20) NOT NULL COMMENT '主键ID',
+    `trace_id`        varchar(64)  DEFAULT NULL COMMENT '链路ID',
+    `request_id`      varchar(64)  DEFAULT NULL COMMENT '请求ID',
+    `request_method`  varchar(10)  DEFAULT NULL COMMENT 'HTTP方法',
+    `request_url`     varchar(512) DEFAULT NULL COMMENT '请求路径',
+    `request_ip`      varchar(64)  DEFAULT NULL COMMENT '客户端IP',
+    `user_id`         varchar(64)  DEFAULT NULL COMMENT '操作用户ID',
+    `level`           varchar(10)  NOT NULL COMMENT '日志级别 INFO/WARN/ERROR',
+    `logger_name`     varchar(256) DEFAULT NULL COMMENT '类名',
+    `message`         text COMMENT '日志消息',
+    `exception_stack` text COMMENT '异常堆栈',
+    `duration_ms`     bigint(20)   DEFAULT NULL COMMENT '请求耗时(毫秒)',
+    `create_time`     datetime     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    PRIMARY KEY (`id`),
+    KEY               `idx_trace_id` (`trace_id`),
+    KEY               `idx_level_time` (`level`, `create_time`),
+    KEY               `idx_create_time` (`create_time`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='系统日志表';

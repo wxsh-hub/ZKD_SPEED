@@ -20,6 +20,7 @@ package com.huangwei.ai.ragent.framework.web;
 import com.huangwei.ai.ragent.framework.convention.Result;
 import com.huangwei.ai.ragent.framework.errorcode.BaseErrorCode;
 import com.huangwei.ai.ragent.framework.exception.AbstractException;
+import com.huangwei.ai.ragent.framework.trace.RagTraceContext;
 
 import java.util.Optional;
 
@@ -33,7 +34,8 @@ public final class Results {
      */
     public static Result<Void> success() {
         return new Result<Void>()
-                .setCode(Result.SUCCESS_CODE);
+                .setCode(Result.SUCCESS_CODE)
+                .setRequestId(getTraceId());
     }
 
     /**
@@ -42,37 +44,70 @@ public final class Results {
     public static <T> Result<T> success(T data) {
         return new Result<T>()
                 .setCode(Result.SUCCESS_CODE)
-                .setData(data);
+                .setData(data)
+                .setRequestId(getTraceId());
     }
 
     /**
      * 构建服务端失败响应
      */
     public static Result<Void> failure() {
+        return failure((String) null);
+    }
+
+    /**
+     * 构建带 traceId 的失败响应
+     */
+    static Result<Void> failure(String traceId) {
         return new Result<Void>()
                 .setCode(BaseErrorCode.SERVICE_ERROR.code())
-                .setMessage(BaseErrorCode.SERVICE_ERROR.message());
+                .setMessage(BaseErrorCode.SERVICE_ERROR.message())
+                .setRequestId(traceId != null ? traceId : getTraceId());
     }
 
     /**
      * 通过 {@link AbstractException} 构建失败响应
      */
     static Result<Void> failure(AbstractException abstractException) {
+        return failure(abstractException, null);
+    }
+
+    /**
+     * 通过 {@link AbstractException} 构建失败响应（带 traceId）
+     */
+    static Result<Void> failure(AbstractException abstractException, String traceId) {
         String errorCode = Optional.ofNullable(abstractException.getErrorCode())
                 .orElse(BaseErrorCode.SERVICE_ERROR.code());
         String errorMessage = Optional.ofNullable(abstractException.getErrorMessage())
                 .orElse(BaseErrorCode.SERVICE_ERROR.message());
         return new Result<Void>()
                 .setCode(errorCode)
-                .setMessage(errorMessage);
+                .setMessage(errorMessage)
+                .setRequestId(traceId != null ? traceId : getTraceId());
     }
 
     /**
      * 通过 errorCode、errorMessage 构建失败响应
      */
     static Result<Void> failure(String errorCode, String errorMessage) {
+        return failure(errorCode, errorMessage, null);
+    }
+
+    /**
+     * 通过 errorCode、errorMessage 构建失败响应（带 traceId）
+     */
+    static Result<Void> failure(String errorCode, String errorMessage, String traceId) {
         return new Result<Void>()
                 .setCode(errorCode)
-                .setMessage(errorMessage);
+                .setMessage(errorMessage)
+                .setRequestId(traceId != null ? traceId : getTraceId());
+    }
+
+    private static String getTraceId() {
+        try {
+            return RagTraceContext.getTraceId();
+        } catch (Exception e) {
+            return null;
+        }
     }
 }

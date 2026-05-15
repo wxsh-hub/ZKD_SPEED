@@ -188,3 +188,49 @@ npm run dev
 | ragent-main | master | 合并代码、协调 |
 | ragent-screenshot | feature/screenshot | 后端接口（1.1, 1.2, 2.4, 3.1, 3.2, 3.4） |
 | ragent-frontend | feature/frontend | 前端页面（1.4, 2.1, 2.2, 2.3, 2.5, 3.3, 3.5） |
+
+## 本地测试配置（多项目并行）
+
+为支持多项目同时运行进行接口测试，本地开发时修改以下配置，**提交时不要包含这些改动**。
+
+### 后端配置修改
+
+文件：`bootstrap/src/main/resources/application.yaml`
+
+```yaml
+server:
+  port: 9091  # 原为 9090，改为 9091 避免端口冲突
+
+spring:
+  datasource:
+    url: jdbc:mysql://127.0.0.1:3306/222?...  # 数据库名改为 222（或你本地的库名）
+```
+
+### 前端配置修改
+
+文件：`frontend/vite.config.ts`（或对应的代理配置文件）
+
+```typescript
+proxy: {
+  '/api': {
+    target: 'http://localhost:9091',  // 原为 9090，改为 9091
+    changeOrigin: true,
+  }
+}
+```
+
+### 提交时排除配置文件
+
+```bash
+git add .
+git checkout -- bootstrap/src/main/resources/application.yaml
+git checkout -- frontend/vite.config.ts
+git commit -m "你的提交信息"
+```
+
+### 当前端口分配
+
+| 项目 | 后端端口 | 前端端口 |
+|------|----------|----------|
+| ragent-main (master) | 9090 | 5173 |
+| ragent-screenshot (feature/screenshot) | 9091 | 5174 |

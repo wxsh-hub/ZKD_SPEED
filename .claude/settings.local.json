@@ -65,7 +65,14 @@
       "Bash(cp \"C:/Users/sunha/Desktop/11/ragent-main/.claude/CLAUDE.md\" \"C:/Users/sunha/Desktop/11/ragent-frontend/.claude/CLAUDE.md\")",
       "Bash(cp \"C:/Users/sunha/Desktop/11/ragent-main/.claude/settings.local.json\" \"C:/Users/sunha/Desktop/11/ragent-screenshot/.claude/settings.local.json\")",
       "Bash(cp \"C:/Users/sunha/Desktop/11/ragent-main/.claude/settings.local.json\" \"C:/Users/sunha/Desktop/11/ragent-frontend/.claude/settings.local.json\")",
-      "Read(//c/Users/sunha/.claude/**)"
+      "Read(//c/Users/sunha/.claude/**)",
+      "Bash(git commit -m ' *)",
+      "Bash(git commit *)",
+      "Bash(mvn *)",
+      "Bash(./mvnw spring-boot:run -pl bootstrap)",
+      "Bash(findstr \"4412\")",
+      "Bash(./mvnw spring-boot:run -pl bootstrap -Dspring-boot.run.arguments=\"--server.port=9092\")",
+      "Bash(./mvnw clean *)"
     ]
   }
 }

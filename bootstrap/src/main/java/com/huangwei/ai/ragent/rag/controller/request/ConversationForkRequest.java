@@ -15,39 +15,19 @@
  * limitations under the License.
  */
 
-package com.huangwei.ai.ragent.rag.dto;
+package com.huangwei.ai.ragent.rag.controller.request;
+
+import lombok.Data;
 
 /**
- * 消息增量记录类
- * 用于表示消息的类型和增量数据
+ * 会话分叉请求
  */
-public record MessageDelta(String type, String delta, String modelId) {
+@Data
+public class ConversationForkRequest {
 
     /**
-     * 构造函数（不带模型信息）
+     * 从哪条消息处分叉（包含该消息及之前的所有消息）
+     * 使用 String 类型避免 JavaScript 大数精度丢失
      */
-    public MessageDelta(String type, String delta) {
-        this(type, delta, null);
-    }
-
-    /**
-     * 消息类型
-     */
-    public String type() {
-        return type;
-    }
-
-    /**
-     * 增量数据
-     */
-    public String delta() {
-        return delta;
-    }
-
-    /**
-     * 模型ID（可选，用于标识使用了哪个模型）
-     */
-    public String modelId() {
-        return modelId;
-    }
+    private String messageId;
 }

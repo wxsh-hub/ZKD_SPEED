@@ -50,6 +50,7 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -119,30 +120,39 @@ public class ImitationServiceImpl implements ImitationService {
         // 2. 加载本次会话的历史消息
         List<ChatMessage> history = conversationMemoryService.load(conversationId, userId);
 
-        // 3. 根据改写要求检索参考文章片段
-        String queryText = StrUtil.isNotBlank(request.getRequirements())
-                ? request.getRequirements() : "文章内容";
-        RetrieveRequest retrieveRequest = RetrieveRequest.builder()
-                .query(queryText)
-                .topK(request.getTopK())
-                .collectionName(request.getCollectionName())
-                .build();
-        List<RetrievedChunk> chunks = milvusRetrieverService.retrieve(retrieveRequest);
-
-        if (chunks.isEmpty()) {
-            try {
-                emitter.send(SseEmitter.event().data("未检索到参考文章内容，请确认已上传文章文件并完成入库。"));
-                emitter.complete();
-            } catch (Exception e) {
-                emitter.completeWithError(e);
-            }
-            return;
+        // 3. 获取参考文章内容：优先按 task_id 全量查询，降级为语义检索
+        String fullText;
+        if (StrUtil.isNotBlank(request.getTaskId())) {
+            fullText = fetchAllChunksByTaskId(request.getTaskId());
+        } else {
+            fullText = null;
         }
 
-        // 4. 拼接检索到的相关片段
-        String context = chunks.stream()
-                .map(c -> "[相关度: " + String.format("%.2f", c.getScore()) + "]\n" + c.getText())
-                .collect(Collectors.joining("\n\n---\n\n"));
+        if (StrUtil.isBlank(fullText)) {
+            // 降级：语义检索
+            String queryText = StrUtil.isNotBlank(request.getRequirements())
+                    ? request.getRequirements() : "文章内容";
+            RetrieveRequest retrieveRequest = RetrieveRequest.builder()
+                    .query(queryText)
+                    .topK(request.getTopK())
+                    .collectionName(request.getCollectionName())
+                    .build();
+            List<RetrievedChunk> chunks = milvusRetrieverService.retrieve(retrieveRequest);
+
+            if (chunks.isEmpty()) {
+                try {
+                    emitter.send(SseEmitter.event().data("未检索到参考文章内容，请确认已上传文章文件并完成入库。"));
+                    emitter.complete();
+                } catch (Exception e) {
+                    emitter.completeWithError(e);
+                }
+                return;
+            }
+
+            fullText = chunks.stream()
+                    .map(RetrievedChunk::getText)
+                    .collect(Collectors.joining("\n\n"));
+        }
 
         // 5. 查询文章分析摘要（核心论点、写作风格、文章结构）
         ArticleAnalysisDO analysis = findLatestAnalysis();
@@ -150,7 +160,7 @@ public class ImitationServiceImpl implements ImitationService {
 
         // 6. 组装 prompt（带历史对话上下文）
         String systemPrompt = buildSystemPrompt(request.getWordCount());
-        String userPrompt = buildUserPrompt(analysisContext, context, request.getRequirements());
+        String userPrompt = buildUserPrompt(analysisContext, fullText, request.getRequirements());
 
         List<ChatMessage> messages = new ArrayList<>();
         messages.add(ChatMessage.system(systemPrompt));
@@ -218,6 +228,58 @@ public class ImitationServiceImpl implements ImitationService {
                 emitter.completeWithError(error);
             }
         });
+    }
+
+    // ==================== 原文全量查询 ====================
+
+    /**
+     * 按 task_id 从 Milvus 查询该文章的所有 chunk，按 chunk_index 排序后拼接为完整原文
+     */
+    private String fetchAllChunksByTaskId(String taskId) {
+        String collectionName = ragDefaultProperties.getCollectionName();
+
+        QueryReq queryReq = QueryReq.builder()
+                .collectionName(collectionName)
+                .filter("metadata[\"task_id\"] == \"" + taskId + "\"")
+                .outputFields(List.of("content", "metadata"))
+                .limit(500)
+                .build();
+
+        QueryResp resp = milvusClient.query(queryReq);
+        List<QueryResp.QueryResult> results = resp.getQueryResults();
+        if (results == null || results.isEmpty()) {
+            log.warn("按 task_id 未查询到 chunk，taskId={}", taskId);
+            return null;
+        }
+
+        // 按 chunk_index 排序
+        results.sort((a, b) -> {
+            int idxA = getChunkIndex(a);
+            int idxB = getChunkIndex(b);
+            return Integer.compare(idxA, idxB);
+        });
+
+        String fullText = results.stream()
+                .map(r -> String.valueOf(r.getEntity().get("content")))
+                .collect(Collectors.joining("\n"));
+
+        log.info("按 task_id 获取原文成功，taskId={}, chunks={}, length={}", taskId, results.size(), fullText.length());
+        return fullText;
+    }
+
+    private int getChunkIndex(QueryResp.QueryResult result) {
+        try {
+            Object meta = result.getEntity().get("metadata");
+            if (meta instanceof Map) {
+                Object idx = ((Map<?, ?>) meta).get("chunk_index");
+                if (idx instanceof Number) {
+                    return ((Number) idx).intValue();
+                }
+            }
+        } catch (Exception e) {
+            log.warn("解析 chunk_index 失败", e);
+        }
+        return 0;
     }
 
     // ==================== 文章分析提取 ====================
@@ -356,7 +418,7 @@ public class ImitationServiceImpl implements ImitationService {
             sb.append("----------\n\n");
         }
 
-        sb.append("【参考文章原文】（参考内容和语境）\n\n");
+        sb.append("【参考文章完整原文】\n\n");
         sb.append(chunkContext);
         sb.append("\n\n----------\n\n");
 

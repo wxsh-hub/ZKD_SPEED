@@ -17,6 +17,7 @@
 
 package com.huangwei.ai.ragent.rag.service.impl;
 
+import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.huangwei.ai.ragent.rag.config.MemoryProperties;
@@ -41,6 +42,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -83,6 +86,8 @@ public class ConversationServiceImpl implements ConversationService {
                 .map(item -> ConversationVO.builder()
                         .conversationId(item.getConversationId())
                         .title(item.getTitle())
+                        .parentId(item.getParentId())
+                        .branchFromMessageId(item.getBranchFromMessageId())
                         .lastTime(item.getLastTime())
                         .build())
                 .collect(Collectors.toList());
@@ -168,19 +173,141 @@ public class ConversationServiceImpl implements ConversationService {
             throw new ClientException("会话不存在");
         }
 
-        conversationMapper.deleteById(record.getId());
-        messageMapper.delete(
+        // 收集所有后代会话ID（含自身）
+        List<String> allIds = new ArrayList<>();
+        collectDescendantIds(conversationId, userId, allIds);
+        allIds.add(conversationId);
+
+        // 批量删除所有会话及其消息和摘要
+        for (String id : allIds) {
+            conversationMapper.delete(
+                    Wrappers.lambdaQuery(ConversationDO.class)
+                            .eq(ConversationDO::getConversationId, id)
+                            .eq(ConversationDO::getUserId, userId)
+                            .eq(ConversationDO::getDeleted, 0)
+            );
+            messageMapper.delete(
+                    Wrappers.lambdaQuery(ConversationMessageDO.class)
+                            .eq(ConversationMessageDO::getConversationId, id)
+                            .eq(ConversationMessageDO::getUserId, userId)
+                            .eq(ConversationMessageDO::getDeleted, 0)
+            );
+            summaryMapper.delete(
+                    Wrappers.lambdaQuery(ConversationSummaryDO.class)
+                            .eq(ConversationSummaryDO::getConversationId, id)
+                            .eq(ConversationSummaryDO::getUserId, userId)
+                            .eq(ConversationSummaryDO::getDeleted, 0)
+            );
+        }
+    }
+
+    private void collectDescendantIds(String parentId, String userId, List<String> result) {
+        List<ConversationDO> children = conversationMapper.selectList(
+                Wrappers.lambdaQuery(ConversationDO.class)
+                        .eq(ConversationDO::getParentId, parentId)
+                        .eq(ConversationDO::getUserId, userId)
+                        .eq(ConversationDO::getDeleted, 0)
+        );
+        for (ConversationDO child : children) {
+            result.add(child.getConversationId());
+            collectDescendantIds(child.getConversationId(), userId, result);
+        }
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public ConversationVO fork(String sourceConversationId, String messageId, String userId) {
+        if (StrUtil.isBlank(sourceConversationId) || StrUtil.isBlank(messageId) || StrUtil.isBlank(userId)) {
+            throw new ClientException("分叉参数缺失");
+        }
+        Long messageIdLong;
+        try {
+            messageIdLong = Long.parseLong(messageId);
+        } catch (NumberFormatException e) {
+            throw new ClientException("消息ID格式错误");
+        }
+
+        // 验证源会话存在且属于当前用户
+        ConversationDO sourceConversation = conversationMapper.selectOne(
+                Wrappers.lambdaQuery(ConversationDO.class)
+                        .eq(ConversationDO::getConversationId, sourceConversationId)
+                        .eq(ConversationDO::getUserId, userId)
+                        .eq(ConversationDO::getDeleted, 0)
+        );
+        if (sourceConversation == null) {
+            throw new ClientException("源会话不存在");
+        }
+
+        // 获取指定消息及之前的所有消息
+        List<ConversationMessageDO> sourceMessages = messageMapper.selectList(
                 Wrappers.lambdaQuery(ConversationMessageDO.class)
-                        .eq(ConversationMessageDO::getConversationId, conversationId)
+                        .eq(ConversationMessageDO::getConversationId, sourceConversationId)
                         .eq(ConversationMessageDO::getUserId, userId)
                         .eq(ConversationMessageDO::getDeleted, 0)
+                        .le(ConversationMessageDO::getId, messageIdLong)
+                        .orderByAsc(ConversationMessageDO::getId)
         );
-        summaryMapper.delete(
-                Wrappers.lambdaQuery(ConversationSummaryDO.class)
-                        .eq(ConversationSummaryDO::getConversationId, conversationId)
-                        .eq(ConversationSummaryDO::getUserId, userId)
-                        .eq(ConversationSummaryDO::getDeleted, 0)
-        );
+
+        if (sourceMessages.isEmpty()) {
+            throw new ClientException("未找到指定消息");
+        }
+
+        // 用用户的提问内容生成标题（从后往前找最后一条 user 消息）
+        String userQuestion = null;
+        for (int i = sourceMessages.size() - 1; i >= 0; i--) {
+            if ("user".equals(sourceMessages.get(i).getRole())) {
+                userQuestion = sourceMessages.get(i).getContent();
+                break;
+            }
+        }
+        if (userQuestion == null) {
+            userQuestion = sourceMessages.get(sourceMessages.size() - 1).getContent();
+        }
+        String branchTitle = generateBranchTitle(userQuestion);
+
+        // 创建新会话
+        String newConversationId = IdUtil.fastSimpleUUID();
+        Date now = new Date();
+        ConversationDO newConversation = ConversationDO.builder()
+                .conversationId(newConversationId)
+                .userId(userId)
+                .title(branchTitle)
+                .parentId(sourceConversationId)
+                .branchFromMessageId(messageIdLong)
+                .lastTime(now)
+                .build();
+        conversationMapper.insert(newConversation);
+
+        // 复制消息到新会话
+        List<ConversationMessageDO> newMessages = new ArrayList<>();
+        for (ConversationMessageDO sourceMessage : sourceMessages) {
+            ConversationMessageDO newMessage = ConversationMessageDO.builder()
+                    .conversationId(newConversationId)
+                    .userId(userId)
+                    .role(sourceMessage.getRole())
+                    .content(sourceMessage.getContent())
+                    .promptSnapshot(sourceMessage.getPromptSnapshot())
+                    .createTime(now)
+                    .updateTime(now)
+                    .deleted(0)
+                    .build();
+            newMessages.add(newMessage);
+        }
+
+        // 批量插入新消息
+        for (ConversationMessageDO newMessage : newMessages) {
+            messageMapper.insert(newMessage);
+        }
+
+        log.info("会话分叉成功: source={}, new={}, messageCount={}", sourceConversationId, newConversationId, newMessages.size());
+
+        return ConversationVO.builder()
+                .conversationId(newConversationId)
+                .title(newConversation.getTitle())
+                .parentId(sourceConversationId)
+                .branchFromMessageId(messageIdLong)
+                .lastTime(now)
+                .build();
     }
 
     private String generateTitleFromQuestion(String question) {
@@ -208,6 +335,18 @@ public class ConversationServiceImpl implements ConversationService {
         } catch (Exception ex) {
             log.warn("生成会话标题失败", ex);
             return "新对话";
+        }
+    }
+
+    private String generateBranchTitle(String messageContent) {
+        String truncated = messageContent.length() > 200
+                ? messageContent.substring(0, 200)
+                : messageContent;
+        try {
+            return generateTitleFromQuestion(truncated);
+        } catch (Exception e) {
+            log.warn("生成分支标题失败", e);
+            return "分支对话";
         }
     }
 }

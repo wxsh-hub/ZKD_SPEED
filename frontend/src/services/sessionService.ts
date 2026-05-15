@@ -4,6 +4,8 @@ export interface ConversationVO {
   conversationId: string;
   title: string;
   lastTime?: string;
+  parentId?: string | null;
+  branchFromMessageId?: number | string | null;
 }
 
 export interface ConversationMessageVO {
@@ -29,4 +31,10 @@ export async function renameSession(conversationId: string, title: string) {
 
 export async function listMessages(conversationId: string) {
   return api.get<ConversationMessageVO[]>(`/conversations/${conversationId}/messages`);
+}
+
+export async function forkConversation(conversationId: string, messageId: number | string) {
+  return api.post<ConversationVO>(`/conversations/${conversationId}/fork`, {
+    messageId: String(messageId)
+  });
 }

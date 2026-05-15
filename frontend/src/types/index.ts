@@ -33,6 +33,7 @@ export interface Message {
   createdAt?: string;
   feedback?: FeedbackValue;
   status?: MessageStatus;
+  modelId?: string;
 }
 
 export interface StreamMetaPayload {
@@ -43,6 +44,7 @@ export interface StreamMetaPayload {
 export interface MessageDeltaPayload {
   type: string;
   delta: string;
+  modelId?: string;
 }
 
 export interface CompletionPayload {

@@ -49,6 +49,7 @@ public class StreamChatEventHandler implements StreamCallback {
     private final StreamTaskManager taskManager;
     private final boolean sendTitleOnComplete;
     private final StringBuilder answer = new StringBuilder();
+    private String currentModelId;
 
     /**
      * 使用参数对象构造（推荐）
@@ -122,7 +123,7 @@ public class StreamChatEventHandler implements StreamCallback {
             return;
         }
         answer.append(chunk);
-        sendChunked(TYPE_RESPONSE, chunk);
+        sendChunked(TYPE_RESPONSE, chunk, currentModelId);
     }
 
     @Override
@@ -133,7 +134,7 @@ public class StreamChatEventHandler implements StreamCallback {
         if (StrUtil.isBlank(chunk)) {
             return;
         }
-        sendChunked(TYPE_THINK, chunk);
+        sendChunked(TYPE_THINK, chunk, null);
     }
 
     @Override
@@ -160,7 +161,7 @@ public class StreamChatEventHandler implements StreamCallback {
         sender.fail(t);
     }
 
-    private void sendChunked(String type, String content) {
+    private void sendChunked(String type, String content, String modelId) {
         int length = content.length();
         int idx = 0;
         int count = 0;
@@ -171,13 +172,13 @@ public class StreamChatEventHandler implements StreamCallback {
             idx += Character.charCount(codePoint);
             count++;
             if (count >= messageChunkSize) {
-                sender.sendEvent(SSEEventType.MESSAGE.value(), new MessageDelta(type, buffer.toString()));
+                sender.sendEvent(SSEEventType.MESSAGE.value(), new MessageDelta(type, buffer.toString(), modelId));
                 buffer.setLength(0);
                 count = 0;
             }
         }
         if (!buffer.isEmpty()) {
-            sender.sendEvent(SSEEventType.MESSAGE.value(), new MessageDelta(type, buffer.toString()));
+            sender.sendEvent(SSEEventType.MESSAGE.value(), new MessageDelta(type, buffer.toString(), modelId));
         }
     }
 
@@ -190,5 +191,12 @@ public class StreamChatEventHandler implements StreamCallback {
             return conversation.getTitle();
         }
         return "新对话";
+    }
+
+    /**
+     * 设置当前使用的模型ID
+     */
+    public void setCurrentModelId(String modelId) {
+        this.currentModelId = modelId;
     }
 }

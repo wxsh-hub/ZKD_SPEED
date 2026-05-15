@@ -17,6 +17,7 @@
 
 package com.huangwei.ai.ragent.rag.controller;
 
+import com.huangwei.ai.ragent.rag.controller.request.ConversationForkRequest;
 import com.huangwei.ai.ragent.rag.controller.request.ConversationUpdateRequest;
 import com.huangwei.ai.ragent.rag.controller.vo.ConversationMessageVO;
 import com.huangwei.ai.ragent.rag.controller.vo.ConversationVO;
@@ -30,6 +31,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -80,5 +82,15 @@ public class ConversationController {
     @GetMapping("/conversations/{conversationId}/messages")
     public Result<List<ConversationMessageVO>> listMessages(@PathVariable String conversationId) {
         return Results.success(conversationMessageService.listMessages(conversationId, null, ConversationMessageOrder.ASC));
+    }
+
+    /**
+     * 从指定消息处分叉会话
+     * 复制该消息及之前的所有历史消息到新会话
+     */
+    @PostMapping("/conversations/{conversationId}/fork")
+    public Result<ConversationVO> fork(@PathVariable String conversationId,
+                                       @RequestBody ConversationForkRequest request) {
+        return Results.success(conversationService.fork(conversationId, request.getMessageId(), UserContext.getUserId()));
     }
 }

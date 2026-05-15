@@ -139,7 +139,7 @@ export function ImitationPage() {
     setOutput("");
 
     const controller = rewriteArticleStream(
-      { requirements: requirements.trim(), wordCount, conversationId, modelId: selectedModelId },
+      { requirements: requirements.trim(), wordCount, conversationId, modelId: selectedModelId, taskId: uploadResult?.taskId },
       token,
       {
         onChunk: (text) => setOutput((prev) => prev + text),

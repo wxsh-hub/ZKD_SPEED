@@ -8,14 +8,17 @@ CREATE TABLE `t_conversation`
     `id`              bigint(20) NOT NULL COMMENT '主键ID',
     `conversation_id` varchar(64)  NOT NULL COMMENT '会话ID',
     `user_id`         varchar(64)  NOT NULL COMMENT '用户ID',
-    `title`           varchar(128) NOT NULL COMMENT '会话名称',
+    `title`                  varchar(128) NOT NULL COMMENT '会话名称',
+    `parent_id`              varchar(64)  DEFAULT NULL COMMENT '父会话ID（分叉来源）',
+    `branch_from_message_id` bigint(20)   DEFAULT NULL COMMENT '分叉点消息ID',
     `last_time`       datetime DEFAULT NULL COMMENT '最近消息时间',
     `create_time`     datetime DEFAULT NULL COMMENT '创建时间',
     `update_time`     datetime DEFAULT NULL COMMENT '更新时间',
     `deleted`         tinyint(4) DEFAULT '0' COMMENT '是否删除 0：正常 1：删除',
     PRIMARY KEY (`id`),
     UNIQUE KEY `uk_conversation_user` (`conversation_id`,`user_id`),
-    KEY               `idx_user_time` (`user_id`,`last_time`)
+    KEY               `idx_user_time` (`user_id`,`last_time`),
+    KEY               `idx_parent_id` (`parent_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='会话列表';
 
 CREATE TABLE `t_conversation_summary`

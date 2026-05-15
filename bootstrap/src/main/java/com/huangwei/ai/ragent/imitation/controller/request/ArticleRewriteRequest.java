@@ -68,6 +68,11 @@ public class ArticleRewriteRequest {
     private int wordCount = 800;
 
     /**
+     * 上传时返回的任务ID，用于直接获取原文全部分块（优先于语义检索）
+     */
+    private String taskId;
+
+    /**
      * 指定使用的模型ID，为空时使用默认模型
      */
     private String modelId;

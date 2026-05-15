@@ -42,6 +42,7 @@ import com.huangwei.ai.ragent.rag.dto.RetrievalContext;
 import com.huangwei.ai.ragent.rag.dto.SubQuestionIntent;
 import com.huangwei.ai.ragent.rag.service.RAGChatService;
 import com.huangwei.ai.ragent.rag.service.handler.StreamCallbackFactory;
+import com.huangwei.ai.ragent.rag.service.handler.StreamChatEventHandler;
 import com.huangwei.ai.ragent.rag.service.handler.StreamTaskManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -132,9 +133,15 @@ public class RAGChatServiceImpl implements RAGChatService {
 
         RetrievalContext ctx = retrievalEngine.retrieve(subIntents, DEFAULT_TOP_K);
         if (ctx.isEmpty()) {
-            String emptyReply = "未检索到与问题相关的文档内容。";
-            callback.onContent(emptyReply);
-            callback.onComplete();
+            // 检索不到内容时，调用外部模型进行回答
+            StreamCancellationHandle handle = streamExternalModelResponse(
+                    rewriteResult.rewrittenQuestion(),
+                    history,
+                    thinkingEnabled,
+                    modelId,
+                    callback
+            );
+            taskManager.bindHandle(taskId, handle);
             return;
         }
 
@@ -172,6 +179,45 @@ public class RAGChatServiceImpl implements RAGChatService {
                 .thinking(false)
                 .modelId("qwen-plus")
                 .build();
+        return llmService.streamChat(req, callback);
+    }
+
+    /**
+     * 检索不到内容时，调用外部模型进行回答
+     */
+    private StreamCancellationHandle streamExternalModelResponse(String question, List<ChatMessage> history,
+                                                                  boolean deepThinking, String modelId,
+                                                                  StreamCallback callback) {
+        // 设置模型信息到callback
+        if (callback instanceof StreamChatEventHandler) {
+            String actualModelId = StrUtil.isBlank(modelId) ? "qwen-plus" : modelId;
+            ((StreamChatEventHandler) callback).setCurrentModelId(actualModelId);
+        }
+
+        // 添加提示信息
+        String tipMessage = "未检索到相关文档，正在使用外部模型回答...\n\n";
+        callback.onContent(tipMessage);
+
+        // 构建请求
+        String systemPrompt = "你是一个专业的AI助手。请根据你的知识回答用户的问题。如果不确定，请说明。";
+        List<ChatMessage> messages = new java.util.ArrayList<>();
+        messages.add(ChatMessage.system(systemPrompt));
+
+        // 添加历史消息（最多保留最近5轮）
+        int startIdx = Math.max(0, history.size() - 10);
+        for (int i = startIdx; i < history.size(); i++) {
+            messages.add(history.get(i));
+        }
+        messages.add(ChatMessage.user(question));
+
+        ChatRequest req = ChatRequest.builder()
+                .messages(messages)
+                .temperature(0.7D)
+                .topP(0.8D)
+                .thinking(deepThinking)
+                .modelId(StrUtil.isBlank(modelId) ? "qwen-plus" : modelId)
+                .build();
+
         return llmService.streamChat(req, callback);
     }
 

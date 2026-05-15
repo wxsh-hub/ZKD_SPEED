@@ -15,6 +15,7 @@ export interface ImitationRewriteParams {
   conversationId?: string;
   topK?: number;
   modelId?: string;
+  taskId?: string;
 }
 
 export async function uploadArticle(file: File) {
@@ -51,7 +52,8 @@ export function rewriteArticleStream(
         topK: params.topK ?? 10,
         wordCount: params.wordCount,
         conversationId: params.conversationId ?? "",
-        modelId: params.modelId || ""
+        modelId: params.modelId || "",
+        taskId: params.taskId || ""
       }),
       signal: controller.signal
     });

@@ -8,6 +8,7 @@ const ChatPage = lazy(() => import("@/pages/ChatPage").then((m) => ({ default: m
 const NotFoundPage = lazy(() => import("@/pages/NotFoundPage").then((m) => ({ default: m.NotFoundPage })));
 const NovelPage = lazy(() => import("@/pages/NovelPage").then((m) => ({ default: m.NovelPage })));
 const ImitationPage = lazy(() => import("@/pages/ImitationPage").then((m) => ({ default: m.ImitationPage })));
+const ScriptPage = lazy(() => import("@/pages/ScriptPage").then((m) => ({ default: m.ScriptPage })));
 const AdminLayout = lazy(() => import("@/pages/admin/AdminLayout").then((m) => ({ default: m.AdminLayout })));
 const DashboardPage = lazy(() => import("@/pages/admin/dashboard/DashboardPage").then((m) => ({ default: m.DashboardPage })));
 const KnowledgeListPage = lazy(() => import("@/pages/admin/knowledge/KnowledgeListPage").then((m) => ({ default: m.KnowledgeListPage })));
@@ -113,6 +114,22 @@ export const router = createBrowserRouter([
     element: (
       <RequireAuth>
         <LazyPage><ImitationPage /></LazyPage>
+      </RequireAuth>
+    )
+  },
+  {
+    path: "/script",
+    element: (
+      <RequireAuth>
+        <LazyPage><ScriptPage /></LazyPage>
+      </RequireAuth>
+    )
+  },
+  {
+    path: "/script/:projectId",
+    element: (
+      <RequireAuth>
+        <LazyPage><ScriptPage /></LazyPage>
       </RequireAuth>
     )
   },

@@ -34,6 +34,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
         "com.huangwei.ai.ragent.user.dao.mapper",
         "com.huangwei.ai.ragent.novel.dao.mapper",
         "com.huangwei.ai.ragent.imitation.dao.mapper",
+        "com.huangwei.ai.ragent.script.dao.mapper",
         "com.huangwei.ai.ragent.framework.log"
 })
 public class RagentApplication {

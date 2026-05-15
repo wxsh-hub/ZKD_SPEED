@@ -7,7 +7,7 @@ export function BranchExplainer() {
   const [expanded, setExpanded] = React.useState(true);
 
   return (
-    <div className="mx-auto max-w-[800px] px-6 pt-4">
+    <div className="mx-auto max-w-[800px] px-6 pt-2">
       <div className="overflow-hidden rounded-xl border border-[#E5E7EB] bg-gradient-to-br from-[#F5F3FF] via-white to-[#F0F9FF] shadow-sm">
         <button
           type="button"

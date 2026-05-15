@@ -59,13 +59,13 @@ public class NovelContinueRequest {
      * 续写字数档位，可选值：
      * 300  - 短篇（约300字）
      * 500  - 标准（约500字）
-     * 800  - 中等（约800字）
-     * 1500 - 长篇（约1500字）
+     * 700  - 中等（约700字）
+     * 1000 - 长篇（约1000字）
      * 3000 - 超长篇（约3000字）
-     * 默认 800
+     * 默认 700
      */
     @Builder.Default
-    private int wordCount = 800;
+    private int wordCount = 700;
 
     /**
      * 指定使用的模型ID，为空时使用默认模型

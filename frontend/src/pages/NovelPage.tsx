@@ -29,11 +29,11 @@ import { getSystemSettings, type ModelCandidate } from "@/services/settingsServi
 import { storage } from "@/utils/storage";
 
 const WORD_COUNT_PRESETS = [
-  { ratio: 0.7, label: "精简" },
-  { ratio: 0.9, label: "略少" },
-  { ratio: 1.0, label: "相当" },
-  { ratio: 1.1, label: "略多" },
-  { ratio: 1.3, label: "扩充" },
+  { value: 300, label: "300字" },
+  { value: 500, label: "500字" },
+  { value: 700, label: "700字" },
+  { value: 1000, label: "1000字" },
+  { value: 3000, label: "3000字" },
 ];
 
 const ACCEPT_TYPES = ".txt,.md,.pdf,.docx";
@@ -50,7 +50,7 @@ export function NovelPage() {
 
   // continue state
   const [direction, setDirection] = useState("");
-  const [wordCount, setWordCount] = useState(0);
+  const [wordCount, setWordCount] = useState(700);
   const [selectedModelId, setSelectedModelId] = useState("");
   const [models, setModels] = useState<ModelCandidate[]>([]);
   const [conversationId, setConversationId] = useState("");
@@ -73,18 +73,22 @@ export function NovelPage() {
       .catch(() => null);
   }, []);
 
-  // uploadResult 变化时，默认选中"相当"（原文等长）
-  useEffect(() => {
-    if (uploadResult?.originalWordCount) {
-      setWordCount(Math.round(uploadResult.originalWordCount * 1.0));
-    }
-  }, [uploadResult?.originalWordCount]);
-
-  const applyFile = useCallback((selected: File) => {
+  const applyFile = useCallback(async (selected: File) => {
     setFile(selected);
     setUploadResult(null);
     setOutput("");
     setConversationId("");
+    setUploading(true);
+    try {
+      const result = await uploadNovel(selected);
+      setUploadResult(result);
+      toast.success(`上传成功，原文 ${result.originalWordCount} 字，共 ${result.chunkCount} 个分块`);
+    } catch (err: any) {
+      toast.error(err?.message || "上传失败");
+      setFile(null);
+    } finally {
+      setUploading(false);
+    }
   }, []);
 
   const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -111,20 +115,6 @@ export function NovelPage() {
     const dropped = e.dataTransfer.files?.[0];
     if (dropped) applyFile(dropped);
   }, [applyFile]);
-
-  const handleUpload = useCallback(async () => {
-    if (!file) return;
-    setUploading(true);
-    try {
-      const result = await uploadNovel(file);
-      setUploadResult(result);
-      toast.success(`上传成功，原文 ${result.originalWordCount} 字，共 ${result.chunkCount} 个分块`);
-    } catch (err: any) {
-      toast.error(err?.message || "上传失败");
-    } finally {
-      setUploading(false);
-    }
-  }, [file]);
 
   const handleRemoveFile = useCallback(() => {
     setFile(null);
@@ -270,25 +260,12 @@ export function NovelPage() {
                         </button>
                       </div>
 
-                      {!uploadResult ? (
-                        <Button
-                          onClick={handleUpload}
-                          disabled={uploading}
-                          className="w-full bg-orange-500 hover:bg-orange-600"
-                        >
-                          {uploading ? (
-                            <>
-                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                              上传中...
-                            </>
-                          ) : (
-                            <>
-                              <Upload className="mr-2 h-4 w-4" />
-                              上传并入库
-                            </>
-                          )}
-                        </Button>
-                      ) : (
+                      {uploading ? (
+                        <div className="flex items-center justify-center gap-2 rounded-lg border border-orange-200 bg-orange-50 px-4 py-3 text-sm text-orange-600">
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          上传中...
+                        </div>
+                      ) : uploadResult ? (
                         <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
                           <p className="font-medium">上传成功</p>
                           <p className="text-xs text-emerald-600 mt-1">
@@ -297,7 +274,7 @@ export function NovelPage() {
                             {uploadResult.originalWordCount} 字
                           </p>
                         </div>
-                      )}
+                      ) : null}
                     </div>
                   )}
                 </div>
@@ -316,38 +293,22 @@ export function NovelPage() {
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-slate-700">
                       续写字数
-                      {uploadResult?.originalWordCount ? (
-                        <span className="ml-2 text-xs font-normal text-slate-400">
-                          原文 {uploadResult.originalWordCount} 字
-                        </span>
-                      ) : null}
                     </label>
-                    <div className="grid grid-cols-3 gap-2">
+                    <div className="grid grid-cols-5 gap-2">
                       {WORD_COUNT_PRESETS.map((opt) => {
-                        const original = uploadResult?.originalWordCount ?? 0;
-                        const computed = Math.round(original * opt.ratio);
-                        const disabled = computed > 3000;
-                        const selected = wordCount === computed;
+                        const selected = wordCount === opt.value;
                         return (
                           <button
-                            key={opt.ratio}
-                            onClick={() => !disabled && setWordCount(computed)}
-                            disabled={disabled}
+                            key={opt.value}
+                            onClick={() => setWordCount(opt.value)}
                             className={cn(
-                              "rounded-lg border px-3 py-2 text-center text-xs font-medium transition-colors",
-                              disabled
-                                ? "cursor-not-allowed border-slate-100 bg-slate-50 text-slate-300"
-                                : selected
-                                  ? "border-orange-300 bg-orange-50 text-orange-700"
-                                  : "border-slate-200 bg-white text-slate-600 hover:border-orange-200 hover:bg-orange-50/50"
+                              "rounded-lg border px-3 py-2 text-center text-xs font-medium whitespace-nowrap transition-colors",
+                              selected
+                                ? "border-orange-300 bg-orange-50 text-orange-700"
+                                : "border-slate-200 bg-white text-slate-600 hover:border-orange-200 hover:bg-orange-50/50"
                             )}
                           >
                             {opt.label}
-                            {original > 0 && (
-                              <span className="block text-[10px] mt-0.5 text-slate-400">
-                                {disabled ? "超限" : `约${computed}字`}
-                              </span>
-                            )}
                           </button>
                         );
                       })}

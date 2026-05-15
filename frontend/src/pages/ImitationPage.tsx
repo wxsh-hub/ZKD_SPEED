@@ -33,7 +33,7 @@ const WORD_COUNT_PRESETS = [
   { ratio: 0.9, label: "略少" },
   { ratio: 1.0, label: "相当" },
   { ratio: 1.1, label: "略多" },
-  { ratio: 1.3, label: "扩充" },
+  { ratio: 1.2, label: "扩充" },
 ];
 
 const ACCEPT_TYPES = ".txt,.md,.pdf,.docx";
@@ -80,11 +80,22 @@ export function ImitationPage() {
     }
   }, [uploadResult?.originalWordCount]);
 
-  const applyFile = useCallback((selected: File) => {
+  const applyFile = useCallback(async (selected: File) => {
     setFile(selected);
     setUploadResult(null);
     setOutput("");
     setConversationId("");
+    setUploading(true);
+    try {
+      const result = await uploadArticle(selected);
+      setUploadResult(result);
+      toast.success(`上传成功，原文 ${result.originalWordCount} 字，共 ${result.chunkCount} 个分块`);
+    } catch (err: any) {
+      toast.error(err?.message || "上传失败");
+      setFile(null);
+    } finally {
+      setUploading(false);
+    }
   }, []);
 
   const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -111,20 +122,6 @@ export function ImitationPage() {
     const dropped = e.dataTransfer.files?.[0];
     if (dropped) applyFile(dropped);
   }, [applyFile]);
-
-  const handleUpload = useCallback(async () => {
-    if (!file) return;
-    setUploading(true);
-    try {
-      const result = await uploadArticle(file);
-      setUploadResult(result);
-      toast.success(`上传成功，原文 ${result.originalWordCount} 字，共 ${result.chunkCount} 个分块`);
-    } catch (err: any) {
-      toast.error(err?.message || "上传失败");
-    } finally {
-      setUploading(false);
-    }
-  }, [file]);
 
   const handleRemoveFile = useCallback(() => {
     setFile(null);
@@ -270,25 +267,12 @@ export function ImitationPage() {
                         </button>
                       </div>
 
-                      {!uploadResult ? (
-                        <Button
-                          onClick={handleUpload}
-                          disabled={uploading}
-                          className="w-full bg-emerald-600 hover:bg-emerald-700"
-                        >
-                          {uploading ? (
-                            <>
-                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                              上传中...
-                            </>
-                          ) : (
-                            <>
-                              <Upload className="mr-2 h-4 w-4" />
-                              上传并入库
-                            </>
-                          )}
-                        </Button>
-                      ) : (
+                      {uploading ? (
+                        <div className="flex items-center justify-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-600">
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          上传中...
+                        </div>
+                      ) : uploadResult ? (
                         <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
                           <p className="font-medium">上传成功</p>
                           <p className="text-xs text-emerald-600 mt-1">
@@ -297,7 +281,7 @@ export function ImitationPage() {
                             {uploadResult.originalWordCount} 字
                           </p>
                         </div>
-                      )}
+                      ) : null}
                     </div>
                   )}
                 </div>
@@ -343,11 +327,9 @@ export function ImitationPage() {
                             )}
                           >
                             {opt.label}
-                            {original > 0 && (
-                              <span className="block text-[10px] mt-0.5 text-slate-400">
-                                {disabled ? "超限" : `约${computed}字`}
-                              </span>
-                            )}
+                            <span className="block text-[10px] mt-0.5 text-slate-400">
+                              {disabled ? "超限" : `原文${Math.round(opt.ratio * 100)}%`}
+                            </span>
                           </button>
                         );
                       })}

@@ -42,6 +42,7 @@ interface ChatState {
   appendStreamContent: (delta: string) => void;
   appendThinkingContent: (delta: string) => void;
   submitFeedback: (messageId: string, feedback: FeedbackValue) => Promise<void>;
+  branchFromMessage: (messageId: string) => Promise<string | null>;
 }
 
 function mapVoteToFeedback(vote?: number | null): FeedbackValue {
@@ -528,5 +529,36 @@ export const useChatStore = create<ChatState>((set, get) => ({
       }));
       toast.error((error as Error).message || "反馈保存失败");
     }
+  },
+  branchFromMessage: async (messageId) => {
+    const state = get();
+    const messageIndex = state.messages.findIndex((m) => m.id === messageId);
+    if (messageIndex < 0) {
+      toast.error("未找到该消息");
+      return null;
+    }
+    const branchMessages = state.messages.slice(0, messageIndex + 1);
+    if (branchMessages.length === 0) {
+      toast.error("没有可分支的消息");
+      return null;
+    }
+    set({
+      currentSessionId: null,
+      messages: branchMessages.map((m) => ({
+        ...m,
+        status: "done" as const
+      })),
+      isStreaming: false,
+      isLoading: false,
+      isCreatingNew: true,
+      deepThinkingEnabled: false,
+      thinkingStartAt: null,
+      streamTaskId: null,
+      streamAbort: null,
+      streamingMessageId: null,
+      cancelRequested: false
+    });
+    toast.success("已创建对话分支，发送消息即可继续");
+    return null;
   }
 }));

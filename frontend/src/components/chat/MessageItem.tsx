@@ -1,9 +1,10 @@
 import * as React from "react";
-import { Brain, ChevronDown } from "lucide-react";
+import { Brain, ChevronDown, GitBranch } from "lucide-react";
 
 import { FeedbackButtons } from "@/components/chat/FeedbackButtons";
 import { ThinkingIndicator } from "@/components/chat/ThinkingIndicator";
 import { cn } from "@/lib/utils";
+import { useChatStore } from "@/stores/chatStore";
 import type { Message } from "@/types";
 
 const MarkdownRenderer = React.lazy(() =>
@@ -16,6 +17,7 @@ interface MessageItemProps {
 }
 
 export const MessageItem = React.memo(function MessageItem({ message, isLast }: MessageItemProps) {
+  const branchFromMessage = useChatStore((state) => state.branchFromMessage);
   const isUser = message.role === "user";
   const showFeedback =
     message.role === "assistant" &&
@@ -97,14 +99,27 @@ export const MessageItem = React.memo(function MessageItem({ message, isLast }: 
           {message.status === "error" ? (
             <p className="text-xs text-rose-500">生成已中断。</p>
           ) : null}
-          {showFeedback ? (
-            <FeedbackButtons
-              messageId={message.id}
-              feedback={message.feedback ?? null}
-              content={message.content}
-              alwaysVisible={Boolean(isLast)}
-            />
-          ) : null}
+          <div className="flex items-center gap-2">
+            {showFeedback ? (
+              <FeedbackButtons
+                messageId={message.id}
+                feedback={message.feedback ?? null}
+                content={message.content}
+                alwaysVisible={Boolean(isLast)}
+              />
+            ) : null}
+            {message.role === "assistant" && message.status === "done" && !message.id.startsWith("assistant-") ? (
+              <button
+                type="button"
+                onClick={() => branchFromMessage(message.id)}
+                className="flex items-center gap-1 rounded-md px-2 py-1 text-xs text-[#6B7280] opacity-0 transition-opacity hover:bg-[#7C3AED]/10 hover:text-[#7C3AED] group-hover:opacity-100"
+                title="从此处创建对话分支"
+              >
+                <GitBranch className="h-3.5 w-3.5" />
+                <span>分支</span>
+              </button>
+            ) : null}
+          </div>
         </div>
       </div>
     </div>

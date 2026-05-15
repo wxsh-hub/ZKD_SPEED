@@ -1,6 +1,7 @@
 import * as React from "react";
 import { ArrowUpRight, BookOpen, Bot, Brain, Check, Lightbulb, Send, Square } from "lucide-react";
 
+import { BranchExplainer } from "@/components/chat/BranchExplainer";
 import { cn } from "@/lib/utils";
 import { FlowTag, RAG_CHAT_STEPS } from "@/components/common/FlowTag";
 import { ModelSelector } from "@/components/common/ModelSelector";
@@ -328,6 +329,13 @@ export function WelcomeScreen() {
           style={{ animationDelay: "240ms", animationFillMode: "both" }}
         >
           <FlowTag title="RAG 对话实现原理" steps={RAG_CHAT_STEPS} />
+        </div>
+
+        <div
+          className="mt-6 opacity-0 animate-fade-up"
+          style={{ animationDelay: "320ms", animationFillMode: "both" }}
+        >
+          <BranchExplainer />
         </div>
       </div>
     </div>

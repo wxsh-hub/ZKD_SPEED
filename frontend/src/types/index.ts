@@ -18,6 +18,8 @@ export interface Session {
   id: string;
   title: string;
   lastTime?: string;
+  parentId?: string | null;
+  branchFromMessageId?: string | null;
 }
 
 export interface Message {

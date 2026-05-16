@@ -9,6 +9,7 @@ const NotFoundPage = lazy(() => import("@/pages/NotFoundPage").then((m) => ({ de
 const NovelPage = lazy(() => import("@/pages/NovelPage").then((m) => ({ default: m.NovelPage })));
 const ImitationPage = lazy(() => import("@/pages/ImitationPage").then((m) => ({ default: m.ImitationPage })));
 const ScriptPage = lazy(() => import("@/pages/ScriptPage").then((m) => ({ default: m.ScriptPage })));
+const ScriptDetailPage = lazy(() => import("@/pages/ScriptDetailPage").then((m) => ({ default: m.ScriptDetailPage })));
 const AdminLayout = lazy(() => import("@/pages/admin/AdminLayout").then((m) => ({ default: m.AdminLayout })));
 const DashboardPage = lazy(() => import("@/pages/admin/dashboard/DashboardPage").then((m) => ({ default: m.DashboardPage })));
 const KnowledgeListPage = lazy(() => import("@/pages/admin/knowledge/KnowledgeListPage").then((m) => ({ default: m.KnowledgeListPage })));
@@ -129,7 +130,7 @@ export const router = createBrowserRouter([
     path: "/script/:projectId",
     element: (
       <RequireAuth>
-        <LazyPage><ScriptPage /></LazyPage>
+        <LazyPage><ScriptDetailPage /></LazyPage>
       </RequireAuth>
     )
   },

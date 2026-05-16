@@ -5,6 +5,7 @@ import {
   Download,
   FileText,
   Loader2,
+  RefreshCw,
   Send,
   Square,
   Trash2,
@@ -51,6 +52,7 @@ export function ImitationPage() {
   // rewrite state
   const [requirements, setRequirements] = useState("");
   const [wordCount, setWordCount] = useState(0);
+  const [selectedRatio, setSelectedRatio] = useState(1.0);
   const [selectedModelId, setSelectedModelId] = useState("");
   const [models, setModels] = useState<ModelCandidate[]>([]);
   const [conversationId, setConversationId] = useState("");
@@ -58,6 +60,11 @@ export function ImitationPage() {
   const [streaming, setStreaming] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
   const outputRef = useRef<HTMLDivElement>(null);
+
+  // regenerate state
+  const [history, setHistory] = useState<Array<{ requirements: string; feedback: string; output: string }>>([]);
+  const [showRegenerate, setShowRegenerate] = useState(false);
+  const [feedback, setFeedback] = useState("");
 
   useEffect(() => {
     const el = outputRef.current;
@@ -77,6 +84,7 @@ export function ImitationPage() {
   useEffect(() => {
     if (uploadResult?.originalWordCount) {
       setWordCount(Math.round(uploadResult.originalWordCount * 1.0));
+      setSelectedRatio(1.0);
     }
   }, [uploadResult?.originalWordCount]);
 
@@ -135,6 +143,10 @@ export function ImitationPage() {
       toast.error("请先上传参考文章");
       return;
     }
+    if (output) {
+      setHistory((prev) => [...prev, { requirements, feedback: "", output }]);
+    }
+    setShowRegenerate(false);
     setStreaming(true);
     setOutput("");
 
@@ -162,6 +174,9 @@ export function ImitationPage() {
   const handleClearOutput = useCallback(() => {
     setOutput("");
     setConversationId("");
+    setHistory([]);
+    setShowRegenerate(false);
+    setFeedback("");
   }, []);
 
   const handleExport = useCallback(() => {
@@ -174,6 +189,36 @@ export function ImitationPage() {
     a.click();
     URL.revokeObjectURL(url);
   }, [output]);
+
+  const handleRegenerate = useCallback(() => {
+    if (!feedback.trim()) {
+      toast.error("请输入改进意见");
+      return;
+    }
+    if (output) {
+      setHistory((prev) => [...prev, { requirements, feedback: feedback.trim(), output }]);
+    }
+    const regenerateRequirements = feedback.trim();
+    setFeedback("");
+    setShowRegenerate(false);
+    setStreaming(true);
+    setOutput("");
+
+    const controller = rewriteArticleStream(
+      { requirements: regenerateRequirements, wordCount, conversationId, modelId: selectedModelId, taskId: uploadResult?.taskId },
+      token,
+      {
+        onChunk: (text) => setOutput((prev) => prev + text),
+        onMeta: (meta) => setConversationId(meta.conversationId),
+        onDone: () => setStreaming(false),
+        onError: (err) => {
+          setStreaming(false);
+          toast.error(err);
+        }
+      }
+    );
+    abortRef.current = controller;
+  }, [feedback, requirements, output, wordCount, conversationId, selectedModelId, token, uploadResult]);
 
   return (
     <MainLayout>
@@ -311,11 +356,11 @@ export function ImitationPage() {
                         const original = uploadResult?.originalWordCount ?? 0;
                         const computed = Math.round(original * opt.ratio);
                         const disabled = computed > 3000;
-                        const selected = wordCount === computed;
+                        const selected = selectedRatio === opt.ratio;
                         return (
                           <button
                             key={opt.ratio}
-                            onClick={() => !disabled && setWordCount(computed)}
+                            onClick={() => { if (!disabled) { setWordCount(computed); setSelectedRatio(opt.ratio); } }}
                             disabled={disabled}
                             className={cn(
                               "rounded-lg border px-3 py-2 text-center text-xs font-medium transition-colors",
@@ -366,7 +411,7 @@ export function ImitationPage() {
                     <Textarea
                       value={requirements}
                       onChange={(e) => setRequirements(e.target.value)}
-                      placeholder="例如：语气更正式一些、适当精简篇幅、更口语化..."
+                      placeholder="可选，不填则按原文风格正常仿写。例如：语气更正式一些、适当精简篇幅、更口语化..."
                       className="min-h-[100px] resize-none text-sm"
                     />
                   </div>
@@ -404,6 +449,19 @@ export function ImitationPage() {
                 {output && !streaming && (
                   <div className="flex items-center gap-1">
                     <button
+                      onClick={() => setShowRegenerate(!showRegenerate)}
+                      title="输入改进意见，基于对话历史重新生成"
+                      className={cn(
+                        "flex items-center gap-1 rounded-lg px-2 py-1 text-xs transition-colors",
+                        showRegenerate
+                          ? "bg-emerald-100 text-emerald-600"
+                          : "text-slate-400 hover:bg-slate-100 hover:text-emerald-600"
+                      )}
+                    >
+                      <RefreshCw className="h-3 w-3" />
+                      重新生成
+                    </button>
+                    <button
                       onClick={handleExport}
                       className="flex items-center gap-1 rounded-lg px-2 py-1 text-xs text-slate-400 hover:bg-slate-100 hover:text-emerald-600"
                     >
@@ -420,12 +478,69 @@ export function ImitationPage() {
                   </div>
                 )}
               </div>
-              <div className="p-5">
+              {/* regenerate feedback - 紧跟头部，永远可见 */}
+              {showRegenerate && output && !streaming && (
+                <div className="border-b border-emerald-100 bg-emerald-50/30 px-5 py-4 space-y-3">
+                  <p className="text-sm font-medium text-emerald-700">
+                    请描述您的改进意见
+                  </p>
+                  <Textarea
+                    value={feedback}
+                    onChange={(e) => setFeedback(e.target.value)}
+                    placeholder="例如：语气更正式一些、段落结构需要调整、用词不够精准..."
+                    className="min-h-[80px] resize-none text-sm bg-white"
+                    autoFocus
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+                        handleRegenerate();
+                      }
+                    }}
+                  />
+                  <div className="flex items-center gap-2">
+                    <Button
+                      onClick={handleRegenerate}
+                      disabled={!feedback.trim()}
+                      className="bg-emerald-600 hover:bg-emerald-700"
+                      size="sm"
+                    >
+                      <RefreshCw className="mr-1.5 h-3.5 w-3.5" />
+                      确认重新生成
+                    </Button>
+                    <Button
+                      onClick={() => { setShowRegenerate(false); setFeedback(""); }}
+                      variant="ghost"
+                      size="sm"
+                      className="text-slate-500"
+                    >
+                      取消
+                    </Button>
+                    <span className="ml-auto text-xs text-slate-400">
+                      Ctrl+Enter 发送
+                    </span>
+                  </div>
+                </div>
+              )}
+              <div className="p-5 space-y-4">
+                {/* history */}
+                {history.length > 0 && (
+                  <div className="flex flex-wrap items-center gap-2">
+                    {history.map((item, i) => (
+                      <div key={i} className="flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs">
+                        <span className="text-slate-400">第{i + 1}轮</span>
+                        {item.feedback && (
+                          <span className="text-emerald-500 truncate max-w-[120px]">{item.feedback}</span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* current output */}
                 <div
                   ref={outputRef}
                   className={cn(
-                    "min-h-[500px] max-h-[calc(100vh-260px)] overflow-y-auto rounded-lg border border-slate-200 bg-slate-50/50 p-5",
-                    !output && "flex items-center justify-center"
+                    "min-h-[400px] max-h-[calc(100vh-360px)] overflow-y-auto rounded-lg border border-slate-200 bg-slate-50/50 p-5",
+                    !output && !streaming && "flex items-center justify-center"
                   )}
                 >
                   {output ? (
@@ -435,15 +550,19 @@ export function ImitationPage() {
                         <span className="ml-0.5 inline-block h-4 w-1.5 animate-pulse bg-emerald-500 align-middle" />
                       )}
                     </div>
+                  ) : streaming ? (
+                    <div className="flex flex-col items-center gap-2 text-slate-400">
+                      <Loader2 className="h-6 w-6 animate-spin text-emerald-400" />
+                      <p className="text-sm">正在生成中...</p>
+                    </div>
                   ) : (
                     <div className="flex flex-col items-center gap-2 text-slate-400">
                       <FileText className="h-8 w-8" />
-                      <p className="text-sm">
-                        {streaming ? "正在生成中..." : "仿写内容将在这里显示"}
-                      </p>
+                      <p className="text-sm">仿写内容将在这里显示</p>
                     </div>
                   )}
                 </div>
+
               </div>
             </div>
           </div>

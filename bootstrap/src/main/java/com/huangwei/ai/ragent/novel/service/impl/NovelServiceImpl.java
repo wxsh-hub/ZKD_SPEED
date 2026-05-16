@@ -112,14 +112,23 @@ public class NovelServiceImpl implements NovelService {
         String userId = UserContext.getUserId();
 
         // 1. 存储用户消息（续写方向）
-        conversationMemoryService.append(conversationId, userId, ChatMessage.user(request.getDirection()));
+        String direction = StrUtil.isBlank(request.getDirection()) ? "请根据原文风格和已有剧情自然续写" : request.getDirection();
+        conversationMemoryService.append(conversationId, userId, ChatMessage.user(direction));
 
         // 2. 加载本次会话的历史消息（之前的续写方向和结果）
         List<ChatMessage> history = conversationMemoryService.load(conversationId, userId);
 
-        // 3. 根据续写方向检索相关小说片段
+        // 3. 查询小说摘要（提前加载，用于空方向时的检索 query）
+        NovelSummaryDO summary = findLatestSummary();
+        String summaryContext = buildSummaryContext(summary);
+
+        // 4. 根据续写方向检索相关小说片段（方向为空时用剧情摘要检索）
+        String query = request.getDirection();
+        if (StrUtil.isBlank(query)) {
+            query = (summary != null && StrUtil.isNotBlank(summary.getPlotSummary())) ? summary.getPlotSummary() : "小说剧情";
+        }
         RetrieveRequest retrieveRequest = RetrieveRequest.builder()
-                .query(request.getDirection())
+                .query(query)
                 .topK(request.getTopK())
                 .collectionName(request.getCollectionName())
                 .build();
@@ -135,18 +144,14 @@ public class NovelServiceImpl implements NovelService {
             return;
         }
 
-        // 4. 拼接检索到的相关片段
+        // 5. 拼接检索到的相关片段
         String context = chunks.stream()
                 .map(c -> "[相关度: " + String.format("%.2f", c.getScore()) + "]\n" + c.getText())
                 .collect(Collectors.joining("\n\n---\n\n"));
 
-        // 5. 查询小说摘要（人物、世界观、剧情线）
-        NovelSummaryDO summary = findLatestSummary();
-        String summaryContext = buildSummaryContext(summary);
-
         // 6. 组装 prompt（带历史对话上下文）
         String systemPrompt = buildSystemPrompt(request.getWordCount());
-        String userPrompt = buildUserPrompt(summaryContext, context, request.getDirection());
+        String userPrompt = buildUserPrompt(summaryContext, context, direction);
 
         List<ChatMessage> messages = new ArrayList<>();
         messages.add(ChatMessage.system(systemPrompt));

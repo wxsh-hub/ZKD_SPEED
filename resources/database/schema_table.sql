@@ -444,6 +444,7 @@ CREATE TABLE `t_script_project`
     `description`  varchar(512)          DEFAULT NULL COMMENT '项目描述',
     `target_width` int(11)               DEFAULT NULL COMMENT '目标运行屏幕宽度',
     `target_height` int(11)              DEFAULT NULL COMMENT '目标运行屏幕高度',
+    `scale_pct`    int(11)               DEFAULT NULL COMMENT 'DPI缩放百分比',
     `status`       varchar(20)  NOT NULL DEFAULT 'draft' COMMENT '状态: draft/compiled',
     `exe_path`     varchar(512)          DEFAULT NULL COMMENT '编译后的EXE文件路径',
     `create_time`  datetime     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',

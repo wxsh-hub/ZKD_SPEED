@@ -1,8 +1,15 @@
 import * as React from "react";
 import { Github, Menu } from "lucide-react";
+import { useLocation } from "react-router-dom";
 
 import { Button } from "@/components/ui/button";
 import { useChatStore } from "@/stores/chatStore";
+
+const PAGE_TITLES: Record<string, string> = {
+  "/novel": "小说续写",
+  "/imitation": "文章仿写",
+  "/script": "脚本生成",
+};
 
 interface HeaderProps {
   onToggleSidebar: () => void;
@@ -10,11 +17,20 @@ interface HeaderProps {
 
 export function Header({ onToggleSidebar }: HeaderProps) {
   const { currentSessionId, sessions } = useChatStore();
+  const location = useLocation();
   const [starCount, setStarCount] = React.useState<number | null>(null);
   const currentSession = React.useMemo(
     () => sessions.find((session) => session.id === currentSessionId),
     [sessions, currentSessionId]
   );
+
+  const pageTitle = React.useMemo(() => {
+    const path = location.pathname;
+    for (const [prefix, title] of Object.entries(PAGE_TITLES)) {
+      if (path === prefix || path.startsWith(prefix + "/")) return title;
+    }
+    return null;
+  }, [location.pathname]);
 
   React.useEffect(() => {
     let active = true;
@@ -57,7 +73,7 @@ export function Header({ onToggleSidebar }: HeaderProps) {
             <Menu className="h-5 w-5" />
           </Button>
           <p className="text-base font-medium text-gray-900">
-            {currentSession?.title || "新对话"}
+            {pageTitle || currentSession?.title || "新对话"}
           </p>
         </div>
         <div className="flex items-center gap-2">

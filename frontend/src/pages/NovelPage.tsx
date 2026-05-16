@@ -5,6 +5,7 @@ import {
   Download,
   FileText,
   Loader2,
+  RefreshCw,
   Send,
   Square,
   Trash2,
@@ -58,6 +59,11 @@ export function NovelPage() {
   const [streaming, setStreaming] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
   const outputRef = useRef<HTMLDivElement>(null);
+
+  // regenerate state
+  const [history, setHistory] = useState<Array<{ direction: string; feedback: string; output: string }>>([]);
+  const [showRegenerate, setShowRegenerate] = useState(false);
+  const [feedback, setFeedback] = useState("");
 
   useEffect(() => {
     const el = outputRef.current;
@@ -124,10 +130,10 @@ export function NovelPage() {
   }, []);
 
   const handleContinue = useCallback(async () => {
-    if (!direction.trim()) {
-      toast.error("请输入续写方向");
-      return;
+    if (output) {
+      setHistory((prev) => [...prev, { direction, feedback: "", output }]);
     }
+    setShowRegenerate(false);
     setStreaming(true);
     setOutput("");
 
@@ -155,6 +161,9 @@ export function NovelPage() {
   const handleClearOutput = useCallback(() => {
     setOutput("");
     setConversationId("");
+    setHistory([]);
+    setShowRegenerate(false);
+    setFeedback("");
   }, []);
 
   const handleExport = useCallback(() => {
@@ -167,6 +176,36 @@ export function NovelPage() {
     a.click();
     URL.revokeObjectURL(url);
   }, [output]);
+
+  const handleRegenerate = useCallback(() => {
+    if (!feedback.trim()) {
+      toast.error("请输入改进意见");
+      return;
+    }
+    if (output) {
+      setHistory((prev) => [...prev, { direction, feedback: feedback.trim(), output }]);
+    }
+    const regenerateDirection = feedback.trim();
+    setFeedback("");
+    setShowRegenerate(false);
+    setStreaming(true);
+    setOutput("");
+
+    const controller = continueNovelStream(
+      { direction: regenerateDirection, wordCount, conversationId, modelId: selectedModelId },
+      token,
+      {
+        onChunk: (text) => setOutput((prev) => prev + text),
+        onMeta: (meta) => setConversationId(meta.conversationId),
+        onDone: () => setStreaming(false),
+        onError: (err) => {
+          setStreaming(false);
+          toast.error(err);
+        }
+      }
+    );
+    abortRef.current = controller;
+  }, [feedback, direction, output, wordCount, conversationId, selectedModelId, token]);
 
   return (
     <MainLayout>
@@ -344,7 +383,7 @@ export function NovelPage() {
                     <Textarea
                       value={direction}
                       onChange={(e) => setDirection(e.target.value)}
-                      placeholder="请输入续写方向，例如：主角进入密林后遭遇暴风雨，意外发现了一座废弃的古庙..."
+                      placeholder="可选，不填则按剧情自然续写。例如：主角进入密林后遭遇暴风雨，意外发现了一座废弃的古庙..."
                       className="min-h-[100px] resize-none text-sm"
                     />
                   </div>
@@ -362,7 +401,6 @@ export function NovelPage() {
                   ) : (
                     <Button
                       onClick={handleContinue}
-                      disabled={!direction.trim()}
                       className="w-full bg-orange-500 hover:bg-orange-600"
                     >
                       <Send className="mr-2 h-4 w-4" />
@@ -382,6 +420,19 @@ export function NovelPage() {
                 {output && !streaming && (
                   <div className="flex items-center gap-1">
                     <button
+                      onClick={() => setShowRegenerate(!showRegenerate)}
+                      title="输入改进意见，基于对话历史重新生成"
+                      className={cn(
+                        "flex items-center gap-1 rounded-lg px-2 py-1 text-xs transition-colors",
+                        showRegenerate
+                          ? "bg-orange-100 text-orange-600"
+                          : "text-slate-400 hover:bg-slate-100 hover:text-orange-600"
+                      )}
+                    >
+                      <RefreshCw className="h-3 w-3" />
+                      重新生成
+                    </button>
+                    <button
                       onClick={handleExport}
                       className="flex items-center gap-1 rounded-lg px-2 py-1 text-xs text-slate-400 hover:bg-slate-100 hover:text-orange-600"
                     >
@@ -398,12 +449,69 @@ export function NovelPage() {
                   </div>
                 )}
               </div>
-              <div className="p-5">
+              {/* regenerate feedback - 紧跟头部，永远可见 */}
+              {showRegenerate && output && !streaming && (
+                <div className="border-b border-orange-100 bg-orange-50/30 px-5 py-4 space-y-3">
+                  <p className="text-sm font-medium text-orange-700">
+                    请描述您的改进意见
+                  </p>
+                  <Textarea
+                    value={feedback}
+                    onChange={(e) => setFeedback(e.target.value)}
+                    placeholder="例如：节奏太慢了，加快剧情发展；人物对话不够生动；结局需要更开放..."
+                    className="min-h-[80px] resize-none text-sm bg-white"
+                    autoFocus
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+                        handleRegenerate();
+                      }
+                    }}
+                  />
+                  <div className="flex items-center gap-2">
+                    <Button
+                      onClick={handleRegenerate}
+                      disabled={!feedback.trim()}
+                      className="bg-orange-500 hover:bg-orange-600"
+                      size="sm"
+                    >
+                      <RefreshCw className="mr-1.5 h-3.5 w-3.5" />
+                      确认重新生成
+                    </Button>
+                    <Button
+                      onClick={() => { setShowRegenerate(false); setFeedback(""); }}
+                      variant="ghost"
+                      size="sm"
+                      className="text-slate-500"
+                    >
+                      取消
+                    </Button>
+                    <span className="ml-auto text-xs text-slate-400">
+                      Ctrl+Enter 发送
+                    </span>
+                  </div>
+                </div>
+              )}
+              <div className="p-5 space-y-4">
+                {/* history */}
+                {history.length > 0 && (
+                  <div className="flex flex-wrap items-center gap-2">
+                    {history.map((item, i) => (
+                      <div key={i} className="flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs">
+                        <span className="text-slate-400">第{i + 1}轮</span>
+                        {item.feedback && (
+                          <span className="text-orange-500 truncate max-w-[120px]">{item.feedback}</span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* current output */}
                 <div
                   ref={outputRef}
                   className={cn(
-                    "min-h-[500px] max-h-[calc(100vh-260px)] overflow-y-auto rounded-lg border border-slate-200 bg-slate-50/50 p-5",
-                    !output && "flex items-center justify-center"
+                    "min-h-[400px] max-h-[calc(100vh-360px)] overflow-y-auto rounded-lg border border-slate-200 bg-slate-50/50 p-5",
+                    !output && !streaming && "flex items-center justify-center"
                   )}
                 >
                   {output ? (
@@ -413,15 +521,19 @@ export function NovelPage() {
                         <span className="ml-0.5 inline-block h-4 w-1.5 animate-pulse bg-orange-500 align-middle" />
                       )}
                     </div>
+                  ) : streaming ? (
+                    <div className="flex flex-col items-center gap-2 text-slate-400">
+                      <Loader2 className="h-6 w-6 animate-spin text-orange-400" />
+                      <p className="text-sm">正在生成中...</p>
+                    </div>
                   ) : (
                     <div className="flex flex-col items-center gap-2 text-slate-400">
                       <BookOpen className="h-8 w-8" />
-                      <p className="text-sm">
-                        {streaming ? "正在生成中..." : "续写内容将在这里显示"}
-                      </p>
+                      <p className="text-sm">续写内容将在这里显示</p>
                     </div>
                   )}
                 </div>
+
               </div>
             </div>
           </div>

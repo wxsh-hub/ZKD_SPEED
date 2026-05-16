@@ -34,8 +34,8 @@ public class NovelContinueRequest {
 
     /**
      * 续写方向/要求，例如："主角进入密林后遭遇了一场暴风雨"
+     * 为空时按剧情自然续写
      */
-    @NotBlank(message = "续写方向不能为空")
     private String direction;
 
     /**

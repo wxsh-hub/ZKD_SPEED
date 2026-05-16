@@ -77,14 +77,43 @@ public class RAGChatServiceImpl implements RAGChatService {
     private final IntentResolver intentResolver;
     private final RetrievalEngine retrievalEngine;
 
+    private static final String REPLY_GREETING = "你好！我是企业内部知识助手「小码」，有什么可以帮你的？\n\n你可以问我：\n- 人事相关：请假、考勤、入职流程等\n- IT 支持：VPN、邮箱、打印机等\n- 行政事务：会议室、门禁、物资领用等";
+    private static final String REPLY_SIMPLE_HI = "你好！有什么可以帮你的？";
+    private static final String REPLY_HERE = "在的，有什么可以帮你的？";
+    private static final String REPLY_THANKS = "不客气，有其他问题随时问我！";
+    private static final String REPLY_BYE = "再见，有问题随时找我！";
+
     private static final Map<String, String> GREETINGS = Map.ofEntries(
-            Map.entry("你好", "你好！我是企业内部知识助手「小码」，有什么可以帮你的？\n\n你可以问我：\n- 人事相关：请假、考勤、入职流程等\n- IT 支持：VPN、邮箱、打印机等\n- 行政事务：会议室、门禁、物资领用等"),
-            Map.entry("hello", "你好！我是企业内部知识助手「小码」，有什么可以帮你的？"),
-            Map.entry("hi", "你好！有什么可以帮你的？"),
-            Map.entry("在吗", "在的，有什么可以帮你的？"),
+            // 问候
+            Map.entry("你好", REPLY_GREETING),
+            Map.entry("hello", REPLY_GREETING),
+            Map.entry("hi", REPLY_SIMPLE_HI),
+            Map.entry("hey", REPLY_SIMPLE_HI),
+            Map.entry("嗨", REPLY_SIMPLE_HI),
+            Map.entry("哈喽", REPLY_SIMPLE_HI),
+            Map.entry("嘿", REPLY_SIMPLE_HI),
+            // 在线确认
+            Map.entry("在吗", REPLY_HERE),
+            Map.entry("在不在", REPLY_HERE),
+            Map.entry("有人吗", REPLY_HERE),
+            Map.entry("在嘛", REPLY_HERE),
+            // 时段问候
             Map.entry("早上好", "早上好！有什么可以帮你的？"),
+            Map.entry("上午好", "上午好！有什么可以帮你的？"),
+            Map.entry("中午好", "中午好！有什么可以帮你的？"),
             Map.entry("下午好", "下午好！有什么可以帮你的？"),
-            Map.entry("晚上好", "晚上好！有什么可以帮你的？")
+            Map.entry("晚上好", "晚上好！有什么可以帮你的？"),
+            Map.entry("早安", "早安！有什么可以帮你的？"),
+            Map.entry("晚安", "晚安！有什么可以帮你的？"),
+            // 结束语
+            Map.entry("谢谢", REPLY_THANKS),
+            Map.entry("感谢", REPLY_THANKS),
+            Map.entry("thanks", REPLY_THANKS),
+            Map.entry("thank you", REPLY_THANKS),
+            Map.entry("拜拜", REPLY_BYE),
+            Map.entry("再见", REPLY_BYE),
+            Map.entry("bye", REPLY_BYE),
+            Map.entry("byebye", REPLY_BYE)
     );
 
     @Override

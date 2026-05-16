@@ -435,6 +435,59 @@ CREATE TABLE `t_article_analysis`
     KEY             `idx_task_id` (`task_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='文章分析表（核心论点/写作风格/文章结构）';
 
+-- ==================== 脚本自动开发器 ====================
+
+CREATE TABLE `t_script_project`
+(
+    `id`           bigint(20) NOT NULL COMMENT '主键ID',
+    `name`         varchar(128) NOT NULL COMMENT '项目名称',
+    `description`  varchar(512)          DEFAULT NULL COMMENT '项目描述',
+    `target_width` int(11)               DEFAULT NULL COMMENT '目标运行屏幕宽度',
+    `target_height` int(11)              DEFAULT NULL COMMENT '目标运行屏幕高度',
+    `status`       varchar(20)  NOT NULL DEFAULT 'draft' COMMENT '状态: draft/compiled',
+    `exe_path`     varchar(512)          DEFAULT NULL COMMENT '编译后的EXE文件路径',
+    `create_time`  datetime     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time`  datetime     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    `deleted`      tinyint(1) NOT NULL DEFAULT '0' COMMENT '是否删除 0:正常 1:删除',
+    PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='脚本项目表';
+
+CREATE TABLE `t_script_screenshot`
+(
+    `id`            bigint(20) NOT NULL COMMENT '主键ID',
+    `project_id`    bigint(20) NOT NULL COMMENT '所属项目ID',
+    `file_name`     varchar(256) NOT NULL COMMENT '原始文件名',
+    `file_path`     varchar(512) NOT NULL COMMENT '存储路径(相对)',
+    `file_url`      varchar(512) NOT NULL COMMENT '访问URL',
+    `width`         int(11) NOT NULL COMMENT '截图原始宽度(像素)',
+    `height`        int(11) NOT NULL COMMENT '截图原始高度(像素)',
+    `scale_pct`     int(11) NOT NULL DEFAULT 100 COMMENT 'DPI缩放百分比',
+    `timestamp_str` varchar(32)           DEFAULT NULL COMMENT '文件名中的时间戳',
+    `sort_order`    int(11) NOT NULL DEFAULT 0 COMMENT '排序序号(按时间)',
+    `create_time`   datetime     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time`   datetime     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    `deleted`       tinyint(1) NOT NULL DEFAULT '0' COMMENT '是否删除 0:正常 1:删除',
+    PRIMARY KEY (`id`),
+    KEY `idx_project_id` (`project_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='脚本截图表';
+
+CREATE TABLE `t_script_step`
+(
+    `id`             bigint(20) NOT NULL COMMENT '主键ID',
+    `project_id`     bigint(20) NOT NULL COMMENT '所属项目ID',
+    `screenshot_id`  bigint(20)          DEFAULT NULL COMMENT '关联截图ID(wait_seconds可为空)',
+    `step_order`     int(11) NOT NULL COMMENT '全局排序序号(从0开始)',
+    `operation_type` varchar(32) NOT NULL COMMENT '操作类型: click/area_click/long_press/wait_image/wait_seconds/input_text/scroll',
+    `params_json`    json       NOT NULL COMMENT '操作参数JSON',
+    `template_path`  varchar(512)         DEFAULT NULL COMMENT 'wait_image的模板图片路径',
+    `template_url`   varchar(512)         DEFAULT NULL COMMENT 'wait_image的模板图片URL',
+    `create_time`    datetime    NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time`    datetime    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    `deleted`        tinyint(1) NOT NULL DEFAULT '0' COMMENT '是否删除 0:正常 1:删除',
+    PRIMARY KEY (`id`),
+    KEY `idx_project_order` (`project_id`, `step_order`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='脚本操作步骤表';
+
 -- ==================== 系统日志 ====================
 
 CREATE TABLE `t_system_log`

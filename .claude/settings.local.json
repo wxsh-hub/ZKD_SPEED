@@ -66,6 +66,10 @@
       "Bash(cp \"C:/Users/sunha/Desktop/11/ragent-main/.claude/settings.local.json\" \"C:/Users/sunha/Desktop/11/ragent-screenshot/.claude/settings.local.json\")",
       "Bash(cp \"C:/Users/sunha/Desktop/11/ragent-main/.claude/settings.local.json\" \"C:/Users/sunha/Desktop/11/ragent-frontend/.claude/settings.local.json\")",
       "Read(//c/Users/sunha/.claude/**)",
+      "Bash(git commit *)",
+      "Bash(git pull *)",
+      "Bash(findstr :8080)"
+      "Read(//c/Users/sunha/.claude/**)",
       "Bash(git commit -m ' *)",
       "Bash(git commit *)",
       "Bash(mvn *)",

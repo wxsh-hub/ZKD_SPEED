@@ -137,6 +137,22 @@ git branch -d feature/frontend
 - 样式用 Tailwind CSS，参考现有页面的 class 写法
 - 新页面需要在 `router.tsx` 中添加路由
 
+### ⚠️ 前后端 ID 传递必须用字符串（bigint 精度丢失陷阱）
+
+后端主键是 MySQL `bigint(20)`（如 `2055228071107194880`），**超过了 JavaScript `Number.MAX_SAFE_INTEGER`（9007199254740991）**。
+
+如果 axios 直接 `JSON.parse`，数字会被截断，导致：
+- 前端拿到的 ID 与后端不一致
+- 用错误 ID 查询后端，接口返回空或报错
+- 页面点击无反应、数据丢失等诡异 bug
+
+**已在 `frontend/src/services/api.ts` 中配置了 `transformResponse`，自动将 16 位以上数字转为字符串。**
+
+**新增前端模块时务必注意：**
+- `types/` 中所有 ID 字段类型必须是 `string`，不能是 `number`
+- 不要手动对 ID 做 `parseInt`、`Number()` 等转换
+- 传参时直接用字符串拼接：`` `/script/project/${id}` ``，不要用模板字面量以外的方式
+
 ## 启动方式
 
 后端：

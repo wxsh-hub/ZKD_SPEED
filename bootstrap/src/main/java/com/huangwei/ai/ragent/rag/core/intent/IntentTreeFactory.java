@@ -251,22 +251,34 @@ public class IntentTreeFactory {
                 .id("sys")
                 .name("系统交互")
                 .level(DOMAIN)
-                .kind(IntentKind.SYSTEM) // Domain 可以先标 SYSTEM，仅作语义提示
+                .kind(IntentKind.SYSTEM)
                 .build();
 
         // 欢迎 / 问候
         IntentNode welcome = IntentNode.builder()
                 .id("sys-welcome")
                 .name("欢迎与问候")
-                .level(CATEGORY) // 直接作为叶子
+                .level(CATEGORY)
                 .parentId(sys.getId())
-                .description("用户与助手打招呼，如：你好、早上好、hi、在吗 等")
+                .description("用户与助手打招呼、在线确认、时段问候等，如：你好、早上好、hi、在吗、嗨、哈喽 等")
                 .examples(List.of(
                         "你好",
                         "hello",
+                        "hi",
+                        "hey",
+                        "嗨",
+                        "哈喽",
                         "早上好",
+                        "上午好",
+                        "中午好",
+                        "下午好",
+                        "晚上好",
+                        "早安",
+                        "晚安",
                         "在吗",
-                        "嗨"
+                        "在不在",
+                        "有人吗",
+                        "在嘛"
                 ))
                 .kind(IntentKind.SYSTEM)
                 .build();
@@ -277,17 +289,74 @@ public class IntentTreeFactory {
                 .name("关于助手")
                 .level(CATEGORY)
                 .parentId(sys.getId())
-                .description("询问助手是做什么的、是谁、能做什么等")
+                .description("询问助手的身份、能力、技术架构、开发者、是否联网、底层模型等自我介绍类问题")
                 .examples(List.of(
                         "你是谁",
+                        "你叫什么名字",
                         "你是做什么的",
                         "你能帮我做什么",
-                        "你是什么AI"
+                        "你有什么功能",
+                        "你都能干什么",
+                        "你是什么AI",
+                        "你是什么模型",
+                        "你是不是ChatGPT",
+                        "你是GPT吗",
+                        "谁开发的你",
+                        "你由谁开发",
+                        "你用的什么模型",
+                        "你的底层模型是什么",
+                        "你能联网吗",
+                        "你会联网搜索吗"
                 ))
                 .kind(IntentKind.SYSTEM)
                 .build();
 
-        sys.setChildren(List.of(welcome, aboutBot));
+        // 感谢
+        IntentNode thanks = IntentNode.builder()
+                .id("sys-thanks")
+                .name("感谢")
+                .level(CATEGORY)
+                .parentId(sys.getId())
+                .description("用户表示感谢、夸奖、满意等正面反馈")
+                .examples(List.of(
+                        "谢谢",
+                        "感谢",
+                        "thanks",
+                        "thank you",
+                        "太棒了",
+                        "不错",
+                        "厉害",
+                        "好的谢谢",
+                        "谢了",
+                        "多谢",
+                        "3q",
+                        "感谢感谢"
+                ))
+                .kind(IntentKind.SYSTEM)
+                .build();
+
+        // 告别
+        IntentNode goodbye = IntentNode.builder()
+                .id("sys-goodbye")
+                .name("告别")
+                .level(CATEGORY)
+                .parentId(sys.getId())
+                .description("用户表示告别、结束对话等")
+                .examples(List.of(
+                        "再见",
+                        "拜拜",
+                        "bye",
+                        "byebye",
+                        "下次见",
+                        "我走了",
+                        "先这样吧",
+                        "没事了",
+                        "不用了"
+                ))
+                .kind(IntentKind.SYSTEM)
+                .build();
+
+        sys.setChildren(List.of(welcome, aboutBot, thanks, goodbye));
         roots.add(sys);
 
         // 填充 fullPath

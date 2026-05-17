@@ -101,6 +101,17 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * 拦截业务异常（RuntimeException 子类，如 ScriptBizException）
+     * 返回具体错误信息给前端，而不是通用的"系统出错"
+     */
+    @ExceptionHandler(value = RuntimeException.class)
+    public Result<Void> runtimeExceptionHandler(HttpServletRequest request, RuntimeException ex) {
+        String traceId = RagTraceContext.getTraceId();
+        log.error("[{}] {} traceId={} [biz] {}", request.getMethod(), getUrl(request), traceId, ex.getMessage(), ex);
+        return Results.failure(BaseErrorCode.CLIENT_ERROR.code(), ex.getMessage(), traceId);
+    }
+
+    /**
      * 拦截未捕获异常
      */
     @ExceptionHandler(value = Throwable.class)

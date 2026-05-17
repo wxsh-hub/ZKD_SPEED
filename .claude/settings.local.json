@@ -68,7 +68,7 @@
       "Read(//c/Users/sunha/.claude/**)",
       "Bash(git commit *)",
       "Bash(git pull *)",
-      "Bash(findstr :8080)"
+      "Bash(findstr :8080)",
       "Read(//c/Users/sunha/.claude/**)",
       "Bash(git commit -m ' *)",
       "Bash(git commit *)",
@@ -76,7 +76,22 @@
       "Bash(./mvnw spring-boot:run -pl bootstrap)",
       "Bash(findstr \"4412\")",
       "Bash(./mvnw spring-boot:run -pl bootstrap -Dspring-boot.run.arguments=\"--server.port=9092\")",
-      "Bash(./mvnw clean *)"
+      "Bash(./mvnw clean *)",
+      "Bash(mkdir -p \"C:/temp/nuitka-builds\")",
+      "Read(//c/temp/**)",
+      "Bash(pip show *)",
+      "Bash(pip install *)",
+      "Read(//d/Python311/**)",
+      "Bash(\"D:/Python311/python.exe\" --version)",
+      "Bash(D:/Python311/python.exe *)",
+      "Bash(iconv -f gbk -t utf-8)",
+      "Bash(cp \"D:/11111111111/AAAworkAAA/ZDK/ZKD_SPEED/picture/引导/进入脚本/\"*.png \"D:/11111111111/AAAworkAAA/ZDK/ZKD_SPEED/frontend/public/guide/进入脚本/\")",
+      "Bash(cp \"D:/11111111111/AAAworkAAA/ZDK/ZKD_SPEED/picture/引导/编译脚本/\"*.png \"D:/11111111111/AAAworkAAA/ZDK/ZKD_SPEED/frontend/public/guide/编译脚本/\")",
+      "Bash(xxd \"bootstrap/src/main/java/com/huangwei/ai/ragent/script/service/ScriptCodeGenerator.java\")",
+      "Bash(awk 'NR>=518 && NR<=542' \"bootstrap/src/main/java/com/huangwei/ai/ragent/script/service/ScriptCodeGenerator.java\")",
+      "Bash(awk NR==523{for\\(i=1;i<=length\\($0\\);i++\\){c=substr\\($0,i,1\\);if\\(c==\"\\(\"\\)printf \"  pos %d: \\(\\\\n\",i;if\\(c==\"\\)\"\\)printf \"  pos %d: \\)\\\\n\",i}} *)",
+      "Bash(awk NR==523{print} *)",
+      "Bash(./mvnw install *)"
     ]
   }
 }

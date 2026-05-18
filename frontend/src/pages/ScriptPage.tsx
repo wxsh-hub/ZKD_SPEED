@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import {
   ArrowLeft,
+  Download,
   FolderOpen,
   Loader2,
   Monitor,
@@ -45,6 +46,7 @@ import {
   type ScriptProject,
   type CreateProjectRequest,
 } from "@/services/scriptService";
+import { ScreenshotGuideModal } from "@/components/script/ScreenshotGuideModal";
 
 export function ScriptPage() {
   const navigate = useNavigate();
@@ -53,6 +55,7 @@ export function ScriptPage() {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<ScriptProject | null>(null);
   const [creating, setCreating] = useState(false);
+  const [guideOpen, setGuideOpen] = useState(false);
 
   // create form
   const [form, setForm] = useState<CreateProjectRequest>({
@@ -151,6 +154,16 @@ export function ScriptPage() {
               </div>
             </div>
             <div className="flex items-center gap-2">
+              <Button variant="outline" onClick={() => {
+                const a = document.createElement("a");
+                a.href = "/screenshot.exe";
+                a.download = "screenshot.exe";
+                a.click();
+                setGuideOpen(true);
+              }}>
+                <Download className="mr-2 h-4 w-4" />
+                截图工具
+              </Button>
               <Button variant="outline" onClick={loadProjects}>
                 <RefreshCw className="mr-2 h-4 w-4" />
                 刷新
@@ -315,6 +328,7 @@ export function ScriptPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      <ScreenshotGuideModal open={guideOpen} onClose={() => setGuideOpen(false)} />
     </MainLayout>
   );
 }

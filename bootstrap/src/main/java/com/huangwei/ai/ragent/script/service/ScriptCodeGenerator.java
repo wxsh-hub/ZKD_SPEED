@@ -319,7 +319,7 @@ public class ScriptCodeGenerator {
             String curIndent = indent + "    ".repeat(indentLevel);
 
             // 控制流标记不插入暂停检查
-            boolean isBlock = type.startsWith("for_") || type.startsWith("if_");
+            boolean isBlock = type.startsWith("for_") || type.startsWith("if_") || "else".equals(type);
             sb.append(curIndent).append("# step ").append(step.getStepOrder()).append(": ").append(type).append("\n");
 
             if (withPauseCheck && !isBlock) {
@@ -360,6 +360,12 @@ public class ScriptCodeGenerator {
                 case "if_random" -> {
                     double probability = getDouble(params, "probability", 0.5);
                     sb.append(curIndent).append("if random.random() < ").append(probability).append(":\n");
+                    indentLevel++;
+                }
+                case "else" -> {
+                    indentLevel = Math.max(0, indentLevel - 1);
+                    String elseIndent = indent + "    ".repeat(indentLevel);
+                    sb.append(elseIndent).append("else:\n");
                     indentLevel++;
                 }
                 case "if_end" -> {

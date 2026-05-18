@@ -448,6 +448,7 @@ CREATE TABLE `t_script_project`
     `status`       varchar(20)  NOT NULL DEFAULT 'draft' COMMENT '状态: draft/compiled',
     `exe_path`     varchar(512)          DEFAULT NULL COMMENT '编译后的EXE文件路径',
     `gui_enabled`  tinyint(1) NOT NULL DEFAULT '0' COMMENT '是否启用GUI界面 0:否 1:是',
+    `upload_token` varchar(64)           DEFAULT NULL COMMENT '截图上传Token（用于截图工具免登录上传）',
     `run_count`    int(11)               DEFAULT NULL COMMENT '执行次数(为空表示1次)',
     `run_interval` int(11)               DEFAULT NULL COMMENT '执行间隔秒数(为空表示0)',
     `create_time`  datetime     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',

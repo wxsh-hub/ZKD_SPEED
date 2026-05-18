@@ -4,6 +4,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Code,
+  Copy,
   Download,
   FolderOpen,
   GripVertical,
@@ -62,6 +63,14 @@ import {
   OPERATION_HINTS,
   KEY_OPTIONS,
 } from "@/services/scriptService";
+import { ScreenshotGuideModal } from "@/components/script/ScreenshotGuideModal";
+
+// 将相对路径的 fileUrl 补全为可通过代理访问的地址
+function resolveFileUrl(url: string | null | undefined): string {
+  if (!url) return "";
+  if (url.startsWith("http://") || url.startsWith("https://")) return url;
+  return `/api/ragent${url.startsWith("/") ? "" : "/"}${url}`;
+}
 
 // ============ Key Selector ============
 
@@ -185,6 +194,7 @@ interface StepItemProps {
   onDelete: (index: number) => void;
   onMoveUp: (index: number) => void;
   onMoveDown: (index: number) => void;
+  onUploadTemplateDirect: (index: number, file: File) => void;
   isFirst: boolean;
   isLast: boolean;
   isActive: boolean;
@@ -199,11 +209,13 @@ function StepItem({
   onDelete,
   onMoveUp,
   onMoveDown,
+  onUploadTemplateDirect,
   isFirst,
   isLast,
   isActive,
   onClick,
 }: StepItemProps) {
+  const tplInputRef = useRef<HTMLInputElement>(null);
   const renderParams = () => {
     const params = step.paramsJson || {};
     switch (step.operationType) {
@@ -426,11 +438,44 @@ function StepItem({
                 }}
                 className="h-7 w-20 text-xs"
               />
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                ref={tplInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    onUploadTemplateDirect(index, file);
+                    if (tplInputRef.current) tplInputRef.current.value = "";
+                  }
+                }}
+              />
+              <button
+                onClick={() => tplInputRef.current?.click()}
+                className="flex items-center gap-1 rounded border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] text-slate-600 hover:bg-slate-100"
+              >
+                <Upload className="h-3 w-3" />
+                上传模板
+              </button>
               {params.templateUrl && (
-                <span className="text-xs text-emerald-600">已设置模板</span>
+                <>
+                  <a
+                    href={resolveFileUrl(params.templateUrl as string)}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center gap-1 rounded border border-emerald-200 bg-emerald-50 px-2 py-1 text-[11px] text-emerald-600 hover:bg-emerald-100"
+                  >
+                    <ImagePlus className="h-3 w-3" />
+                    查看模板
+                  </a>
+                  <span className="text-[10px] text-emerald-500">已设置</span>
+                </>
               )}
             </div>
-            <span className="text-xs text-slate-400">在图片上拖拽圈出检测区域</span>
+            <span className="text-xs text-slate-400">上传模板图片或在截图上拖拽圈出检测区域</span>
           </div>
         );
       case "if_random":
@@ -457,6 +502,8 @@ function StepItem({
             />
           </div>
         );
+      case "else":
+        return <span className="text-xs text-amber-600 font-medium">否则（条件不满足时执行）</span>;
       case "if_end":
         return <span className="text-xs text-slate-400">条件结束</span>;
       default:
@@ -538,9 +585,21 @@ function StepItem({
 
 interface InsertStepDropdownProps {
   onInsert: (type: OperationType) => void;
+  elseAllowed: boolean;
 }
 
-function InsertStepDropdown({ onInsert }: InsertStepDropdownProps) {
+function hasUnclosedIf(steps: ScriptStep[], beforeIndex: number): boolean {
+  let depth = 0;
+  for (let i = 0; i < beforeIndex && i < steps.length; i++) {
+    const t = steps[i].operationType;
+    if (t === "if_image" || t === "if_random") depth++;
+    else if (t === "if_end") depth = Math.max(0, depth - 1);
+    else if (t === "else" && depth > 0) depth--;
+  }
+  return depth > 0;
+}
+
+function InsertStepDropdown({ onInsert, elseAllowed }: InsertStepDropdownProps) {
   return (
     <div className="flex items-center justify-center py-1.5">
       <div className="h-px flex-1 bg-slate-200" />
@@ -552,7 +611,11 @@ function InsertStepDropdown({ onInsert }: InsertStepDropdownProps) {
         </DropdownMenuTrigger>
         <DropdownMenuContent align="center" side="right">
           {(Object.keys(OPERATION_LABELS) as OperationType[]).map((type) => (
-            <DropdownMenuItem key={type} onClick={() => onInsert(type)}>
+            <DropdownMenuItem
+              key={type}
+              onClick={() => onInsert(type)}
+              disabled={type === "else" && !elseAllowed}
+            >
               <span
                 className={cn(
                   "inline-block w-2 h-2 rounded-full mr-2",
@@ -572,6 +635,12 @@ function InsertStepDropdown({ onInsert }: InsertStepDropdownProps) {
 // ============ Guide Modal ============
 
 const GUIDE_STEPS = [
+  {
+    title: "",
+    description: "",
+    image: "",
+    isTitlePage: true,
+  },
   {
     title: "第 1 步：上传截图",
     description: "点击左侧截图列表上方的 + 按钮，上传游戏或应用的截图。支持单张上传或整个文件夹批量上传。截图会自动压缩并存储。",
@@ -609,6 +678,7 @@ function ScriptGuideModal({ open, onClose }: ScriptGuideModalProps) {
   const current = GUIDE_STEPS[step];
   const isFirst = step === 0;
   const isLast = step === GUIDE_STEPS.length - 1;
+  const isTitlePage = (current as any).isTitlePage === true;
 
   return (
     <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/40">
@@ -626,22 +696,31 @@ function ScriptGuideModal({ open, onClose }: ScriptGuideModalProps) {
 
         {/* content */}
         <div className="px-5 py-5">
-          {/* image */}
-          <div className="mb-4 max-h-[420px] overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
-            {current.image ? (
-              <img src={current.image} alt={current.title} className="w-full object-contain" />
-            ) : (
-              <div className="flex h-full items-center justify-center text-center text-slate-400">
-                <div>
-                  <MousePointerClick className="mx-auto mb-2 h-8 w-8" />
-                  <p className="text-xs">引导截图占位</p>
-                </div>
+          {isTitlePage ? (
+            <div className="flex flex-col items-center justify-center py-16">
+              <MousePointerClick className="mb-4 h-12 w-12 text-violet-500" />
+              <h1 className="text-2xl font-bold text-slate-900">创建脚本指南</h1>
+            </div>
+          ) : (
+            <>
+              {/* image */}
+              <div className="mb-4 max-h-[420px] overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
+                {current.image ? (
+                  <img src={current.image} alt={current.title} className="w-full object-contain" />
+                ) : (
+                  <div className="flex h-full items-center justify-center text-center text-slate-400">
+                    <div>
+                      <MousePointerClick className="mx-auto mb-2 h-8 w-8" />
+                      <p className="text-xs">引导截图占位</p>
+                    </div>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
 
-          <h3 className="mb-1.5 text-sm font-semibold text-slate-800">{current.title}</h3>
-          <p className="text-xs leading-relaxed text-slate-500">{current.description}</p>
+              <h3 className="mb-1.5 text-sm font-semibold text-slate-800">{current.title}</h3>
+              <p className="text-xs leading-relaxed text-slate-500">{current.description}</p>
+            </>
+          )}
         </div>
 
         {/* footer */}
@@ -697,6 +776,12 @@ function ScriptGuideModal({ open, onClose }: ScriptGuideModalProps) {
 
 const BUILD_GUIDE_STEPS = [
   {
+    title: "",
+    description: "",
+    image: "",
+    isTitlePage: true,
+  },
+  {
     title: "第 1 步：杀毒软件隔离区找回",
     description:
       "部分杀毒软件（如 360、火绒、Windows Defender）可能会将编译后的 EXE 误判为威胁并自动隔离。请打开杀毒软件的「隔离区」或「病毒和威胁防护历史记录」，找到被拦截的文件并选择「还原」。",
@@ -737,6 +822,7 @@ function BuildGuideModal({ open, onClose, downloadUrl, projectName }: BuildGuide
   const current = BUILD_GUIDE_STEPS[step];
   const isFirst = step === 0;
   const isLast = step === BUILD_GUIDE_STEPS.length - 1;
+  const isTitlePage = (current as any).isTitlePage === true;
 
   return (
     <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/40">
@@ -754,22 +840,31 @@ function BuildGuideModal({ open, onClose, downloadUrl, projectName }: BuildGuide
 
         {/* content */}
         <div className="px-5 py-5">
-          {/* image */}
-          <div className="mb-4 max-h-[420px] overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
-            {current.image ? (
-              <img src={current.image} alt={current.title} className="w-full object-contain" />
-            ) : (
-              <div className="flex h-full items-center justify-center text-center text-slate-400">
-                <div>
-                  <HelpCircle className="mx-auto mb-2 h-8 w-8" />
-                  <p className="text-xs">引导截图占位</p>
-                </div>
+          {isTitlePage ? (
+            <div className="flex flex-col items-center justify-center py-16">
+              <HelpCircle className="mb-4 h-12 w-12 text-violet-500" />
+              <h1 className="text-2xl font-bold text-slate-900">脚本使用指南</h1>
+            </div>
+          ) : (
+            <>
+              {/* image */}
+              <div className="mb-4 max-h-[420px] overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
+                {current.image ? (
+                  <img src={current.image} alt={current.title} className="w-full object-contain" />
+                ) : (
+                  <div className="flex h-full items-center justify-center text-center text-slate-400">
+                    <div>
+                      <HelpCircle className="mx-auto mb-2 h-8 w-8" />
+                      <p className="text-xs">引导截图占位</p>
+                    </div>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
 
-          <h3 className="mb-1.5 text-sm font-semibold text-slate-800">{current.title}</h3>
-          <p className="text-xs leading-relaxed text-slate-500">{current.description}</p>
+              <h3 className="mb-1.5 text-sm font-semibold text-slate-800">{current.title}</h3>
+              <p className="text-xs leading-relaxed text-slate-500">{current.description}</p>
+            </>
+          )}
         </div>
 
         {/* footer */}
@@ -828,7 +923,7 @@ interface CanvasOverlayProps {
   steps: ScriptStep[];
   activeStepId: string | null;
   onCanvasClick: (x: number, y: number) => void;
-  onCanvasAreaSelect: (x1: number, y1: number, x2: number, y2: number) => void;
+  onCanvasAreaSelect: (x1: number, y1: number, x2: number, y2: number, duration?: number) => void;
   onUploadTemplate: (file: File, x1: number, y1: number, x2: number, y2: number) => void;
   onNoStepClick: () => void;
 }
@@ -849,27 +944,42 @@ function CanvasOverlay({
   const [currentPos, setCurrentPos] = useState<{ x: number; y: number } | null>(null);
   const [imgSize, setImgSize] = useState({ w: 0, h: 0 });
   const imgRef = useRef<HTMLImageElement | null>(null);
+  const drawStartTimeRef = useRef<number>(0);
 
   const activeStep = steps.find((s) => s.id === activeStepId) ?? null;
 
-  // load image
+  // load image via fetch → blob to avoid canvas taint
   useEffect(() => {
-    const img = new Image();
-    img.crossOrigin = "anonymous";
-    img.onload = () => {
-      imgRef.current = img;
-      setImgSize({ w: img.naturalWidth, h: img.naturalHeight });
+    let blobUrl: string | null = null;
+    let cancelled = false;
+    const url = resolveFileUrl(screenshot.fileUrl);
+    fetch(url)
+      .then((res) => res.blob())
+      .then((blob) => {
+        if (cancelled) return;
+        blobUrl = URL.createObjectURL(blob);
+        const img = new Image();
+        img.onload = () => {
+          if (cancelled) return;
+          imgRef.current = img;
+          setImgSize({ w: img.naturalWidth, h: img.naturalHeight });
+        };
+        img.src = blobUrl;
+      })
+      .catch(() => {
+        // fetch 失败时回退为普通加载
+        if (cancelled) return;
+        const img = new Image();
+        img.onload = () => {
+          imgRef.current = img;
+          setImgSize({ w: img.naturalWidth, h: img.naturalHeight });
+        };
+        img.src = url;
+      });
+    return () => {
+      cancelled = true;
+      if (blobUrl) URL.revokeObjectURL(blobUrl);
     };
-    img.onerror = () => {
-      // CORS 不支持时回退为普通加载（画布会被污染，裁剪不可用）
-      const fallback = new Image();
-      fallback.onload = () => {
-        imgRef.current = fallback;
-        setImgSize({ w: fallback.naturalWidth, h: fallback.naturalHeight });
-      };
-      fallback.src = screenshot.fileUrl;
-    };
-    img.src = screenshot.fileUrl;
   }, [screenshot.fileUrl]);
 
   // draw
@@ -1003,6 +1113,18 @@ function CanvasOverlay({
         ctx.moveTo(currentPos.x, currentPos.y);
         ctx.lineTo(currentPos.x - aLen * Math.cos(angle + 0.4), currentPos.y - aLen * Math.sin(angle + 0.4));
         ctx.stroke();
+        // 显示拖拽耗时
+        const elapsed = Math.max(100, Date.now() - drawStartTimeRef.current);
+        const label = `${elapsed}ms`;
+        ctx.setLineDash([]);
+        ctx.font = "bold 12px sans-serif";
+        ctx.fillStyle = "#7C3AED";
+        ctx.strokeStyle = "#fff";
+        ctx.lineWidth = 3;
+        const lx = (startPos.x + currentPos.x) / 2;
+        const ly = (startPos.y + currentPos.y) / 2 - 10;
+        ctx.strokeText(label, lx, ly);
+        ctx.fillText(label, lx, ly);
       } else {
         const rx = Math.min(startPos.x, currentPos.x);
         const ry = Math.min(startPos.y, currentPos.y);
@@ -1041,6 +1163,7 @@ function CanvasOverlay({
       setDrawing(true);
       setStartPos(pos);
       setCurrentPos(pos);
+      drawStartTimeRef.current = Date.now();
     }
   };
 
@@ -1055,12 +1178,14 @@ function CanvasOverlay({
     const endPos = getCanvasPos(e);
     const s = toImagePos(startPos.x, startPos.y);
     const ep = toImagePos(endPos.x, endPos.y);
+    const elapsed = Date.now() - drawStartTimeRef.current;
     if (Math.abs(ep.x - s.x) > 5 || Math.abs(ep.y - s.y) > 5) {
       if (activeStep && activeStep.operationType === "if_image") {
         // 裁剪模板图片并上传
         cropAndUpload(startPos, endPos, s, ep);
       } else {
-        onCanvasAreaSelect(s.x, s.y, ep.x, ep.y);
+        const duration = activeStep?.operationType === "scroll" ? Math.max(100, elapsed) : undefined;
+        onCanvasAreaSelect(s.x, s.y, ep.x, ep.y, duration);
       }
     }
     setStartPos(null);
@@ -1147,6 +1272,7 @@ export function ScriptDetailPage() {
 
   // build guide modal
   const [showBuildGuide, setShowBuildGuide] = useState(false);
+  const [showScreenshotGuide, setShowScreenshotGuide] = useState(false);
 
   // gui options
   const [guiEnabled, setGuiEnabled] = useState(false);
@@ -1238,6 +1364,13 @@ export function ScriptDetailPage() {
   // step CRUD
   const handleAddStep = (type: OperationType, insertAfterIndex?: number) => {
     if (!project) return;
+    if (type === "else") {
+      const checkIndex = insertAfterIndex !== undefined ? insertAfterIndex + 1 : steps.length;
+      if (!hasUnclosedIf(steps, checkIndex)) {
+        toast.error("没有未结束的条件块，无法添加「否则」");
+        return;
+      }
+    }
     const defaultParams: Record<OperationType, Record<string, unknown>> = {
       click: {},
       double_click: {},
@@ -1247,13 +1380,14 @@ export function ScriptDetailPage() {
       mouse_move: {},
       key_press: {},
       key_long_press: {},
-      wait_seconds: { seconds: 3 },
+      wait_seconds: { seconds: 1 },
       input_text: {},
       scroll: { x1: 0, y1: 0, x2: 0, y2: 0, duration: 500 },
       for_start: { count: 3 },
       for_end: {},
       if_image: { x1: 0, y1: 0, x2: 100, y2: 100, similarity: 0.95 },
       if_random: { probability: 0.5 },
+      else: {},
       if_end: {},
     };
 
@@ -1328,7 +1462,7 @@ export function ScriptDetailPage() {
     const idx = steps.findIndex((s) => s.id === stepId);
     if (idx < 0) return;
     const step = steps[idx];
-    if (step.operationType === "click" || step.operationType === "double_click") {
+    if (step.operationType === "click" || step.operationType === "double_click" || step.operationType === "mouse_move") {
       handleUpdateStep(idx, { paramsJson: { x, y } });
     } else if (step.operationType === "long_press") {
       handleUpdateStep(idx, {
@@ -1337,7 +1471,7 @@ export function ScriptDetailPage() {
     }
   };
 
-  const handleCanvasAreaSelect = (x1: number, y1: number, x2: number, y2: number) => {
+  const handleCanvasAreaSelect = (x1: number, y1: number, x2: number, y2: number, duration?: number) => {
     const stepId = activeStepIdRef.current;
     if (!stepId) return;
     const idx = steps.findIndex((s) => s.id === stepId);
@@ -1356,9 +1490,8 @@ export function ScriptDetailPage() {
         paramsJson: { x1: minX, y1: minY, x2: maxX, y2: maxY, duration: step.paramsJson.duration || 1000 },
       });
     } else if (step.operationType === "scroll") {
-      const duration = (step.paramsJson.duration as number) || 500;
       handleUpdateStep(idx, {
-        paramsJson: { x1, y1, x2, y2, duration },
+        paramsJson: { x1, y1, x2, y2, duration: duration || (step.paramsJson.duration as number) || 500 },
       });
     }
   };
@@ -1374,6 +1507,20 @@ export function ScriptDetailPage() {
         paramsJson: { ...steps[idx].paramsJson, x1, y1, x2, y2, templateUrl },
       });
       toast.success("模板已设置");
+    } catch {
+      toast.error("模板上传失败");
+    }
+  };
+
+  // 直接上传模板图片（不经过截图裁剪压缩）
+  const handleUploadTemplateDirect = async (index: number, file: File) => {
+    if (!project) return;
+    try {
+      const templateUrl = await uploadTemplate(project.id, file);
+      handleUpdateStep(index, {
+        paramsJson: { ...steps[index].paramsJson, templateUrl },
+      });
+      toast.success("模板上传成功");
     } catch {
       toast.error("模板上传失败");
     }
@@ -1481,10 +1628,22 @@ export function ScriptDetailPage() {
     for_end: [],
     if_image: [],
     if_random: [],
+    else: [],
     if_end: [],
   };
 
   const validateSteps = (): boolean => {
+    if (steps.length === 0) {
+      toast.error("请先添加至少一个操作步骤再编译");
+      return false;
+    }
+    const hasRealOperation = steps.some(
+      (s) => !["for_start", "for_end", "if_image", "if_random", "else", "if_end"].includes(s.operationType)
+    );
+    if (!hasRealOperation) {
+      toast.error("请先添加至少一个操作步骤（点击、输入、滑动等），仅有控制流无法编译");
+      return false;
+    }
     for (let i = 0; i < steps.length; i++) {
       const step = steps[i];
       const required = STEP_REQUIRED_FIELDS[step.operationType] || [];
@@ -1512,6 +1671,10 @@ export function ScriptDetailPage() {
         forDepth--;
       }
       else if (step.operationType === "if_image" || step.operationType === "if_random") ifDepth++;
+      else if (step.operationType === "else") {
+        // else 不影响深度计数，但需要校验前面有对应的 if
+        if (ifDepth <= 0) { toast.error("存在多余的「否则」，缺少对应的条件开始"); return false; }
+      }
       else if (step.operationType === "if_end") {
         if (ifDepth <= 0) { toast.error("存在多余的「条件结束」，缺少对应的条件开始"); return false; }
         ifDepth--;
@@ -1669,8 +1832,31 @@ export function ScriptDetailPage() {
                 {" · "}{screenshots.length} 张截图 · {steps.length} 个步骤
               </p>
             </div>
+            {project.uploadToken && (
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(project.uploadToken!);
+                  toast.success("Token 已复制到剪贴板");
+                }}
+                className="flex items-center gap-1.5 rounded-md border border-slate-200 bg-slate-50 px-2 py-1 text-xs text-slate-500 transition-colors hover:bg-slate-100"
+                title="点击复制上传Token，用于截图工具免登录上传"
+              >
+                <span className="font-mono text-[10px]">Token</span>
+                <Copy className="h-3 w-3" />
+              </button>
+            )}
           </div>
           <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => {
+              const a = document.createElement("a");
+              a.href = "/screenshot.exe";
+              a.download = "screenshot.exe";
+              a.click();
+              setShowScreenshotGuide(true);
+            }}>
+              <Download className="mr-1.5 h-3.5 w-3.5" />
+              截图工具
+            </Button>
             <Button
               variant="outline"
               size="sm"
@@ -1836,7 +2022,7 @@ export function ScriptDetailPage() {
                       )}
                     >
                       <img
-                        src={s.fileUrl}
+                        src={resolveFileUrl(s.fileUrl)}
                         alt={s.fileName}
                         className="w-full object-cover"
                         style={{ aspectRatio: `${s.width}/${s.height}` }}
@@ -1889,19 +2075,23 @@ export function ScriptDetailPage() {
             <div className="border-t border-slate-200 bg-white px-4 py-3">
               <div className="mb-2 text-sm text-slate-500 font-medium">添加步骤:</div>
               <div className="flex flex-wrap items-center gap-2">
-                {(Object.keys(OPERATION_LABELS) as OperationType[]).map((type) => (
-                  <button
-                    key={type}
-                    onClick={() => handleAddStep(type)}
-                    className={cn(
-                      "rounded-lg border px-4 py-2 text-sm font-medium transition-colors",
-                      OPERATION_COLORS[type],
-                      "hover:opacity-80"
-                    )}
-                  >
-                    {OPERATION_LABELS[type]}
-                  </button>
-                ))}
+                {(Object.keys(OPERATION_LABELS) as OperationType[]).map((type) => {
+                  const elseDisabled = type === "else" && !hasUnclosedIf(steps, steps.length);
+                  return (
+                    <button
+                      key={type}
+                      onClick={() => handleAddStep(type)}
+                      disabled={elseDisabled}
+                      className={cn(
+                        "rounded-lg border px-4 py-2 text-sm font-medium transition-colors",
+                        OPERATION_COLORS[type],
+                        elseDisabled ? "opacity-40 cursor-not-allowed" : "hover:opacity-80"
+                      )}
+                    >
+                      {OPERATION_LABELS[type]}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -1965,11 +2155,13 @@ export function ScriptDetailPage() {
                       {i === 0 && (
                         <InsertStepDropdown
                           onInsert={(type) => handleAddStep(type, -1)}
+                          elseAllowed={hasUnclosedIf(steps, 0)}
                         />
                       )}
                       {i > 0 && (
                         <InsertStepDropdown
                           onInsert={(type) => handleAddStep(type, i - 1)}
+                          elseAllowed={hasUnclosedIf(steps, i)}
                         />
                       )}
                       <StepItem
@@ -1980,6 +2172,7 @@ export function ScriptDetailPage() {
                         onDelete={handleDeleteStep}
                         onMoveUp={(idx) => handleMoveStep(idx, -1)}
                         onMoveDown={(idx) => handleMoveStep(idx, 1)}
+                        onUploadTemplateDirect={handleUploadTemplateDirect}
                         isFirst={i === 0}
                         isLast={i === steps.length - 1}
                         isActive={i === activeStepIndex}
@@ -1989,6 +2182,7 @@ export function ScriptDetailPage() {
                   ))}
                   <InsertStepDropdown
                     onInsert={(type) => handleAddStep(type, steps.length - 1)}
+                    elseAllowed={hasUnclosedIf(steps, steps.length)}
                   />
                 </div>
               )}
@@ -2054,6 +2248,7 @@ export function ScriptDetailPage() {
         {/* guide modal */}
         <ScriptGuideModal open={showGuide} onClose={handleCloseGuide} />
         <BuildGuideModal open={showBuildGuide} onClose={() => setShowBuildGuide(false)} downloadUrl={downloadUrl} projectName={project.name} />
+        <ScreenshotGuideModal open={showScreenshotGuide} onClose={() => setShowScreenshotGuide(false)} uploadToken={project.uploadToken} />
       </div>
     </MainLayout>
   );

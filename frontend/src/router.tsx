@@ -10,6 +10,9 @@ const NovelPage = lazy(() => import("@/pages/NovelPage").then((m) => ({ default:
 const ImitationPage = lazy(() => import("@/pages/ImitationPage").then((m) => ({ default: m.ImitationPage })));
 const ScriptPage = lazy(() => import("@/pages/ScriptPage").then((m) => ({ default: m.ScriptPage })));
 const ScriptDetailPage = lazy(() => import("@/pages/ScriptDetailPage").then((m) => ({ default: m.ScriptDetailPage })));
+const LandingPageA = lazy(() => import("@/pages/LandingPageA"));
+const LandingPageB = lazy(() => import("@/pages/LandingPageB"));
+const LandingPageC = lazy(() => import("@/pages/LandingPageC"));
 const AdminLayout = lazy(() => import("@/pages/admin/AdminLayout").then((m) => ({ default: m.AdminLayout })));
 const DashboardPage = lazy(() => import("@/pages/admin/dashboard/DashboardPage").then((m) => ({ default: m.DashboardPage })));
 const KnowledgeListPage = lazy(() => import("@/pages/admin/knowledge/KnowledgeListPage").then((m) => ({ default: m.KnowledgeListPage })));
@@ -69,14 +72,25 @@ function RedirectIfAuth({ children }: { children: JSX.Element }) {
 }
 
 function HomeRedirect() {
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-  return <Navigate to={isAuthenticated ? "/chat" : "/login"} replace />;
+  return <LazyPage><LandingPageB /></LazyPage>;
 }
 
 export const router = createBrowserRouter([
   {
     path: "/",
     element: <HomeRedirect />
+  },
+  {
+    path: "/landing/a",
+    element: <LazyPage><LandingPageA /></LazyPage>
+  },
+  {
+    path: "/landing/b",
+    element: <LazyPage><LandingPageB /></LazyPage>
+  },
+  {
+    path: "/landing/c",
+    element: <LazyPage><LandingPageC /></LazyPage>
   },
   {
     path: "/login",

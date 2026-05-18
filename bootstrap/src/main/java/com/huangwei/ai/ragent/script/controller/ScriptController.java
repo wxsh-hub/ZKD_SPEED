@@ -109,4 +109,11 @@ public class ScriptController {
             @RequestPart("file") MultipartFile file) {
         return Results.success(scriptService.uploadTemplate(projectId, file));
     }
+
+    @PostMapping(value = "/script/token/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public Result<ScriptScreenshotVO> uploadByToken(
+            @RequestParam("token") String token,
+            @RequestPart("file") MultipartFile file) {
+        return Results.success(scriptService.uploadByToken(token, file));
+    }
 }

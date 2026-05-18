@@ -66,6 +66,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 @Slf4j
 @Service
@@ -80,6 +82,15 @@ public class ScriptServiceImpl implements ScriptService {
 
     @Value("${script.python-path:python}")
     private String pythonPath;
+
+    @Value("${script.github.token:}")
+    private String githubToken;
+
+    @Value("${script.github.owner:}")
+    private String githubOwner;
+
+    @Value("${script.github.repo:}")
+    private String githubRepo;
 
     public ScriptServiceImpl(ScriptProjectMapper projectMapper,
                              ScriptScreenshotMapper screenshotMapper,
@@ -137,6 +148,7 @@ public class ScriptServiceImpl implements ScriptService {
                     .status(p.getStatus())
                     .exePath(p.getExePath())
                     .guiEnabled(p.getGuiEnabled())
+                    .uploadToken(p.getUploadToken())
                     .screenshotCount(screenshotCounts.getOrDefault(pid, 0L).intValue())
                     .stepCount(0)
                     .createTime(p.getCreateTime())
@@ -172,6 +184,7 @@ public class ScriptServiceImpl implements ScriptService {
                 .status(project.getStatus())
                 .exePath(project.getExePath())
                 .guiEnabled(project.getGuiEnabled())
+                .uploadToken(project.getUploadToken())
                 .screenshotCount(screenshots.size())
                 .stepCount(steps.size())
                 .createTime(project.getCreateTime())
@@ -189,6 +202,7 @@ public class ScriptServiceImpl implements ScriptService {
                 .name(request.getName())
                 .description(request.getDescription())
                 .status(ScriptStatus.DRAFT.getValue())
+                .uploadToken(UUID.randomUUID().toString().replace("-", ""))
                 .build();
         projectMapper.insert(project);
 
@@ -197,6 +211,7 @@ public class ScriptServiceImpl implements ScriptService {
                 .name(project.getName())
                 .description(project.getDescription())
                 .status(project.getStatus())
+                .uploadToken(project.getUploadToken())
                 .screenshotCount(0)
                 .stepCount(0)
                 .createTime(project.getCreateTime())
@@ -335,6 +350,30 @@ public class ScriptServiceImpl implements ScriptService {
         return doUploadScreenshot(project, file, count.intValue());
     }
 
+    @Override
+    @Transactional
+    public ScriptScreenshotVO uploadByToken(String token, MultipartFile file) {
+        if (StrUtil.isBlank(token)) {
+            throw new ScriptBizException("上传Token不能为空");
+        }
+        ScriptProjectDO project = projectMapper.selectOne(
+                new LambdaQueryWrapper<ScriptProjectDO>()
+                        .eq(ScriptProjectDO::getUploadToken, token)
+                        .eq(ScriptProjectDO::getDeleted, 0));
+        if (project == null) {
+            throw new ScriptBizException("无效的上传Token");
+        }
+        if (!isImageFile(file)) {
+            throw new ScriptBizException("不支持的图片格式: " + file.getOriginalFilename());
+        }
+
+        Long count = screenshotMapper.selectCount(
+                new LambdaQueryWrapper<ScriptScreenshotDO>()
+                        .eq(ScriptScreenshotDO::getProjectId, project.getId()));
+
+        return doUploadScreenshot(project, file, count.intValue());
+    }
+
     private ScriptScreenshotVO doUploadScreenshot(ScriptProjectDO project, MultipartFile file, int sortOrder) {
         // 压缩并获取尺寸（一次解码）
         ImageCompressor.Result compressed = ImageCompressor.compressWithDimensions(file);
@@ -455,14 +494,250 @@ public class ScriptServiceImpl implements ScriptService {
     private void doBuild(Long projectId, String taskId, String scriptContent) {
         Path tmpDir = null;
         try {
-            // 使用纯 ASCII 路径避免 Nuitka 处理中文路径崩溃
-            Path buildBase = Path.of("C:", "temp", "nuitka-builds");
+            ScriptProjectDO buildProject = projectMapper.selectById(projectId);
+
+            // 收集模板 URL
+            List<String> templateUrls = collectTemplateUrls(projectId);
+
+            updateProgress(projectId, 10, "正在提交编译任务到 GitHub Actions...");
+
+            // 如果配置了 GitHub，使用 GitHub Actions 编译
+            if (StrUtil.isNotBlank(githubToken) && StrUtil.isNotBlank(githubOwner) && StrUtil.isNotBlank(githubRepo)) {
+                doBuildWithGitHub(projectId, taskId, scriptContent, buildProject, templateUrls);
+            } else {
+                doBuildLocal(projectId, taskId, scriptContent, buildProject);
+            }
+
+        } catch (Exception e) {
+            log.error("EXE 编译失败: projectId={}", projectId, e);
+            buildProgressMap.put(projectId, BuildProgress.builder()
+                    .status(ScriptStatus.FAILED.getValue())
+                    .progress(0)
+                    .message("编译失败: " + e.getMessage())
+                    .build());
+            try {
+                ScriptProjectDO project = projectMapper.selectById(projectId);
+                if (project != null) {
+                    project.setStatus(ScriptStatus.DRAFT.getValue());
+                    projectMapper.updateById(project);
+                }
+            } catch (Exception ignored) {
+            }
+            CompletableFuture.delayedExecutor(5, TimeUnit.MINUTES)
+                    .execute(() -> {
+                        BuildProgress cur = buildProgressMap.get(projectId);
+                        if (cur != null && ScriptStatus.FAILED.getValue().equals(cur.getStatus())) {
+                            buildProgressMap.remove(projectId);
+                        }
+                    });
+        }
+    }
+
+    /**
+     * 通过 GitHub Actions 编译
+     */
+    private void doBuildWithGitHub(Long projectId, String taskId, String scriptContent,
+                                    ScriptProjectDO buildProject, List<String> templateUrls) throws Exception {
+        Path tmpDir = null;
+        try {
+            java.net.http.HttpClient httpClient = java.net.http.HttpClient.newBuilder()
+                    .followRedirects(java.net.http.HttpClient.Redirect.ALWAYS)
+                    .build();
+            String apiBase = "https://api.github.com/repos/" + githubOwner + "/" + githubRepo;
+            String authHeader = "Bearer " + githubToken;
+
+            // 1. 触发 workflow_dispatch
+            String templateUrlsJson = objectMapper.writeValueAsString(templateUrls);
+            Map<String, String> inputs = new HashMap<>();
+            inputs.put("script_content", scriptContent);
+            inputs.put("project_name", buildProject != null ? buildProject.getName() : "script");
+            inputs.put("template_urls", templateUrlsJson);
+            String bodyJson = objectMapper.writeValueAsString(Map.of("ref", "main", "inputs", inputs));
+            log.info("触发 GitHub Actions, body size={} bytes", bodyJson.length());
+
+            java.net.http.HttpRequest triggerReq = java.net.http.HttpRequest.newBuilder()
+                    .uri(java.net.URI.create(apiBase + "/actions/workflows/build.yml/dispatches"))
+                    .header("Authorization", authHeader)
+                    .header("Accept", "application/vnd.github+json")
+                    .header("Content-Type", "application/json")
+                    .header("X-GitHub-Api-Version", "2022-11-28")
+                    .POST(java.net.http.HttpRequest.BodyPublishers.ofString(bodyJson))
+                    .build();
+
+            java.net.http.HttpResponse<String> triggerResp = httpClient.send(triggerReq, java.net.http.HttpResponse.BodyHandlers.ofString());
+            if (triggerResp.statusCode() != 204) {
+                throw new ScriptBizException("触发 GitHub Actions 失败: " + triggerResp.statusCode() + " " + triggerResp.body());
+            }
+
+            updateProgress(projectId, 20, "编译任务已提交，等待 GitHub Actions 启动...");
+
+            // 2. 等待几秒让 workflow run 创建
+            Thread.sleep(5000);
+
+            // 3. 轮询获取最新的 workflow run
+            String runId = null;
+            for (int i = 0; i < 120; i++) {
+                Thread.sleep(5000);
+
+                java.net.http.HttpRequest listReq = java.net.http.HttpRequest.newBuilder()
+                        .uri(java.net.URI.create(apiBase + "/actions/runs?per_page=1"))
+                        .header("Authorization", authHeader)
+                        .header("Accept", "application/vnd.github+json")
+                        .GET()
+                        .build();
+
+                java.net.http.HttpResponse<String> listResp = httpClient.send(listReq, java.net.http.HttpResponse.BodyHandlers.ofString());
+                if (listResp.statusCode() != 200) {
+                    log.warn("查询 workflow runs 失败: {}", listResp.statusCode());
+                    continue;
+                }
+
+                Map<String, Object> runsData = objectMapper.readValue(listResp.body(), new com.fasterxml.jackson.core.type.TypeReference<>() {});
+                List<Map<String, Object>> workflowRuns = (List<Map<String, Object>>) runsData.get("workflow_runs");
+                if (workflowRuns == null || workflowRuns.isEmpty()) continue;
+
+                Map<String, Object> latestRun = workflowRuns.get(0);
+                String status = (String) latestRun.get("status");
+                String conclusion = (String) latestRun.get("conclusion");
+                runId = latestRun.get("id").toString();
+
+                if ("completed".equals(status)) {
+                    if (!"success".equals(conclusion)) {
+                        throw new ScriptBizException("GitHub Actions 编译失败: " + conclusion);
+                    }
+                    break;
+                }
+
+                int progress = Math.min(70, 20 + i);
+                updateProgress(projectId, progress, "GitHub Actions 编译中... (" + status + ")");
+            }
+
+            if (runId == null) {
+                throw new ScriptBizException("等待 GitHub Actions 超时");
+            }
+
+            updateProgress(projectId, 75, "正在下载编译产物...");
+
+            // 4. 下载 artifact
+            java.net.http.HttpRequest artifactReq = java.net.http.HttpRequest.newBuilder()
+                    .uri(java.net.URI.create(apiBase + "/actions/runs/" + runId + "/artifacts"))
+                    .header("Authorization", authHeader)
+                    .header("Accept", "application/vnd.github+json")
+                    .GET()
+                    .build();
+
+            java.net.http.HttpResponse<String> artifactResp = httpClient.send(artifactReq, java.net.http.HttpResponse.BodyHandlers.ofString());
+            if (artifactResp.statusCode() != 200) {
+                throw new ScriptBizException("获取 artifact 列表失败: " + artifactResp.statusCode());
+            }
+
+            Map<String, Object> artifactData = objectMapper.readValue(artifactResp.body(), new com.fasterxml.jackson.core.type.TypeReference<>() {});
+            List<Map<String, Object>> artifacts = (List<Map<String, Object>>) artifactData.get("artifacts");
+            if (artifacts == null || artifacts.isEmpty()) {
+                throw new ScriptBizException("未找到编译产物 (artifact)");
+            }
+
+            String artifactId = artifacts.get(0).get("id").toString();
+
+            // 5. 下载 artifact zip
+            java.net.http.HttpRequest downloadReq = java.net.http.HttpRequest.newBuilder()
+                    .uri(java.net.URI.create(apiBase + "/actions/artifacts/" + artifactId + "/zip"))
+                    .header("Authorization", authHeader)
+                    .header("Accept", "application/vnd.github+json")
+                    .GET()
+                    .build();
+
+            tmpDir = Files.createTempDirectory(Path.of(System.getProperty("java.io.tmpdir")), "gha-download-");
+            Path zipFile = tmpDir.resolve("artifact.zip");
+            var downloadResp = httpClient.send(downloadReq, java.net.http.HttpResponse.BodyHandlers.ofFile(zipFile));
+            if (downloadResp.statusCode() != 200) {
+                throw new ScriptBizException("下载 artifact 失败: HTTP " + downloadResp.statusCode());
+            }
+
+            updateProgress(projectId, 85, "正在解压并上传到 OSS...");
+
+            // 6. 解压 zip，找到 .exe 文件
+            Path extractDir = tmpDir.resolve("extracted");
+            if (Files.size(zipFile) == 0) {
+                throw new ScriptBizException("下载的 artifact zip 为空，请检查 GitHub Actions 编译是否成功");
+            }
+            try (java.util.zip.ZipInputStream zis = new java.util.zip.ZipInputStream(Files.newInputStream(zipFile))) {
+                java.util.zip.ZipEntry entry;
+                while ((entry = zis.getNextEntry()) != null) {
+                    Path target = extractDir.resolve(entry.getName());
+                    if (entry.isDirectory()) {
+                        Files.createDirectories(target);
+                    } else {
+                        Files.createDirectories(target.getParent());
+                        Files.copy(zis, target, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+                    }
+                }
+            }
+            if (!Files.isDirectory(extractDir)) {
+                throw new ScriptBizException("artifact zip 解压失败，未生成任何文件");
+            }
+
+            File exeFile;
+            try (Stream<Path> stream = Files.walk(extractDir)) {
+                exeFile = stream
+                        .filter(p -> p.getFileName().toString().endsWith(".exe") && Files.isRegularFile(p))
+                        .findFirst()
+                        .map(Path::toFile)
+                        .orElseThrow(() -> new ScriptBizException("artifact 中未找到 .exe 文件"));
+            }
+
+            // 7. 上传到 OSS
+            if (buildProject != null && buildProject.getExePath() != null) {
+                ossUtil.deleteByUrl(buildProject.getExePath());
+            }
+
+            String safeName = (buildProject != null && StrUtil.isNotBlank(buildProject.getName()))
+                    ? buildProject.getName().replaceAll("[^\\w\\u4e00-\\u9fa5\\-]", "_") : "script";
+            String key = EXE_PREFIX + "/" + projectId + "/" + safeName + ".exe";
+            String ossUrl = ossUtil.uploadFile(key, exeFile);
+
+            if (buildProject != null) {
+                buildProject.setStatus(ScriptStatus.SUCCESS.getValue());
+                buildProject.setExePath(ossUrl);
+                projectMapper.updateById(buildProject);
+            }
+
+            buildProgressMap.put(projectId, BuildProgress.builder()
+                    .status(ScriptStatus.SUCCESS.getValue())
+                    .progress(100)
+                    .message("编译完成")
+                    .downloadUrl(ossUrl)
+                    .build());
+
+            log.info("EXE 编译成功 (GitHub Actions): projectId={}, url={}", projectId, ossUrl);
+
+            CompletableFuture.delayedExecutor(5, TimeUnit.MINUTES)
+                    .execute(() -> {
+                        BuildProgress cur = buildProgressMap.get(projectId);
+                        if (cur != null && ScriptStatus.SUCCESS.getValue().equals(cur.getStatus())) {
+                            buildProgressMap.remove(projectId);
+                        }
+                    });
+        } finally {
+            deleteDir(tmpDir);
+        }
+    }
+
+    /**
+     * 本地 Nuitka 编译（未配置 GitHub 时的回退方案）
+     */
+    private void doBuildLocal(Long projectId, String taskId, String scriptContent, ScriptProjectDO buildProject) {
+        Path tmpDir = null;
+        try {
+            String os = System.getProperty("os.name", "").toLowerCase();
+            Path buildBase = os.contains("win")
+                    ? Path.of("C:", "temp", "nuitka-builds")
+                    : Path.of("/tmp", "nuitka-builds");
             Files.createDirectories(buildBase);
             tmpDir = Files.createTempDirectory(buildBase, "script-build-");
 
             updateProgress(projectId, 20, "正在写入脚本文件...");
 
-            ScriptProjectDO buildProject = projectMapper.selectById(projectId);
             Path scriptFile = tmpDir.resolve("script.py");
             Files.writeString(scriptFile, scriptContent);
 
@@ -471,7 +746,6 @@ public class ScriptServiceImpl implements ScriptService {
 
             updateProgress(projectId, 30, "正在调用 Nuitka 编译...");
 
-            // 检查是否有模板文件需要打包
             Path templatesDir = tmpDir.resolve("templates");
             boolean hasTemplates = false;
             if (Files.isDirectory(templatesDir)) {
@@ -498,14 +772,18 @@ public class ScriptServiceImpl implements ScriptService {
             ProcessBuilder pb = new ProcessBuilder(cmd);
             pb.directory(tmpDir.toFile());
             pb.redirectErrorStream(true);
-            // 清除环境变量中的中文路径，避免 Nuitka 依赖扫描失败
             pb.environment().put("TMPDIR", buildBase.toString());
             pb.environment().put("TEMP", buildBase.toString());
             pb.environment().put("TMP", buildBase.toString());
 
             Process process = pb.start();
+            StringBuilder output = new StringBuilder();
             try (var reader = new java.io.BufferedReader(new java.io.InputStreamReader(process.getInputStream()))) {
-                while (reader.readLine() != null) { /* drain */ }
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    output.append(line).append("\n");
+                    log.info("[Nuitka] {}", line);
+                }
             }
 
             boolean finished = process.waitFor(10, TimeUnit.MINUTES);
@@ -513,8 +791,8 @@ public class ScriptServiceImpl implements ScriptService {
                 process.destroyForcibly();
                 throw new ScriptBizException("编译超时（10分钟）");
             }
-
             if (process.exitValue() != 0) {
+                log.error("Nuitka 编译失败，退出码: {}，输出:\n{}", process.exitValue(), output);
                 throw new ScriptBizException("Nuitka 编译失败，退出码: " + process.exitValue());
             }
 
@@ -522,9 +800,15 @@ public class ScriptServiceImpl implements ScriptService {
 
             Path outputDir = tmpDir.resolve("output");
             File exeFile;
+            boolean isWindows = os.contains("win");
             try (Stream<Path> stream = Files.walk(outputDir)) {
                 exeFile = stream
-                        .filter(p -> p.toString().endsWith(".exe") && !p.toString().contains(".dist"))
+                        .filter(p -> {
+                            String name = p.getFileName().toString();
+                            if (name.contains(".dist")) return false;
+                            if (isWindows) return name.endsWith(".exe");
+                            return (name.endsWith(".bin") || !name.contains(".")) && Files.isRegularFile(p);
+                        })
                         .findFirst()
                         .map(Path::toFile)
                         .orElseThrow(() -> new ScriptBizException("未找到编译产物"));
@@ -554,21 +838,18 @@ public class ScriptServiceImpl implements ScriptService {
                     .downloadUrl(ossUrl)
                     .build());
 
-            log.info("EXE 编译成功: projectId={}, url={}", projectId, ossUrl);
+            log.info("EXE 编译成功 (本地): projectId={}, url={}", projectId, ossUrl);
 
-            // 延迟清理进度缓存，仅当状态未被新任务覆盖时才移除
-            String finalTaskId = taskId;
             CompletableFuture.delayedExecutor(5, TimeUnit.MINUTES)
                     .execute(() -> {
                         BuildProgress cur = buildProgressMap.get(projectId);
-                        if (cur != null && ScriptStatus.SUCCESS.getValue().equals(cur.getStatus())
-                                && ScriptStatus.SUCCESS.getValue().equals(cur.getStatus())) {
+                        if (cur != null && ScriptStatus.SUCCESS.getValue().equals(cur.getStatus())) {
                             buildProgressMap.remove(projectId);
                         }
                     });
 
         } catch (Exception e) {
-            log.error("EXE 编译失败: projectId={}", projectId, e);
+            log.error("本地编译失败: projectId={}", projectId, e);
             buildProgressMap.put(projectId, BuildProgress.builder()
                     .status(ScriptStatus.FAILED.getValue())
                     .progress(0)
@@ -582,7 +863,6 @@ public class ScriptServiceImpl implements ScriptService {
                 }
             } catch (Exception ignored) {
             }
-            // 失败也延迟清理
             CompletableFuture.delayedExecutor(5, TimeUnit.MINUTES)
                     .execute(() -> {
                         BuildProgress cur = buildProgressMap.get(projectId);
@@ -593,6 +873,25 @@ public class ScriptServiceImpl implements ScriptService {
         } finally {
             deleteDir(tmpDir);
         }
+    }
+
+    /**
+     * 收集项目中所有 if_image 步骤的模板 URL
+     */
+    private List<String> collectTemplateUrls(Long projectId) {
+        List<ScriptStepDO> steps = stepMapper.selectList(
+                new LambdaQueryWrapper<ScriptStepDO>()
+                        .eq(ScriptStepDO::getProjectId, projectId));
+        List<String> urls = new ArrayList<>();
+        for (ScriptStepDO step : steps) {
+            if (!"if_image".equals(step.getOperationType())) continue;
+            Map<String, Object> params = parseParams(step.getParamsJson());
+            String templateUrl = StrUtil.nullToEmpty((String) params.get("templateUrl"));
+            if (StrUtil.isNotBlank(templateUrl)) {
+                urls.add(templateUrl);
+            }
+        }
+        return urls;
     }
 
     private void deleteDir(Path dir) {
@@ -653,6 +952,9 @@ public class ScriptServiceImpl implements ScriptService {
                     forDepth--;
                 }
                 case "if_image", "if_random" -> ifDepth++;
+                case "else" -> {
+                    if (ifDepth <= 0) throw new ScriptBizException("存在多余的「否则」，缺少对应的条件开始");
+                }
                 case "if_end" -> {
                     if (ifDepth <= 0) throw new ScriptBizException("存在多余的「条件结束」，缺少对应的条件开始");
                     ifDepth--;

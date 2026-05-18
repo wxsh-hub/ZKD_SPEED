@@ -47,7 +47,11 @@ public interface ScriptService {
 
     Map<String, Object> buildExe(Long projectId);
 
+    byte[] buildBatPackage(Long projectId);
+
     Map<String, Object> getBuildStatus(Long projectId);
 
     String uploadTemplate(Long projectId, MultipartFile file);
+
+    ScriptScreenshotVO uploadByToken(String token, MultipartFile file);
 }

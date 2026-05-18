@@ -39,6 +39,7 @@ public class ScriptProjectVO {
     private String status;
     private String exePath;
     private Integer guiEnabled;
+    private String uploadToken;
     private Integer screenshotCount;
     private Integer stepCount;
     private Date createTime;

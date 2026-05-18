@@ -56,6 +56,8 @@ public class ScriptProjectDO {
 
     private Integer guiEnabled;
 
+    private String uploadToken;
+
     @TableField(fill = FieldFill.INSERT)
     private Date createTime;
 

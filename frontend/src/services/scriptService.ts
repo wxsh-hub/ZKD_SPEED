@@ -12,6 +12,7 @@ export interface ScriptProject {
   status: "draft" | "building" | "success" | "failed";
   exePath: string | null;
   guiEnabled: number;
+  uploadToken: string | null;
   screenshotCount: number;
   stepCount: number;
   createTime: string;
@@ -60,6 +61,7 @@ export type OperationType =
   | "for_end"
   | "if_image"
   | "if_random"
+  | "else"
   | "if_end";
 
 export const OPERATION_LABELS: Record<OperationType, string> = {
@@ -78,6 +80,7 @@ export const OPERATION_LABELS: Record<OperationType, string> = {
   for_end: "循环结束",
   if_image: "条件(图像)",
   if_random: "条件(随机)",
+  else: "否则",
   if_end: "条件结束",
 };
 
@@ -97,6 +100,7 @@ export const OPERATION_COLORS: Record<OperationType, string> = {
   for_end: "bg-yellow-100 text-yellow-700 border-yellow-200",
   if_image: "bg-rose-100 text-rose-700 border-rose-200",
   if_random: "bg-pink-100 text-pink-700 border-pink-200",
+  else: "bg-amber-100 text-amber-700 border-amber-200",
   if_end: "bg-rose-100 text-rose-700 border-rose-200",
 };
 
@@ -116,6 +120,7 @@ export const OPERATION_HINTS: Record<OperationType, string> = {
   for_end: "标记循环结束位置",
   if_image: "在图片上框选匹配区域",
   if_random: "设置随机概率",
+  else: "条件不满足时执行",
   if_end: "标记条件结束位置",
 };
 

@@ -254,8 +254,8 @@ export async function previewScript(projectId: string): Promise<string> {
   return api.get(`/script/${projectId}/preview`);
 }
 
-export async function buildExe(projectId: string): Promise<{ taskId: string; status: string }> {
-  return api.post(`/script/${projectId}/build`);
+export async function buildExe(projectId: string, mode: "bat" | "github" = "bat"): Promise<{ taskId?: string; status: string; downloadUrl?: string }> {
+  return api.post(`/script/${projectId}/build`, { mode });
 }
 
 export async function getBuildStatus(projectId: string): Promise<BuildStatus> {

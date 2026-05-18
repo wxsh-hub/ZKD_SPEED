@@ -17,6 +17,8 @@ import {
   Trash2,
   Upload,
   X,
+  Zap,
+  Github,
 } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
@@ -772,6 +774,218 @@ function ScriptGuideModal({ open, onClose }: ScriptGuideModalProps) {
   );
 }
 
+// ============ Build Mode Modal ============
+
+interface BuildModeModalProps {
+  open: boolean;
+  onClose: () => void;
+  onSelect: (mode: "bat" | "github") => void;
+}
+
+function BuildModeModal({ open, onClose, onSelect }: BuildModeModalProps) {
+  const [selected, setSelected] = useState<"bat" | "github">("bat");
+
+  if (!open) return null;
+
+  return (
+    <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/40">
+      <div className="mx-4 w-full max-w-[480px] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl">
+        {/* header */}
+        <div className="flex items-center justify-between border-b border-slate-100 px-5 py-3">
+          <h2 className="text-sm font-semibold text-slate-900">选择构建模式</h2>
+          <button
+            onClick={onClose}
+            className="flex h-7 w-7 items-center justify-center rounded-md text-slate-400 hover:bg-slate-100"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        {/* options */}
+        <div className="space-y-3 px-5 py-4">
+          {/* BAT mode */}
+          <button
+            onClick={() => setSelected("bat")}
+            className={`w-full rounded-lg border-2 p-4 text-left transition-all ${
+              selected === "bat"
+                ? "border-violet-500 bg-violet-50"
+                : "border-slate-200 hover:border-slate-300"
+            }`}
+          >
+            <div className="flex items-center gap-3">
+              <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${
+                selected === "bat" ? "bg-violet-500 text-white" : "bg-slate-100 text-slate-500"
+              }`}>
+                <Zap className="h-5 w-5" />
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-semibold text-slate-900">BAT 模式</span>
+                  <span className="rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-medium text-green-700">推荐</span>
+                </div>
+                <p className="mt-0.5 text-xs text-slate-500">直接分发 .py + .bat 文件，几秒完成</p>
+              </div>
+            </div>
+            <div className="mt-3 rounded-md bg-slate-50 px-3 py-2">
+              <p className="text-[11px] leading-relaxed text-slate-600">
+                <span className="font-medium text-green-700">优点：</span>打包速度极快，无编译依赖
+              </p>
+              <p className="mt-1 text-[11px] leading-relaxed text-slate-600">
+                <span className="font-medium text-amber-700">注意：</span>用户需安装 Python 环境，下载后双击 run.bat 运行
+              </p>
+            </div>
+          </button>
+
+          {/* GitHub mode */}
+          <button
+            onClick={() => setSelected("github")}
+            className={`w-full rounded-lg border-2 p-4 text-left transition-all ${
+              selected === "github"
+                ? "border-violet-500 bg-violet-50"
+                : "border-slate-200 hover:border-slate-300"
+            }`}
+          >
+            <div className="flex items-center gap-3">
+              <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${
+                selected === "github" ? "bg-violet-500 text-white" : "bg-slate-100 text-slate-500"
+              }`}>
+                <Github className="h-5 w-5" />
+              </div>
+              <div className="flex-1">
+                <span className="text-sm font-semibold text-slate-900">EXE 编译模式</span>
+                <p className="mt-0.5 text-xs text-slate-500">编译为独立 EXE 可执行文件</p>
+              </div>
+            </div>
+            <div className="mt-3 rounded-md bg-slate-50 px-3 py-2">
+              <p className="text-[11px] leading-relaxed text-slate-600">
+                <span className="font-medium text-green-700">优点：</span>用户无需安装 Python，双击即可运行
+              </p>
+              <p className="mt-1 text-[11px] leading-relaxed text-slate-600">
+                <span className="font-medium text-amber-700">注意：</span>需要几分钟编译时间，离开页面会继续编译
+              </p>
+            </div>
+          </button>
+        </div>
+
+        {/* footer */}
+        <div className="flex justify-end border-t border-slate-100 px-5 py-3">
+          <Button
+            size="sm"
+            onClick={() => {
+              onSelect(selected);
+              onClose();
+            }}
+          >
+            开始构建
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============ Python Guide Modal ============
+
+interface PythonGuideModalProps {
+  open: boolean;
+  onClose: () => void;
+  downloadUrl?: string | null;
+  projectName?: string;
+}
+
+function PythonGuideModal({ open, onClose, downloadUrl, projectName }: PythonGuideModalProps) {
+  if (!open) return null;
+
+  return (
+    <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/40">
+      <div className="mx-4 w-full max-w-[520px] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl">
+        {/* header */}
+        <div className="flex items-center justify-between border-b border-slate-100 px-5 py-3">
+          <h2 className="text-sm font-semibold text-slate-900">使用说明</h2>
+          <button
+            onClick={onClose}
+            className="flex h-7 w-7 items-center justify-center rounded-md text-slate-400 hover:bg-slate-100"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        {/* content */}
+        <div className="px-5 py-4">
+          <div className="mb-4 rounded-lg bg-green-50 border border-green-200 px-4 py-3">
+            <p className="text-sm font-medium text-green-800">打包完成！</p>
+            <p className="mt-1 text-xs text-green-700">
+              已生成 {projectName}_bat.zip，包含 script.py、run.bat 和模板图片
+            </p>
+          </div>
+
+          <h3 className="mb-3 text-sm font-semibold text-slate-900">运行步骤：</h3>
+
+          <div className="space-y-4">
+            {/* Step 1 */}
+            <div className="flex gap-3">
+              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-violet-100 text-xs font-bold text-violet-700">
+                1
+              </div>
+              <div>
+                <p className="text-sm font-medium text-slate-800">下载并解压 zip 文件</p>
+                <p className="mt-0.5 text-xs text-slate-500">解压后会看到 script.py、run.bat 和 templates 文件夹</p>
+              </div>
+            </div>
+
+            {/* Step 2 */}
+            <div className="flex gap-3">
+              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-violet-100 text-xs font-bold text-violet-700">
+                2
+              </div>
+              <div>
+                <p className="text-sm font-medium text-slate-800">安装 Python 环境</p>
+                <p className="mt-0.5 text-xs text-slate-500">如果已安装 Python 可跳过此步</p>
+                <a
+                  href="https://www.python.org/ftp/python/3.11.9/python-3.11.9-amd64.exe"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-2 inline-flex items-center gap-1.5 rounded-md bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700 transition-colors"
+                >
+                  <Download className="h-3.5 w-3.5" />
+                  下载 Python 3.11.9
+                </a>
+                <div className="mt-2 rounded-md bg-amber-50 border border-amber-200 px-3 py-2">
+                  <p className="text-[11px] font-medium text-amber-800">安装时务必勾选：</p>
+                  <p className="mt-1 text-[11px] text-amber-700">
+                    ☑ <span className="font-semibold">Add Python to PATH</span>（添加到环境变量）
+                  </p>
+                  <p className="mt-1 text-[11px] text-amber-600">
+                    如果忘记勾选，可以在系统设置中手动添加 Python 路径到 PATH
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Step 3 */}
+            <div className="flex gap-3">
+              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-violet-100 text-xs font-bold text-violet-700">
+                3
+              </div>
+              <div>
+                <p className="text-sm font-medium text-slate-800">双击 run.bat 运行脚本</p>
+                <p className="mt-0.5 text-xs text-slate-500">确保 script.py 和 templates 文件夹在同一目录下</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* footer */}
+        <div className="flex justify-end border-t border-slate-100 px-5 py-3">
+          <Button size="sm" onClick={onClose}>
+            我知道了
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ============ Build Guide Modal ============
 
 const BUILD_GUIDE_STEPS = [
@@ -1287,6 +1501,9 @@ export function ScriptDetailPage() {
   const [buildProgress, setBuildProgress] = useState(0);
   const [buildMessage, setBuildMessage] = useState("");
   const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
+  const [buildMode, setBuildMode] = useState<"bat" | "github">("bat");
+  const [showBuildModeModal, setShowBuildModeModal] = useState(false);
+  const [showPythonGuide, setShowPythonGuide] = useState(false);
   const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -1752,9 +1969,10 @@ export function ScriptDetailPage() {
   };
 
   // build
-  const handleBuild = async () => {
+  const handleBuild = async (mode: "bat" | "github" = "bat") => {
     if (!projectId || !project) return;
     if (!validateSteps()) return;
+    setBuildMode(mode);
     setBuildStatus("building");
     setBuildProgress(0);
     setBuildMessage("正在保存...");
@@ -1778,14 +1996,29 @@ export function ScriptDetailPage() {
           paramsJson: s.paramsJson,
         })),
       });
-      setBuildMessage("正在提交编译任务...");
-      await buildExe(projectId);
-      startPolling();
+      setBuildMessage(mode === "bat" ? "正在打包..." : "正在提交编译任务...");
+      const result = await buildExe(projectId, mode);
+      if (mode === "bat" && result.downloadUrl) {
+        // BAT 模式：同步返回，直接显示下载
+        setBuildStatus("success");
+        setDownloadUrl(result.downloadUrl);
+        setBuildProgress(100);
+        toast.success("打包完成");
+        setShowPythonGuide(true);
+      } else {
+        // GitHub 模式：异步轮询
+        startPolling();
+      }
     } catch (err: any) {
       setBuildStatus("failed");
       setBuildMessage(err?.message || "编译失败");
       toast.error(err?.message || "编译失败");
     }
+  };
+
+  const handleBuildClick = () => {
+    if (!validateSteps()) return;
+    setShowBuildModeModal(true);
   };
 
   if (loading) {
@@ -1889,7 +2122,7 @@ export function ScriptDetailPage() {
                   size="sm"
                   asChild
                 >
-                  <a href={downloadUrl} download={`${project.name}.exe`}>
+                  <a href={downloadUrl} download={buildMode === "bat" ? `${project.name}_bat.zip` : `${project.name}.exe`}>
                     <Download className="mr-1.5 h-3.5 w-3.5" />
                     下载脚本
                   </a>
@@ -1897,7 +2130,7 @@ export function ScriptDetailPage() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => { handleBuild(); setShowBuildGuide(true); }}
+                  onClick={handleBuildClick}
                 >
                   重新编译
                 </Button>
@@ -1908,7 +2141,7 @@ export function ScriptDetailPage() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => { handleBuild(); setShowBuildGuide(true); }}
+                  onClick={handleBuildClick}
                 >
                   重新编译
                 </Button>
@@ -1917,7 +2150,7 @@ export function ScriptDetailPage() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => { handleBuild(); setShowBuildGuide(true); }}
+                onClick={handleBuildClick}
               >
                 <Code className="mr-1.5 h-3.5 w-3.5" />
                 编译脚本
@@ -2247,6 +2480,21 @@ export function ScriptDetailPage() {
 
         {/* guide modal */}
         <ScriptGuideModal open={showGuide} onClose={handleCloseGuide} />
+        <BuildModeModal
+          open={showBuildModeModal}
+          onClose={() => setShowBuildModeModal(false)}
+          onSelect={(mode) => {
+            setShowBuildModeModal(false);
+            handleBuild(mode);
+            if (mode === "github") setShowBuildGuide(true);
+          }}
+        />
+        <PythonGuideModal
+          open={showPythonGuide}
+          onClose={() => setShowPythonGuide(false)}
+          downloadUrl={downloadUrl}
+          projectName={project.name}
+        />
         <BuildGuideModal open={showBuildGuide} onClose={() => setShowBuildGuide(false)} downloadUrl={downloadUrl} projectName={project.name} />
         <ScreenshotGuideModal open={showScreenshotGuide} onClose={() => setShowScreenshotGuide(false)} uploadToken={project.uploadToken} />
       </div>

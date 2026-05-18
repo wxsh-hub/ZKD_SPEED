@@ -451,7 +451,7 @@ public class ScriptServiceImpl implements ScriptService {
     }
 
     @Override
-    public Map<String, Object> buildExe(Long projectId) {
+    public Map<String, Object> buildExe(Long projectId, String mode) {
         ScriptProjectDO project = projectMapper.selectById(projectId);
         if (project == null) {
             throw new ScriptBizException("项目不存在: " + projectId);
@@ -471,6 +471,12 @@ public class ScriptServiceImpl implements ScriptService {
                 .collect(java.util.stream.Collectors.toList()));
 
         String script = previewScript(projectId);
+
+        if ("bat".equals(mode)) {
+            return doBuildBat(projectId, script);
+        }
+
+        // GitHub Actions 异步编译
         String taskId = IdUtil.getSnowflakeNextIdStr();
 
         buildProgressMap.put(projectId, BuildProgress.builder()
@@ -489,6 +495,125 @@ public class ScriptServiceImpl implements ScriptService {
         result.put("taskId", taskId);
         result.put("status", ScriptStatus.BUILDING.getValue());
         return result;
+    }
+
+    /**
+     * BAT 模式：打包 .py + .bat + 模板图片为 zip，上传 OSS，同步返回下载链接
+     */
+    private Map<String, Object> doBuildBat(Long projectId, String scriptContent) {
+        Path tmpDir = null;
+        try {
+            ScriptProjectDO project = projectMapper.selectById(projectId);
+
+            // 创建临时目录
+            tmpDir = Files.createTempDirectory("bat-build-");
+            Path projectDir = tmpDir.resolve(project.getName());
+            Files.createDirectories(projectDir);
+
+            // 写入 script.py
+            Files.writeString(projectDir.resolve("script.py"), scriptContent);
+
+            // 写入 requirements.txt
+            Files.writeString(projectDir.resolve("requirements.txt"), "Pillow\npyautogui\n");
+
+            // 写入 run.bat（自动安装依赖）
+            String batContent = "@echo off\r\n"
+                    + "chcp 65001 >nul\r\n"
+                    + "echo ================================\r\n"
+                    + "echo   脚本运行工具\r\n"
+                    + "echo ================================\r\n"
+                    + "echo.\r\n"
+                    + "echo [1/2] 正在检查并安装依赖...\r\n"
+                    + "pip install -r requirements.txt -q\r\n"
+                    + "if errorlevel 1 (\r\n"
+                    + "    echo 依赖安装失败，请确保已安装 Python 并添加到 PATH\r\n"
+                    + "    echo 下载 Python: https://www.python.org/ftp/python/3.11.9/python-3.11.9-amd64.exe\r\n"
+                    + "    pause\r\n"
+                    + "    exit /b 1\r\n"
+                    + ")\r\n"
+                    + "echo [2/2] 依赖安装完成，正在运行脚本...\r\n"
+                    + "echo.\r\n"
+                    + "python script.py\r\n"
+                    + "echo.\r\n"
+                    + "echo 脚本执行完毕，按任意键退出...\r\n"
+                    + "pause >nul\r\n";
+            Files.writeString(projectDir.resolve("run.bat"), batContent);
+
+            // 下载模板图片到 templates/ 子目录
+            downloadTemplates(projectId, scriptContent, projectDir);
+
+            // 打包为 zip
+            String zipName = project.getName() + "_bat.zip";
+            Path zipPath = tmpDir.resolve(zipName);
+            zipDirectory(projectDir, zipPath);
+
+            // 上传到 OSS（用项目名作为文件名）
+            byte[] zipBytes = Files.readAllBytes(zipPath);
+            String safeName = project.getName().replaceAll("[^\\w\\u4e00-\\u9fa5\\-]", "_");
+            String key = "script-bat/" + projectId + "/" + safeName + "_bat.zip";
+            String downloadUrl = ossUtil.upload(key, zipBytes, "application/zip");
+
+            // 更新项目状态
+            project.setStatus(ScriptStatus.SUCCESS.getValue());
+            project.setExePath(downloadUrl);
+            projectMapper.updateById(project);
+
+            // 更新进度
+            buildProgressMap.put(projectId, BuildProgress.builder()
+                    .status(ScriptStatus.SUCCESS.getValue())
+                    .progress(100)
+                    .message("打包完成")
+                    .downloadUrl(downloadUrl)
+                    .build());
+
+            // 5 分钟后清理进度
+            CompletableFuture.delayedExecutor(5, TimeUnit.MINUTES)
+                    .execute(() -> buildProgressMap.remove(projectId));
+
+            Map<String, Object> result = new HashMap<>();
+            result.put("status", ScriptStatus.SUCCESS.getValue());
+            result.put("downloadUrl", downloadUrl);
+            return result;
+
+        } catch (Exception e) {
+            log.error("BAT 打包失败: projectId={}", projectId, e);
+            buildProgressMap.put(projectId, BuildProgress.builder()
+                    .status(ScriptStatus.FAILED.getValue())
+                    .progress(0)
+                    .message("打包失败: " + e.getMessage())
+                    .build());
+            throw new ScriptBizException("打包失败: " + e.getMessage());
+        } finally {
+            deleteDir(tmpDir);
+        }
+    }
+
+    /**
+     * 将目录打包为 zip 文件
+     */
+    private void zipDirectory(Path sourceDir, Path zipPath) throws IOException {
+        try (ZipOutputStream zos = new ZipOutputStream(Files.newOutputStream(zipPath))) {
+            try (Stream<Path> walk = Files.walk(sourceDir)) {
+                walk.filter(Files::isRegularFile).forEach(file -> {
+                    String relativePath = sourceDir.relativize(file).toString().replace("\\", "/");
+                    try {
+                        zos.putNextEntry(new ZipEntry(relativePath));
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                    try {
+                        Files.copy(file, zos);
+                    } catch (IOException e) {
+                        throw new RuntimeException("写入 zip 失败: " + file, e);
+                    }
+                    try {
+                        zos.closeEntry();
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                });
+            }
+        }
     }
 
     private void doBuild(Long projectId, String taskId, String scriptContent) {
@@ -658,6 +783,7 @@ public class ScriptServiceImpl implements ScriptService {
 
             // 6. 解压 zip，找到 .exe 文件
             Path extractDir = tmpDir.resolve("extracted");
+            Files.createDirectories(extractDir);
             if (Files.size(zipFile) == 0) {
                 throw new ScriptBizException("下载的 artifact zip 为空，请检查 GitHub Actions 编译是否成功");
             }

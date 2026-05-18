@@ -45,9 +45,7 @@ public interface ScriptService {
 
     String previewScript(Long projectId);
 
-    Map<String, Object> buildExe(Long projectId);
-
-    byte[] buildBatPackage(Long projectId);
+    Map<String, Object> buildExe(Long projectId, String mode);
 
     Map<String, Object> getBuildStatus(Long projectId);
 

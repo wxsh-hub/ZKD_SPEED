@@ -94,8 +94,11 @@ public class ScriptController {
     }
 
     @PostMapping("/script/{projectId}/build")
-    public Result<Map<String, Object>> buildExe(@PathVariable Long projectId) {
-        return Results.success(scriptService.buildExe(projectId));
+    public Result<Map<String, Object>> buildExe(
+            @PathVariable Long projectId,
+            @RequestBody(required = false) Map<String, String> body) {
+        String mode = body != null ? body.getOrDefault("mode", "bat") : "bat";
+        return Results.success(scriptService.buildExe(projectId, mode));
     }
 
     @GetMapping("/script/{projectId}/build/status")

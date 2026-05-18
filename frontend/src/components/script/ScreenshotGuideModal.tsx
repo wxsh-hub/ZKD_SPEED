@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Download, Copy, Check, X, Camera, Settings, Upload, ArrowRight } from "lucide-react";
+import { Download, Copy, Check, X, Settings, Upload, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 
 interface Props {

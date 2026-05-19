@@ -284,3 +284,28 @@ export async function uploadTemplate(
     headers: { "Content-Type": "multipart/form-data" },
   });
 }
+
+export async function exportProject(projectId: string): Promise<void> {
+  // 使用 fetch 直接下载文件，绕过 axios 拦截器（导出接口不走 Result<T> 包装）
+  const token = localStorage.getItem("ragent_token") || "";
+  const base = (import.meta as any).env?.VITE_API_BASE_URL || "";
+  const res = await fetch(`${base}/script/${projectId}/export`, {
+    headers: { Authorization: token },
+  });
+  if (!res.ok) throw new Error("导出失败");
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `script-project-${projectId}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+export async function importProject(data: Record<string, unknown>): Promise<ScriptProject> {
+  return api.post("/script/import", data);
+}
+
+export async function aiGenerateScript(prompt: string, name?: string): Promise<ScriptProject> {
+  return api.post("/script/ai-generate", { prompt, name });
+}

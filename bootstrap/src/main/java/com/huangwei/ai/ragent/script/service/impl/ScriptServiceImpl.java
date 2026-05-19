@@ -24,6 +24,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.huangwei.ai.ragent.common.util.ImageCompressor;
 import com.huangwei.ai.ragent.common.util.OssUtil;
+import com.huangwei.ai.ragent.framework.convention.ChatMessage;
+import com.huangwei.ai.ragent.framework.convention.ChatRequest;
+import com.huangwei.ai.ragent.infra.chat.LLMService;
 import com.huangwei.ai.ragent.script.controller.request.CreateProjectRequest;
 import com.huangwei.ai.ragent.script.controller.request.SaveProjectRequest;
 import com.huangwei.ai.ragent.script.controller.vo.ScriptProjectDetailVO;
@@ -79,6 +82,7 @@ public class ScriptServiceImpl implements ScriptService {
     private final OssUtil ossUtil;
     private final ObjectMapper objectMapper;
     private final ThreadPoolExecutor scriptBuildExecutor;
+    private final LLMService llmService;
 
     @Value("${script.python-path:python}")
     private String pythonPath;
@@ -100,13 +104,15 @@ public class ScriptServiceImpl implements ScriptService {
                              ScriptStepMapper stepMapper,
                              OssUtil ossUtil,
                              ObjectMapper objectMapper,
-                             @Qualifier("scriptBuildExecutor") ThreadPoolExecutor scriptBuildExecutor) {
+                             @Qualifier("scriptBuildExecutor") ThreadPoolExecutor scriptBuildExecutor,
+                             LLMService llmService) {
         this.projectMapper = projectMapper;
         this.screenshotMapper = screenshotMapper;
         this.stepMapper = stepMapper;
         this.ossUtil = ossUtil;
         this.objectMapper = objectMapper;
         this.scriptBuildExecutor = scriptBuildExecutor;
+        this.llmService = llmService;
     }
 
     private static final String SCREENSHOT_PREFIX = "script/screenshots";
@@ -1353,5 +1359,317 @@ public class ScriptServiceImpl implements ScriptService {
             return new int[]{Integer.parseInt(m.group(1)), Integer.parseInt(m.group(2))};
         }
         return new int[]{0, 0};
+    }
+
+    @Override
+    public Map<String, Object> exportProject(Long projectId) {
+        ScriptProjectDetailVO detail = getDetail(projectId);
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("name", detail.getName());
+        result.put("description", detail.getDescription());
+        result.put("targetWidth", detail.getTargetWidth());
+        result.put("targetHeight", detail.getTargetHeight());
+        result.put("scalePct", detail.getScalePct());
+        result.put("guiEnabled", detail.getGuiEnabled());
+
+        List<Map<String, Object>> screenshots = new ArrayList<>();
+        if (detail.getScreenshots() != null) {
+            for (ScriptScreenshotVO s : detail.getScreenshots()) {
+                Map<String, Object> item = new HashMap<>();
+                item.put("fileName", s.getFileName());
+                item.put("fileUrl", s.getFileUrl());
+                item.put("width", s.getWidth());
+                item.put("height", s.getHeight());
+                item.put("scalePct", s.getScalePct());
+                item.put("sortOrder", s.getSortOrder());
+                screenshots.add(item);
+            }
+        }
+        result.put("screenshots", screenshots);
+
+        List<Map<String, Object>> steps = new ArrayList<>();
+        if (detail.getSteps() != null) {
+            for (ScriptStepVO s : detail.getSteps()) {
+                Map<String, Object> item = new HashMap<>();
+                item.put("stepOrder", s.getStepOrder());
+                item.put("operationType", s.getOperationType());
+                item.put("paramsJson", s.getParamsJson());
+                item.put("templatePath", s.getTemplatePath());
+                item.put("templateUrl", s.getTemplateUrl());
+
+                // 用 sortOrder 关联截图，而非数据库 ID
+                if (s.getScreenshotId() != null) {
+                    for (ScriptScreenshotVO ss : detail.getScreenshots()) {
+                        if (ss.getId().equals(s.getScreenshotId())) {
+                            item.put("screenshotSortOrder", ss.getSortOrder());
+                            break;
+                        }
+                    }
+                }
+                steps.add(item);
+            }
+        }
+        result.put("steps", steps);
+
+        return result;
+    }
+
+    @Override
+    @Transactional
+    public ScriptProjectVO importProject(Map<String, Object> data) {
+        String name = (String) data.getOrDefault("name", "导入的项目");
+        String description = (String) data.getOrDefault("description", "");
+
+        ScriptProjectDO project = ScriptProjectDO.builder()
+                .id(IdUtil.getSnowflakeNextId())
+                .name(name)
+                .description(description)
+                .targetWidth(data.get("targetWidth") != null ? ((Number) data.get("targetWidth")).intValue() : null)
+                .targetHeight(data.get("targetHeight") != null ? ((Number) data.get("targetHeight")).intValue() : null)
+                .scalePct(data.get("scalePct") != null ? ((Number) data.get("scalePct")).intValue() : null)
+                .guiEnabled(data.get("guiEnabled") != null ? ((Number) data.get("guiEnabled")).intValue() : 0)
+                .status(ScriptStatus.DRAFT.getValue())
+                .uploadToken(UUID.randomUUID().toString().replace("-", ""))
+                .build();
+        projectMapper.insert(project);
+        Long projectId = project.getId();
+
+        // 导入截图
+        Map<Integer, Long> sortOrderToId = new HashMap<>();
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> screenshots = (List<Map<String, Object>>) data.get("screenshots");
+        if (screenshots != null) {
+            for (int i = 0; i < screenshots.size(); i++) {
+                Map<String, Object> s = screenshots.get(i);
+                int sortOrder = s.get("sortOrder") != null ? ((Number) s.get("sortOrder")).intValue() : i;
+
+                String fileUrl = (String) s.get("fileUrl");
+                // filePath 从 fileUrl 提取路径部分，若无则用空字符串
+                String filePath = "";
+                if (fileUrl != null && fileUrl.contains("/")) {
+                    filePath = fileUrl.substring(fileUrl.lastIndexOf("/"));
+                }
+
+                ScriptScreenshotDO screenshot = ScriptScreenshotDO.builder()
+                        .id(IdUtil.getSnowflakeNextId())
+                        .projectId(projectId)
+                        .fileName((String) s.get("fileName"))
+                        .filePath(filePath)
+                        .fileUrl(fileUrl)
+                        .width(s.get("width") != null ? ((Number) s.get("width")).intValue() : null)
+                        .height(s.get("height") != null ? ((Number) s.get("height")).intValue() : null)
+                        .scalePct(s.get("scalePct") != null ? ((Number) s.get("scalePct")).intValue() : 100)
+                        .sortOrder(sortOrder)
+                        .deleted(0)
+                        .build();
+                screenshotMapper.insert(screenshot);
+                sortOrderToId.put(sortOrder, screenshot.getId());
+            }
+        }
+
+        // 导入步骤
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> steps = (List<Map<String, Object>>) data.get("steps");
+        if (steps != null) {
+            for (int i = 0; i < steps.size(); i++) {
+                Map<String, Object> s = steps.get(i);
+                int stepOrder = s.get("stepOrder") != null ? ((Number) s.get("stepOrder")).intValue() : i;
+                String operationType = (String) s.get("operationType");
+
+                String paramsJson = "{}";
+                Object paramsObj = s.get("paramsJson");
+                if (paramsObj != null) {
+                    try {
+                        paramsJson = objectMapper.writeValueAsString(paramsObj);
+                    } catch (JsonProcessingException e) {
+                        log.warn("序列化 paramsJson 失败", e);
+                    }
+                }
+
+                // 通过 sortOrder 关联截图 ID
+                Long screenshotId = null;
+                if (s.get("screenshotSortOrder") != null) {
+                    int ssOrder = ((Number) s.get("screenshotSortOrder")).intValue();
+                    screenshotId = sortOrderToId.get(ssOrder);
+                }
+
+                ScriptStepDO step = ScriptStepDO.builder()
+                        .id(IdUtil.getSnowflakeNextId())
+                        .projectId(projectId)
+                        .screenshotId(screenshotId)
+                        .stepOrder(stepOrder)
+                        .operationType(operationType)
+                        .paramsJson(paramsJson)
+                        .templatePath((String) s.get("templatePath"))
+                        .templateUrl((String) s.get("templateUrl"))
+                        .deleted(0)
+                        .build();
+                stepMapper.insert(step);
+            }
+        }
+
+        return ScriptProjectVO.builder()
+                .id(project.getId().toString())
+                .name(project.getName())
+                .description(project.getDescription())
+                .targetWidth(project.getTargetWidth())
+                .targetHeight(project.getTargetHeight())
+                .scalePct(project.getScalePct())
+                .status(project.getStatus())
+                .uploadToken(project.getUploadToken())
+                .screenshotCount(screenshots != null ? screenshots.size() : 0)
+                .stepCount(steps != null ? steps.size() : 0)
+                .createTime(project.getCreateTime())
+                .updateTime(project.getUpdateTime())
+                .build();
+    }
+
+    @Override
+    @Transactional
+    public ScriptProjectVO aiGenerate(String prompt, String name) {
+        // 1. 调用 LLM 生成步骤 JSON
+        String systemPrompt = """
+                你是一个自动化脚本专家。用户会用自然语言描述一个自动化操作流程，你需要将其转换为结构化的步骤列表。
+
+                ## 可用操作类型及参数
+
+                | 操作类型 | 参数 | 说明 |
+                |---------|------|------|
+                | click | { x, y } | 点击坐标 |
+                | double_click | { x, y } | 双击坐标 |
+                | long_press | { x, y, duration_s } | 长按（duration_s 默认 1.0） |
+                | mouse_move | { x, y } | 移动鼠标 |
+                | key_press | { key } | 按键（如 enter、ctrl、a、f5） |
+                | key_long_press | { key, duration_s } | 长按按键 |
+                | wait_seconds | { seconds } | 等待指定秒数 |
+                | input_text | { text } | 输入文字 |
+                | scroll | { x, y, direction, distance } | direction: up/down/left/right, distance: 滚动距离 |
+                | for_start | { count } | 循环开始，count 为循环次数 |
+                | for_end | {} | 循环结束 |
+                | break_loop | {} | 跳出循环 |
+                | continue_loop | {} | 继续下一次循环 |
+                | if_image | { similarity } | 图像条件判断（templatePath 用户后续补充） |
+                | if_ai | { prompt } | AI 识别条件（region 用户后续框选） |
+                | if_random | { probability } | 随机条件（0~1 概率） |
+                | else | {} | 否则分支 |
+                | if_end | {} | 条件结束 |
+
+                ## 输出规则
+
+                1. 输出严格的 JSON，不要包含 markdown 代码块标记
+                2. JSON 格式：{"name": "建议的脚本名称", "description": "脚本描述", "steps": [...]}
+                3. 每个 step：{"operationType": "类型", "params": {...}}
+                4. 需要用户填的字段用 null 占位（如坐标 x、y、templatePath、region 等）
+                5. 能推断的先填上（等待秒数、循环次数、输入文字、相似度默认 0.85、长按默认 1 秒、随机概率等）
+                6. if_image 的 templatePath 设为 null，用户后续从截图裁切
+                7. if_ai 的 region 设为 null，用户后续框选
+                8. 坐标如果描述中有明确位置可填近似值（如"屏幕中央"可填 {x: 960, y: 540}），否则 null
+
+                ## 控制流硬性规则（必须严格遵守，否则脚本无法运行）
+
+                ### 规则一：配对规则
+                - 每个 for_start 必须有且只有一个对应的 for_end
+                - 每个 if_image / if_ai / if_random 必须有且只有一个对应的 if_end
+                - 不配对的步骤会导致脚本语法错误
+
+                ### 规则二：else 规则
+                - else 只能出现在 if_image / if_ai / if_random 之后、if_end 之前
+                - 一个条件块中最多只有一个 else
+                - else 不能单独出现，必须在 if 块内
+                - 正确结构：if_* → [操作] → else → [操作] → if_end
+
+                ### 规则三：break_loop / continue_loop 规则
+                - break_loop 和 continue_loop 只能出现在 for_start 和 for_end 之间
+                - 不能出现在 for 循环外部
+                - 不能出现在没有 for 的地方
+
+                ### 规则四：嵌套规则
+                - for 和 if 可以互相嵌套
+                - 嵌套时必须保证每一对正确闭合
+                - 例如：for_start → if_* → ... → if_end → for_end
+
+                ### 规则五：正确结构示例
+
+                简单循环：
+                [for_start, 操作1, 操作2, for_end]
+
+                条件判断：
+                [if_image, 操作A, else, 操作B, if_end]
+
+                循环内条件：
+                [for_start, if_image, 操作A, else, 操作B, if_end, for_end]
+
+                循环内跳出：
+                [for_start, if_image, break_loop, if_end, 操作, for_end]
+
+                ### 规则六：绝对禁止
+                - 禁止出现孤立的 for_end（没有对应的 for_start）
+                - 禁止出现孤立的 if_end（没有对应的 if_*/else）
+                - 禁止出现孤立的 else（没有对应的 if_*）
+                - 禁止在 for 循环外使用 break_loop 或 continue_loop
+                - 禁止 if_*/else/if_end 出现在没有配对的随机位置
+
+                ### 规则七：AI 识别使用限制
+                - if_ai（AI 识别条件）需要调用服务器接口，有网络延迟和额外开销
+                - 用户没有明确提到"AI识别""智能判断""AI判断"等关键词时，不要主动使用 if_ai
+                - 优先使用 if_image（图像匹配）作为条件判断，if_image 更快更稳定
+                - 只有在用户明确要求用 AI 判断屏幕内容时才使用 if_ai
+
+                请在生成完步骤后自行检查一遍：从头到尾扫描，用栈的方式验证每个 for_start/if_*/else/for_end/if_end 是否合法配对。如果不合法就修正后再输出。
+                """;
+
+        String userMessage = "请根据以下描述生成自动化脚本步骤：\n\n" + prompt;
+
+        ChatRequest chatRequest = ChatRequest.builder()
+                .messages(List.of(
+                        ChatMessage.system(systemPrompt),
+                        ChatMessage.user(userMessage)
+                ))
+                .modelId("qwen-plus")
+                .temperature(0.3)
+                .build();
+
+        String llmResponse;
+        try {
+            llmResponse = llmService.chat(chatRequest);
+        } catch (Exception e) {
+            log.error("AI 生成脚本调用 LLM 失败", e);
+            throw new ScriptBizException("AI 生成失败，请稍后重试: " + e.getMessage());
+        }
+
+        // 2. 解析 LLM 返回的 JSON
+        String cleanJson = llmResponse.strip();
+        // 去掉可能的 markdown 代码块标记
+        if (cleanJson.startsWith("```")) {
+            cleanJson = cleanJson.replaceFirst("```json\\s*", "").replaceFirst("```\\s*", "").strip();
+        }
+
+        Map<String, Object> data;
+        try {
+            data = objectMapper.readValue(cleanJson, new com.fasterxml.jackson.core.type.TypeReference<>() {});
+        } catch (Exception e) {
+            log.error("解析 AI 生成的 JSON 失败, 原始响应: {}", llmResponse, e);
+            throw new ScriptBizException("AI 返回格式异常，请重新描述后再试");
+        }
+
+        // 3. 校验控制流配对（安全网，防止 LLM 生成非法结构）
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> steps = (List<Map<String, Object>>) data.get("steps");
+        if (steps != null && !steps.isEmpty()) {
+            List<String> types = steps.stream()
+                    .map(s -> (String) s.get("operationType"))
+                    .collect(Collectors.toList());
+            validateControlFlow(types);
+        }
+
+        // 4. 创建项目并入库（复用 importProject 逻辑）
+        String projectName = (name != null && !name.isBlank()) ? name : (String) data.getOrDefault("name", "AI 生成的脚本");
+        String description = (String) data.getOrDefault("description", "");
+        data.put("name", projectName);
+        data.put("description", description);
+        data.put("screenshots", new ArrayList<>());
+
+        return importProject(data);
     }
 }

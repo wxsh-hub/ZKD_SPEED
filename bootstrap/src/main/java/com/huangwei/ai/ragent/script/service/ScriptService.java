@@ -52,4 +52,10 @@ public interface ScriptService {
     String uploadTemplate(Long projectId, MultipartFile file);
 
     ScriptScreenshotVO uploadByToken(String token, MultipartFile file);
+
+    Map<String, Object> exportProject(Long projectId);
+
+    ScriptProjectVO importProject(Map<String, Object> data);
+
+    ScriptProjectVO aiGenerate(String prompt, String name);
 }

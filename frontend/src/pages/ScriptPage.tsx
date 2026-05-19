@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ArrowLeft,
   Download,
@@ -9,7 +9,9 @@ import {
   Pencil,
   Plus,
   RefreshCw,
+  Sparkles,
   Trash2,
+  Upload,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -43,6 +45,9 @@ import {
   getProjectList,
   createProject,
   deleteProject,
+  exportProject,
+  importProject,
+  aiGenerateScript,
   type ScriptProject,
   type CreateProjectRequest,
 } from "@/services/scriptService";
@@ -56,6 +61,15 @@ export function ScriptPage() {
   const [deleteTarget, setDeleteTarget] = useState<ScriptProject | null>(null);
   const [creating, setCreating] = useState(false);
   const [guideOpen, setGuideOpen] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const importRef = useRef<HTMLInputElement>(null);
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const [importForm, setImportForm] = useState({ name: "", description: "" });
+  const [aiDialogOpen, setAiDialogOpen] = useState(false);
+  const [aiName, setAiName] = useState("");
+  const [aiPrompt, setAiPrompt] = useState("");
+  const [aiGenerating, setAiGenerating] = useState(false);
 
   // create form
   const [form, setForm] = useState<CreateProjectRequest>({
@@ -113,6 +127,78 @@ export function ScriptPage() {
     }
   };
 
+  const handleExport = async (project: ScriptProject) => {
+    try {
+      await exportProject(project.id);
+      toast.success("导出成功");
+    } catch (err: any) {
+      toast.error(err?.message || "导出失败");
+    }
+  };
+
+  const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const text = await file.text();
+      const data = JSON.parse(text);
+      setImportFile(file);
+      setImportForm({
+        name: data.name || file.name.replace(/\.json$/i, "") || "",
+        description: data.description || "",
+      });
+      setImportDialogOpen(true);
+    } catch {
+      toast.error("文件格式错误，请选择有效的 JSON 文件");
+    } finally {
+      if (importRef.current) importRef.current.value = "";
+    }
+  };
+
+  const handleAiGenerate = async () => {
+    if (!aiPrompt.trim()) {
+      toast.error("请输入脚本描述");
+      return;
+    }
+    setAiGenerating(true);
+    try {
+      const project = await aiGenerateScript(aiPrompt.trim(), aiName.trim() || undefined);
+      toast.success("AI 脚本生成成功，请在编辑器中补充坐标和图片");
+      setAiDialogOpen(false);
+      setAiName("");
+      setAiPrompt("");
+      navigate(`/script/${project.id}`);
+    } catch (err: any) {
+      toast.error(err?.message || "AI 生成失败，请稍后重试");
+    } finally {
+      setAiGenerating(false);
+    }
+  };
+
+  const handleImportConfirm = async () => {
+    if (!importFile) return;
+    if (!importForm.name.trim()) {
+      toast.error("请输入脚本名称");
+      return;
+    }
+    setImporting(true);
+    try {
+      const text = await importFile.text();
+      const data = JSON.parse(text);
+      data.name = importForm.name.trim();
+      data.description = importForm.description.trim() || "";
+      const project = await importProject(data);
+      toast.success("导入成功");
+      setImportDialogOpen(false);
+      setImportFile(null);
+      navigate(`/script/${project.id}`);
+    } catch (err: any) {
+      toast.error(err?.message || "导入失败，请检查文件格式");
+    } finally {
+      setImporting(false);
+    }
+  };
+
   const formatDate = (dateStr?: string) => {
     if (!dateStr) return "-";
     return new Date(dateStr).toLocaleString("zh-CN");
@@ -154,6 +240,21 @@ export function ScriptPage() {
               </div>
             </div>
             <div className="flex items-center gap-2">
+              <input
+                ref={importRef}
+                type="file"
+                accept=".json"
+                className="hidden"
+                onChange={handleImport}
+              />
+              <Button variant="outline" onClick={() => importRef.current?.click()} disabled={importing}>
+                {importing ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Upload className="mr-2 h-4 w-4" />
+                )}
+                导入项目
+              </Button>
               <Button variant="outline" onClick={() => {
                 const a = document.createElement("a");
                 a.href = "/screenshot.exe";
@@ -174,6 +275,13 @@ export function ScriptPage() {
               >
                 <Plus className="mr-2 h-4 w-4" />
                 新建项目
+              </Button>
+              <Button
+                className="bg-amber-500 hover:bg-amber-600"
+                onClick={() => setAiDialogOpen(true)}
+              >
+                <Sparkles className="mr-2 h-4 w-4" />
+                AI 生成脚本
               </Button>
             </div>
           </div>
@@ -237,6 +345,16 @@ export function ScriptPage() {
                           title="编辑"
                         >
                           <Pencil className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleExport(project);
+                          }}
+                          className="flex h-7 w-7 items-center justify-center rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+                          title="导出"
+                        >
+                          <Download className="h-3.5 w-3.5" />
                         </button>
                         <button
                           onClick={(e) => {
@@ -328,6 +446,123 @@ export function ScriptPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* import dialog */}
+      <Dialog open={importDialogOpen} onOpenChange={setImportDialogOpen}>
+        <DialogContent className="sm:max-w-[480px]">
+          <DialogHeader>
+            <DialogTitle>导入脚本项目</DialogTitle>
+            <DialogDescription>
+              请确认或修改脚本名称，空字段可以导入后补充
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700">
+                脚本名称 <span className="text-red-400">*</span>
+              </label>
+              <Input
+                value={importForm.name}
+                onChange={(e) => setImportForm({ ...importForm, name: e.target.value })}
+                placeholder="请输入脚本名称"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700">
+                脚本描述 <span className="text-xs text-slate-400">（可选）</span>
+              </label>
+              <Textarea
+                value={importForm.description}
+                onChange={(e) => setImportForm({ ...importForm, description: e.target.value })}
+                placeholder="简要描述脚本的用途..."
+                className="min-h-[80px] resize-none"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => { setImportDialogOpen(false); setImportFile(null); }}
+              disabled={importing}
+            >
+              取消
+            </Button>
+            <Button
+              onClick={handleImportConfirm}
+              disabled={importing}
+              className="bg-violet-600 hover:bg-violet-700"
+            >
+              {importing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              导入
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* AI generate dialog */}
+      <Dialog open={aiDialogOpen} onOpenChange={setAiDialogOpen}>
+        <DialogContent className="sm:max-w-[520px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-amber-500" />
+              AI 生成脚本
+            </DialogTitle>
+            <DialogDescription>
+              用自然语言描述你想要的自动化流程，AI 会生成步骤框架，你再补充坐标和图片
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700">
+                脚本名称 <span className="text-xs text-slate-400">（可选，不填则 AI 自动生成）</span>
+              </label>
+              <Input
+                value={aiName}
+                onChange={(e) => setAiName(e.target.value)}
+                placeholder="例如：自动签到脚本"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700">
+                脚本描述 <span className="text-red-400">*</span>
+              </label>
+              <Textarea
+                value={aiPrompt}
+                onChange={(e) => setAiPrompt(e.target.value)}
+                placeholder="例如：每隔3秒检查屏幕中央是否有弹窗，如果有就点击关闭按钮，没有就点击开始按钮，循环20次"
+                className="min-h-[120px] resize-none"
+              />
+            </div>
+            <div className="rounded-lg bg-amber-50 border border-amber-200 px-3 py-2">
+              <p className="text-xs text-amber-700">
+                <strong>提示：</strong>AI 会生成操作步骤框架，能推断的参数（等待时间、循环次数等）会自动填入，坐标和模板图片需要你在编辑器中手动补充。
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => { setAiDialogOpen(false); setAiName(""); setAiPrompt(""); }}
+              disabled={aiGenerating}
+            >
+              取消
+            </Button>
+            <Button
+              onClick={handleAiGenerate}
+              disabled={aiGenerating}
+              className="bg-amber-500 hover:bg-amber-600"
+            >
+              {aiGenerating ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Sparkles className="mr-2 h-4 w-4" />
+              )}
+              {aiGenerating ? "生成中..." : "开始生成"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <ScreenshotGuideModal open={guideOpen} onClose={() => setGuideOpen(false)} />
     </MainLayout>
   );

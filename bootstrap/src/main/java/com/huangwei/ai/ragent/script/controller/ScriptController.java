@@ -17,6 +17,7 @@
 
 package com.huangwei.ai.ragent.script.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.huangwei.ai.ragent.framework.convention.Result;
 import com.huangwei.ai.ragent.framework.web.Results;
 import com.huangwei.ai.ragent.script.controller.request.CreateProjectRequest;
@@ -24,6 +25,7 @@ import com.huangwei.ai.ragent.script.controller.request.SaveProjectRequest;
 import com.huangwei.ai.ragent.script.controller.vo.ScriptProjectDetailVO;
 import com.huangwei.ai.ragent.script.controller.vo.ScriptProjectVO;
 import com.huangwei.ai.ragent.script.controller.vo.ScriptScreenshotVO;
+import com.huangwei.ai.ragent.script.service.ScriptBizException;
 import com.huangwei.ai.ragent.script.service.ScriptService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -38,6 +40,10 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import jakarta.servlet.http.HttpServletResponse;
+
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 
@@ -46,6 +52,7 @@ import java.util.Map;
 public class ScriptController {
 
     private final ScriptService scriptService;
+    private final ObjectMapper objectMapper;
 
     @GetMapping("/script/list")
     public Result<List<ScriptProjectVO>> list() {
@@ -118,5 +125,34 @@ public class ScriptController {
             @RequestParam("token") String token,
             @RequestPart("file") MultipartFile file) {
         return Results.success(scriptService.uploadByToken(token, file));
+    }
+
+    @GetMapping("/script/{projectId}/export")
+    public void exportProject(@PathVariable Long projectId, HttpServletResponse response) throws IOException {
+        Map<String, Object> data = scriptService.exportProject(projectId);
+        String json = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(data);
+
+        String fileName = data.get("name") != null ? data.get("name").toString() : "script-project";
+        fileName = fileName.replaceAll("[^a-zA-Z0-9\\u4e00-\\u9fa5_-]", "_");
+
+        response.setContentType("application/json");
+        response.setCharacterEncoding(StandardCharsets.UTF_8.name());
+        response.setHeader("Content-Disposition", "attachment; filename=\"" + fileName + ".json\"; filename*=UTF-8''" + java.net.URLEncoder.encode(fileName + ".json", StandardCharsets.UTF_8));
+        response.getWriter().write(json);
+    }
+
+    @PostMapping("/script/import")
+    public Result<ScriptProjectVO> importProject(@RequestBody Map<String, Object> data) {
+        return Results.success(scriptService.importProject(data));
+    }
+
+    @PostMapping("/script/ai-generate")
+    public Result<ScriptProjectVO> aiGenerate(@RequestBody Map<String, String> body) {
+        String prompt = body.get("prompt");
+        if (prompt == null || prompt.isBlank()) {
+            throw new ScriptBizException("请输入脚本描述");
+        }
+        String name = body.get("name");
+        return Results.success(scriptService.aiGenerate(prompt, name));
     }
 }

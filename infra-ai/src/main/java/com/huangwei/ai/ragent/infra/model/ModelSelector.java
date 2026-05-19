@@ -144,6 +144,9 @@ public class ModelSelector {
         }
 
         AIModelProperties.ModelCandidate firstChoice = findCandidate(candidates, firstChoiceModelId);
+        if (firstChoice == null) {
+            return;
+        }
         candidates.remove(firstChoice);
         candidates.add(0, firstChoice);
     }
@@ -160,6 +163,9 @@ public class ModelSelector {
     }
 
     private ModelTarget buildModelTarget(AIModelProperties.ModelCandidate candidate, Map<String, AIModelProperties.ProviderConfig> providers) {
+        if (candidate == null) {
+            return null;
+        }
         String modelId = resolveId(candidate);
 
         // 检查熔断状态

@@ -55,6 +55,7 @@ import {
   buildExe,
   getBuildStatus,
   uploadTemplate,
+  exportProject,
   type ScriptProjectDetail,
   type ScriptScreenshot,
   type ScriptStep,
@@ -2224,6 +2225,19 @@ export function ScriptDetailPage() {
                 <Code className="mr-1.5 h-3.5 w-3.5" />
               )}
               预览脚本
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                if (project) {
+                  exportProject(project.id);
+                  toast.success("导出成功");
+                }
+              }}
+            >
+              <Download className="mr-1.5 h-3.5 w-3.5" />
+              导出
             </Button>
 
             {/* 编译/下载按钮 */}

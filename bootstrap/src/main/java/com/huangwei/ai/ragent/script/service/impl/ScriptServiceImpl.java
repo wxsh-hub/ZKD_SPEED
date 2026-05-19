@@ -92,6 +92,9 @@ public class ScriptServiceImpl implements ScriptService {
     @Value("${script.github.repo:}")
     private String githubRepo;
 
+    @Value("${script.api-base-url:}")
+    private String apiBaseUrl;
+
     public ScriptServiceImpl(ScriptProjectMapper projectMapper,
                              ScriptScreenshotMapper screenshotMapper,
                              ScriptStepMapper stepMapper,
@@ -446,8 +449,15 @@ public class ScriptServiceImpl implements ScriptService {
                         .orderByAsc(ScriptStepDO::getStepOrder));
 
         boolean gui = project.getGuiEnabled() != null && project.getGuiEnabled() == 1;
+        // 确保项目有 uploadToken（旧项目可能没有）
+        if (StrUtil.isBlank(project.getUploadToken())) {
+            project.setUploadToken(UUID.randomUUID().toString().replace("-", ""));
+            projectMapper.updateById(project);
+        }
+        String token = project.getUploadToken();
         return ScriptCodeGenerator.generate(steps, project.getName(),
-                project.getTargetWidth(), project.getTargetHeight(), gui);
+                project.getTargetWidth(), project.getTargetHeight(), gui,
+                apiBaseUrl, token);
     }
 
     @Override
@@ -510,13 +520,19 @@ public class ScriptServiceImpl implements ScriptService {
             Path projectDir = tmpDir.resolve(project.getName());
             Files.createDirectories(projectDir);
 
+            // 先处理模板（下载或从截图裁剪），更新步骤的 templatePath
+            downloadTemplates(projectId, scriptContent, projectDir);
+
+            // 重新生成脚本（因为 templatePath 可能已更新）
+            String updatedScript = previewScript(projectId);
+
             // 写入 script.py
-            Files.writeString(projectDir.resolve("script.py"), scriptContent);
+            Files.writeString(projectDir.resolve("script.py"), updatedScript);
 
             // 写入 requirements.txt
             Files.writeString(projectDir.resolve("requirements.txt"), "Pillow\npyautogui\n");
 
-            // 写入 run.bat（自动安装依赖）
+            // 写入 run.bat（自动安装依赖，执行完毕自动关闭）
             String batContent = "@echo off\r\n"
                     + "chcp 65001 >nul\r\n"
                     + "echo ================================\r\n"
@@ -535,12 +551,13 @@ public class ScriptServiceImpl implements ScriptService {
                     + "echo.\r\n"
                     + "python script.py\r\n"
                     + "echo.\r\n"
-                    + "echo 脚本执行完毕，按任意键退出...\r\n"
-                    + "pause >nul\r\n";
+                    + "if errorlevel 1 (\r\n"
+                    + "    echo 脚本执行出错，请检查错误信息\r\n"
+                    + "    pause\r\n"
+                    + ") else (\r\n"
+                    + "    timeout /t 5 /nobreak >nul\r\n"
+                    + ")\r\n";
             Files.writeString(projectDir.resolve("run.bat"), batContent);
-
-            // 下载模板图片到 templates/ 子目录
-            downloadTemplates(projectId, scriptContent, projectDir);
 
             // 打包为 zip
             String zipName = project.getName() + "_bat.zip";
@@ -1003,6 +1020,7 @@ public class ScriptServiceImpl implements ScriptService {
 
     /**
      * 收集项目中所有 if_image 步骤的模板 URL
+     * 支持两种模式：直接上传的 URL 和从截图裁剪的区域
      */
     private List<String> collectTemplateUrls(Long projectId) {
         List<ScriptStepDO> steps = stepMapper.selectList(
@@ -1015,6 +1033,43 @@ public class ScriptServiceImpl implements ScriptService {
             String templateUrl = StrUtil.nullToEmpty((String) params.get("templateUrl"));
             if (StrUtil.isNotBlank(templateUrl)) {
                 urls.add(templateUrl);
+            } else if (params.containsKey("cropScreenshotId")) {
+                // 从截图裁剪区域，上传到 OSS 后返回 URL
+                try {
+                    String cropScreenshotId = String.valueOf(params.get("cropScreenshotId"));
+                    int x1 = getInt(params, "x1", 0);
+                    int y1 = getInt(params, "y1", 0);
+                    int x2 = getInt(params, "x2", 100);
+                    int y2 = getInt(params, "y2", 100);
+
+                    ScriptScreenshotDO screenshot = screenshotMapper.selectById(Long.parseLong(cropScreenshotId));
+                    if (screenshot == null || StrUtil.isBlank(screenshot.getFileUrl())) {
+                        log.warn("截图不存在: screenshotId={}", cropScreenshotId);
+                        continue;
+                    }
+
+                    // 裁剪并上传到 OSS
+                    Path tmpFile = Files.createTempFile("tpl_crop_", ".png");
+                    try {
+                        cropRegionFromScreenshot(screenshot.getFileUrl(), x1, y1, x2, y2, tmpFile);
+                        byte[] bytes = Files.readAllBytes(tmpFile);
+                        String key = TEMPLATE_PREFIX + "/" + projectId + "/tpl_crop_" + step.getId() + ".png";
+                        String url = ossUtil.upload(key, bytes, "image/png");
+                        urls.add(url);
+
+                        // 更新步骤的 templateUrl
+                        step.setTemplateUrl(url);
+                        params.put("templateUrl", url);
+                        step.setParamsJson(objectMapper.writeValueAsString(params));
+                        stepMapper.updateById(step);
+
+                        log.info("裁剪并上传模板: stepId={}, url={}", step.getId(), url);
+                    } finally {
+                        Files.deleteIfExists(tmpFile);
+                    }
+                } catch (Exception e) {
+                    log.warn("裁剪模板失败: stepId={}", step.getId(), e);
+                }
             }
         }
         return urls;
@@ -1034,32 +1089,115 @@ public class ScriptServiceImpl implements ScriptService {
 
     /**
      * 从脚本内容中提取模板 URL，下载到构建目录的 templates/ 子目录
+     * 支持两种模式：
+     * 1. 直接上传的模板（templateUrl）
+     * 2. 画布圈区域（cropScreenshotId + x1,y1,x2,y2），编译时截取
      */
     private void downloadTemplates(Long projectId, String scriptContent, Path tmpDir) {
-        // 从步骤中提取所有 if_image 的模板 URL
         List<ScriptStepDO> steps = stepMapper.selectList(
                 new LambdaQueryWrapper<ScriptStepDO>()
                         .eq(ScriptStepDO::getProjectId, projectId));
         Path templatesDir = tmpDir.resolve("templates");
         boolean hasTemplates = false;
+
         for (ScriptStepDO step : steps) {
             if (!"if_image".equals(step.getOperationType())) continue;
             Map<String, Object> params = parseParams(step.getParamsJson());
             String templateUrl = StrUtil.nullToEmpty((String) params.get("templateUrl"));
-            if (StrUtil.isBlank(templateUrl)) continue;
+
             try {
-                if (!hasTemplates) {
-                    Files.createDirectories(templatesDir);
-                    hasTemplates = true;
+                if (StrUtil.isNotBlank(templateUrl)) {
+                    // 模式1：直接下载已上传的模板
+                    if (!hasTemplates) {
+                        Files.createDirectories(templatesDir);
+                        hasTemplates = true;
+                    }
+                    String fileName = templateUrl.substring(templateUrl.lastIndexOf('/') + 1);
+                    Path target = templatesDir.resolve(fileName);
+                    try (InputStream is = ossUtil.download(templateUrl)) {
+                        Files.copy(is, target, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+                    }
+                    log.info("下载模板: {} -> {}", templateUrl, target);
+                } else if (params.containsKey("cropScreenshotId")) {
+                    // 模式2：从截图裁剪区域
+                    String cropScreenshotId = String.valueOf(params.get("cropScreenshotId"));
+                    int x1 = getInt(params, "x1", 0);
+                    int y1 = getInt(params, "y1", 0);
+                    int x2 = getInt(params, "x2", 100);
+                    int y2 = getInt(params, "y2", 100);
+
+                    ScriptScreenshotDO screenshot = screenshotMapper.selectById(Long.parseLong(cropScreenshotId));
+                    if (screenshot == null || StrUtil.isBlank(screenshot.getFileUrl())) {
+                        log.warn("截图不存在或无文件URL: screenshotId={}", cropScreenshotId);
+                        continue;
+                    }
+
+                    if (!hasTemplates) {
+                        Files.createDirectories(templatesDir);
+                        hasTemplates = true;
+                    }
+
+                    // 下载原图并裁剪
+                    String templateName = "tpl_crop_" + step.getId() + ".png";
+                    Path templatePath = templatesDir.resolve(templateName);
+                    cropRegionFromScreenshot(screenshot.getFileUrl(), x1, y1, x2, y2, templatePath);
+
+                    // 更新步骤的 templatePath（用于脚本引用）
+                    String relPath = "templates/" + templateName;
+                    step.setTemplatePath(relPath);
+                    params.put("templatePath", relPath);
+                    step.setParamsJson(objectMapper.writeValueAsString(params));
+                    stepMapper.updateById(step);
+
+                    log.info("裁剪模板: screenshot={}, ({},{}) -> ({},{})", cropScreenshotId, x1, y1, x2, y2);
                 }
-                String fileName = templateUrl.substring(templateUrl.lastIndexOf('/') + 1);
-                Path target = templatesDir.resolve(fileName);
-                try (InputStream is = ossUtil.download(templateUrl)) {
-                    Files.copy(is, target, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
-                }
-                log.info("下载模板: {} -> {}", templateUrl, target);
             } catch (Exception e) {
-                log.warn("下载模板失败: {}", templateUrl, e);
+                log.warn("处理模板失败: stepId={}", step.getId(), e);
+            }
+        }
+    }
+
+    /**
+     * 从 OSS 下载截图并裁剪指定区域，保存为模板图片
+     */
+    private void cropRegionFromScreenshot(String screenshotUrl, int x1, int y1, int x2, int y2, Path outputPath) throws Exception {
+        try (InputStream is = ossUtil.download(screenshotUrl)) {
+            javax.imageio.stream.ImageInputStream imageInputStream = javax.imageio.ImageIO.createImageInputStream(is);
+            if (imageInputStream == null) {
+                throw new IOException("无法读取图片: " + screenshotUrl);
+            }
+
+            // 获取图片尺寸
+            java.util.Iterator<javax.imageio.ImageReader> readers = javax.imageio.ImageIO.getImageReaders(imageInputStream);
+            if (!readers.hasNext()) {
+                throw new IOException("无法解析图片格式");
+            }
+            javax.imageio.ImageReader reader = readers.next();
+            reader.setInput(imageInputStream);
+            int imgWidth = reader.getWidth(0);
+            int imgHeight = reader.getHeight(0);
+            reader.dispose();
+            imageInputStream.close();
+
+            // 重新下载并读取图片（因为 reader 已消费了流）
+            try (InputStream is2 = ossUtil.download(screenshotUrl)) {
+                java.awt.image.BufferedImage fullImage = javax.imageio.ImageIO.read(is2);
+                if (fullImage == null) {
+                    throw new IOException("无法解码图片");
+                }
+
+                // 确保坐标在图片范围内
+                int cropX = Math.max(0, Math.min(x1, imgWidth));
+                int cropY = Math.max(0, Math.min(y1, imgHeight));
+                int cropW = Math.min(x2, imgWidth) - cropX;
+                int cropH = Math.min(y2, imgHeight) - cropY;
+
+                if (cropW <= 0 || cropH <= 0) {
+                    throw new IOException("裁剪区域无效: (" + x1 + "," + y1 + ")->(" + x2 + "," + y2 + ")");
+                }
+
+                java.awt.image.BufferedImage cropped = fullImage.getSubimage(cropX, cropY, cropW, cropH);
+                javax.imageio.ImageIO.write(cropped, "png", outputPath.toFile());
             }
         }
     }
@@ -1077,7 +1215,10 @@ public class ScriptServiceImpl implements ScriptService {
                     if (forDepth <= 0) throw new ScriptBizException("存在多余的「循环结束」，缺少对应的「循环开始」");
                     forDepth--;
                 }
-                case "if_image", "if_random" -> ifDepth++;
+                case "break_loop", "continue_loop" -> {
+                    if (forDepth <= 0) throw new ScriptBizException("「跳出循环」和「继续循环」只能放在「循环开始」和「循环结束」之间");
+                }
+                case "if_image", "if_random", "if_ai" -> ifDepth++;
                 case "else" -> {
                     if (ifDepth <= 0) throw new ScriptBizException("存在多余的「否则」，缺少对应的条件开始");
                 }
@@ -1098,6 +1239,13 @@ public class ScriptServiceImpl implements ScriptService {
         } catch (Exception e) {
             return Map.of();
         }
+    }
+
+    private int getInt(Map<String, Object> params, String key, int defaultVal) {
+        Object v = params.get(key);
+        if (v == null) return defaultVal;
+        if (v instanceof Number n) return n.intValue();
+        try { return Integer.parseInt(v.toString()); } catch (Exception e) { return defaultVal; }
     }
 
     private void updateProgress(Long projectId, int progress, String message) {

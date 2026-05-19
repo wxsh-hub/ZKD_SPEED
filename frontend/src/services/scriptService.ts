@@ -59,7 +59,10 @@ export type OperationType =
   | "scroll"
   | "for_start"
   | "for_end"
+  | "break_loop"
+  | "continue_loop"
   | "if_image"
+  | "if_ai"
   | "if_random"
   | "else"
   | "if_end";
@@ -78,7 +81,10 @@ export const OPERATION_LABELS: Record<OperationType, string> = {
   scroll: "滑动",
   for_start: "循环开始",
   for_end: "循环结束",
+  break_loop: "跳出循环",
+  continue_loop: "继续循环",
   if_image: "条件(图像)",
+  if_ai: "条件(AI识别)",
   if_random: "条件(随机)",
   else: "否则",
   if_end: "条件结束",
@@ -98,7 +104,10 @@ export const OPERATION_COLORS: Record<OperationType, string> = {
   scroll: "bg-teal-100 text-teal-700 border-teal-200",
   for_start: "bg-yellow-100 text-yellow-700 border-yellow-200",
   for_end: "bg-yellow-100 text-yellow-700 border-yellow-200",
+  break_loop: "bg-yellow-100 text-yellow-800 border-yellow-300",
+  continue_loop: "bg-yellow-100 text-yellow-800 border-yellow-300",
   if_image: "bg-rose-100 text-rose-700 border-rose-200",
+  if_ai: "bg-violet-100 text-violet-700 border-violet-200",
   if_random: "bg-pink-100 text-pink-700 border-pink-200",
   else: "bg-amber-100 text-amber-700 border-amber-200",
   if_end: "bg-rose-100 text-rose-700 border-rose-200",
@@ -116,12 +125,15 @@ export const OPERATION_HINTS: Record<OperationType, string> = {
   wait_seconds: "输入等待的秒数",
   input_text: "输入要打字的内容",
   scroll: "在图片上拖拽画出滑动路径",
-  for_start: "设置循环次数和间隔",
-  for_end: "标记循环结束位置",
-  if_image: "在图片上框选匹配区域",
-  if_random: "设置随机概率",
-  else: "条件不满足时执行",
-  if_end: "标记条件结束位置",
+  for_start: "重复执行内部操作，设置循环次数。例如循环10次点击按钮",
+  for_end: "标记循环体的结束位置，与「循环开始」配对使用",
+  break_loop: "立即跳出当前循环，继续执行循环之后的操作。只能放在循环开始和循环结束之间",
+  continue_loop: "跳过本次循环剩余操作，直接开始下一次循环。只能放在循环开始和循环结束之间",
+  if_image: "截取屏幕上一块区域作为模板，运行时判断屏幕上是否能找到匹配的图像",
+  if_ai: "截取屏幕区域，用 AI 判断是否满足条件。例如「屏幕上是否有登录按钮」。需要服务器在线",
+  if_random: "按设定的概率随机决定是否执行，用于模拟人类操作的随机性。例如50%概率点击",
+  else: "当上方的条件（图像匹配/随机）不满足时执行这里的操作",
+  if_end: "标记条件块的结束位置，与「条件(图像)」或「条件(随机)」配对使用",
 };
 
 export interface KeyOption {

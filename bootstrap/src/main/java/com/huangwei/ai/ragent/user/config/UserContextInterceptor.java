@@ -72,17 +72,23 @@ public class UserContextInterceptor implements HandlerInterceptor {
         }
 
         String loginId = StpUtil.getLoginIdAsString();
-        UserDO user = userMapper.selectById(Long.parseLong(loginId));
-        log.info("UserContextInterceptor 查询用户: loginId={}, username={}, role={}, avatar={}", loginId, user.getUsername(), user.getRole(), user.getAvatar());
 
-        UserContext.set(
-                LoginUser.builder()
-                        .userId(user.getId().toString())
-                        .username(user.getUsername())
-                        .role(user.getRole())
-                        .avatar(StrUtil.isBlank(user.getAvatar()) ? DEFAULT_AVATAR_URL : user.getAvatar())
-                        .build()
-        );
+        // 从 Sa-Token Session 缓存中获取用户信息，避免每次请求都查数据库
+        String cacheKey = "loginUser:" + loginId;
+        LoginUser loginUser = (LoginUser) StpUtil.getSession().get(cacheKey);
+        if (loginUser == null) {
+            UserDO user = userMapper.selectById(Long.parseLong(loginId));
+            log.info("UserContextInterceptor 查询用户(首次): loginId={}, username={}", loginId, user.getUsername());
+            loginUser = LoginUser.builder()
+                    .userId(user.getId().toString())
+                    .username(user.getUsername())
+                    .role(user.getRole())
+                    .avatar(StrUtil.isBlank(user.getAvatar()) ? DEFAULT_AVATAR_URL : user.getAvatar())
+                    .build();
+            StpUtil.getSession().set(cacheKey, loginUser);
+        }
+
+        UserContext.set(loginUser);
         return true;
     }
 

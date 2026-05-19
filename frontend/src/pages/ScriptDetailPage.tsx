@@ -418,6 +418,8 @@ function StepItem({
       case "for_end":
         return <span className="text-xs text-slate-400">循环结束</span>;
       case "if_image":
+        const hasRegion = params.x1 !== undefined && params.x2 !== undefined;
+        const hasTemplate = !!params.templateUrl;
         return (
           <div className="flex flex-col gap-1.5">
             <div className="flex items-center gap-2">
@@ -441,6 +443,27 @@ function StepItem({
                 className="h-7 w-20 text-xs"
               />
             </div>
+            {/* 模式1：画布圈区域（编译时后端截取） */}
+            {hasRegion && !hasTemplate && (
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1 rounded border border-rose-200 bg-rose-50 px-2 py-1 text-[11px] text-rose-600">
+                  <MousePointerClick className="h-3 w-3" />
+                  区域截取
+                </div>
+                <span className="text-[10px] text-slate-400">
+                  ({params.x1},{params.y1}) → ({params.x2},{params.y2})
+                </span>
+                <button
+                  onClick={() => {
+                    onUpdate(index, { paramsJson: { ...params, x1: undefined, y1: undefined, x2: undefined, y2: undefined, cropScreenshotId: undefined } });
+                  }}
+                  className="text-[10px] text-slate-400 hover:text-red-500"
+                >
+                  清除
+                </button>
+              </div>
+            )}
+            {/* 模式2：直接上传模板 */}
             <div className="flex items-center gap-2">
               <input
                 ref={tplInputRef}
@@ -460,9 +483,9 @@ function StepItem({
                 className="flex items-center gap-1 rounded border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] text-slate-600 hover:bg-slate-100"
               >
                 <Upload className="h-3 w-3" />
-                上传模板
+                {hasRegion ? "改为上传模板" : "上传模板"}
               </button>
-              {params.templateUrl && (
+              {hasTemplate && (
                 <>
                   <a
                     href={resolveFileUrl(params.templateUrl as string)}
@@ -477,7 +500,63 @@ function StepItem({
                 </>
               )}
             </div>
+            <p className="text-[10px] text-slate-400">在画布上拖拽圈出检测区域，或直接上传模板图片</p>
             <span className="text-xs text-slate-400">上传模板图片或在截图上拖拽圈出检测区域</span>
+          </div>
+        );
+      case "if_ai":
+        const aiHasRegion = params.x1 !== undefined && params.x2 !== undefined;
+        return (
+          <div className="flex flex-col gap-1.5">
+            {/* 区域坐标显示 */}
+            {aiHasRegion ? (
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1 rounded border border-violet-200 bg-violet-50 px-2 py-1 text-[11px] text-violet-600">
+                  <MousePointerClick className="h-3 w-3" />
+                  AI 识别区域
+                </div>
+                <span className="text-[10px] text-slate-400">
+                  ({params.x1},{params.y1}) → ({params.x2},{params.y2})
+                </span>
+                <span className="text-[10px] text-slate-400">拖拽可重新选区</span>
+              </div>
+            ) : (
+              <span className="text-[10px] text-slate-400">在画布上拖拽圈出 AI 识别区域</span>
+            )}
+            {/* AI 判断语句 */}
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-slate-500">判断</span>
+              <Input
+                placeholder="如：屏幕上是否有登录按钮"
+                value={params.prompt || ""}
+                onChange={(e) => {
+                  onUpdate(index, { paramsJson: { ...params, prompt: e.target.value } });
+                }}
+                className="h-7 flex-1 text-xs"
+              />
+            </div>
+            {/* 相似度 */}
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-slate-500">相似度</span>
+              <Input
+                type="number"
+                step="0.05"
+                min="0"
+                max="1"
+                value={params.similarity !== undefined ? String(params.similarity) : ""}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  onUpdate(index, { paramsJson: { ...params, similarity: v === "" ? "" : Number(v) } });
+                }}
+                onBlur={(e) => {
+                  const v = Number(e.target.value);
+                  if (!e.target.value || v < 0 || v > 1) {
+                    onUpdate(index, { paramsJson: { ...params, similarity: 0.8 } });
+                  }
+                }}
+                className="h-7 w-20 text-xs"
+              />
+            </div>
           </div>
         );
       case "if_random":
@@ -562,12 +641,17 @@ function StepItem({
             </span>
           )}
         </div>
-        <div onClick={(e) => e.stopPropagation()}>
+        <div onClick={(e) => {
+          const target = e.target as HTMLElement;
+          if (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.closest("[data-step-index]")) {
+            e.stopPropagation();
+          }
+        }}>
           {renderParams()}
-          {step.operationType !== "scroll" && (
-            <span className="text-xs text-slate-400">{OPERATION_HINTS[step.operationType]}</span>
-          )}
         </div>
+        {step.operationType !== "scroll" && (
+          <span className="text-xs text-slate-400">{OPERATION_HINTS[step.operationType]}</span>
+        )}
       </div>
 
       <button
@@ -644,22 +728,27 @@ const GUIDE_STEPS = [
     isTitlePage: true,
   },
   {
-    title: "第 1 步：上传截图",
+    title: "第 1 步：下载截图工具",
+    description: "首先下载截图工具，用它截取你需要自动化的应用或游戏画面。截图时请确保画面清晰、分辨率合适。",
+    image: "/guide/进入脚本/下载截图工具.png",
+  },
+  {
+    title: "第 2 步：上传截图",
     description: "点击左侧截图列表上方的 + 按钮，上传游戏或应用的截图。支持单张上传或整个文件夹批量上传。截图会自动压缩并存储。",
     image: "/guide/进入脚本/上传图片或者文件夹.png",
   },
   {
-    title: "第 2 步：添加操作步骤",
+    title: "第 3 步：添加操作步骤",
     description: "点击底部工具栏的操作类型按钮（点击、区域点击、长按、输入文字、滚动、等待），在右侧步骤列表中添加一个新步骤。",
     image: "/guide/进入脚本/增加脚本操作.png",
   },
   {
-    title: "第 3 步：标注坐标",
+    title: "第 4 步：标注坐标",
     description: "选中右侧的某个步骤，然后在中间画布上点击或框选来标注操作位置。坐标会自动填入步骤参数中，也可以手动输入。",
     image: "/guide/进入脚本/填写操作坐标.png",
   },
   {
-    title: "第 4 步：保存并编译",
+    title: "第 5 步：保存并编译",
     description: "点击右上角「保存」按钮保存项目，然后点击「编译脚本」生成可执行文件。编译完成后可下载 EXE 文件。",
     image: "/guide/进入脚本/保存编译下载脚本.png",
   },
@@ -976,7 +1065,18 @@ function PythonGuideModal({ open, onClose, downloadUrl, projectName }: PythonGui
         </div>
 
         {/* footer */}
-        <div className="flex justify-end border-t border-slate-100 px-5 py-3">
+        <div className="flex items-center justify-between border-t border-slate-100 px-5 py-3">
+          {downloadUrl ? (
+            <a
+              href={downloadUrl}
+              download={`${projectName || "script"}_bat.zip`}
+              onClick={onClose}
+              className="inline-flex items-center gap-1.5 rounded-md bg-violet-600 px-4 py-2 text-xs font-medium text-white hover:bg-violet-700 transition-colors"
+            >
+              <Download className="h-3.5 w-3.5" />
+              下载压缩包
+            </a>
+          ) : <div />}
           <Button size="sm" onClick={onClose}>
             我知道了
           </Button>
@@ -1373,7 +1473,7 @@ function CanvasOverlay({
     if (!activeStep) { onNoStepClick(); return; }
     const pos = getCanvasPos(e);
     const type = activeStep.operationType;
-    if (type === "area_click" || type === "area_long_press" || type === "long_press" || type === "scroll" || type === "if_image") {
+    if (type === "area_click" || type === "area_long_press" || type === "long_press" || type === "scroll" || type === "if_image" || type === "if_ai") {
       setDrawing(true);
       setStartPos(pos);
       setCurrentPos(pos);
@@ -1426,14 +1526,8 @@ function CanvasOverlay({
     cropCanvas.height = y2 - y1;
     const ctx = cropCanvas.getContext("2d")!;
     ctx.drawImage(img, x1 * scale, y1 * scale, (x2 - x1) * scale, (y2 - y1) * scale, 0, 0, x2 - x1, y2 - y1);
-    cropCanvas.toBlob((blob) => {
-      if (!blob) {
-        toast.error("截图裁剪失败，可能是图片跨域限制，请确认 COS 已配置 CORS");
-        return;
-      }
-      const file = new File([blob], "template.png", { type: "image/png" });
-      onUploadTemplate(file, x1, y1, x2, y2);
-    }, "image/png");
+    // 只记录区域坐标，不上传模板（后端编译时截取）
+    onCanvasAreaSelect(x1, y1, x2, y2);
   };
 
   const handleClick = (e: React.MouseEvent) => {
@@ -1602,7 +1696,10 @@ export function ScriptDetailPage() {
       scroll: { x1: 0, y1: 0, x2: 0, y2: 0, duration: 500 },
       for_start: { count: 3 },
       for_end: {},
+      break_loop: {},
+      continue_loop: {},
       if_image: { x1: 0, y1: 0, x2: 100, y2: 100, similarity: 0.95 },
+      if_ai: { x1: 0, y1: 0, x2: 100, y2: 100, prompt: "", similarity: 0.8 },
       if_random: { probability: 0.5 },
       else: {},
       if_end: {},
@@ -1710,6 +1807,25 @@ export function ScriptDetailPage() {
       handleUpdateStep(idx, {
         paramsJson: { x1, y1, x2, y2, duration: duration || (step.paramsJson.duration as number) || 500 },
       });
+    } else if (step.operationType === "if_ai") {
+      handleUpdateStep(idx, {
+        paramsJson: { ...step.paramsJson, x1: minX, y1: minY, x2: maxX, y2: maxY },
+      });
+      toast.success("已设置 AI 识别区域");
+    } else if (step.operationType === "if_image") {
+      // 记录区域坐标和截图ID，后端编译时截取
+      const currentScreenshotId = activeScreenshot?.id ?? step.screenshotId;
+      handleUpdateStep(idx, {
+        paramsJson: {
+          ...step.paramsJson,
+          x1: minX, y1: minY, x2: maxX, y2: maxY,
+          cropScreenshotId: currentScreenshotId,
+        },
+        // 清除旧的 templateUrl（改为区域截取模式）
+        templateUrl: undefined as any,
+        templatePath: undefined as any,
+      });
+      toast.success("已设置检测区域");
     }
   };
 
@@ -1843,7 +1959,10 @@ export function ScriptDetailPage() {
     scroll: [],
     for_start: [],
     for_end: [],
+    break_loop: [],
+    continue_loop: [],
     if_image: [],
+    if_ai: ["x1", "y1", "x2", "y2", "prompt"],
     if_random: [],
     else: [],
     if_end: [],
@@ -1855,7 +1974,7 @@ export function ScriptDetailPage() {
       return false;
     }
     const hasRealOperation = steps.some(
-      (s) => !["for_start", "for_end", "if_image", "if_random", "else", "if_end"].includes(s.operationType)
+      (s) => !["for_start", "for_end", "break_loop", "continue_loop", "if_image", "if_random", "if_ai", "else", "if_end"].includes(s.operationType)
     );
     if (!hasRealOperation) {
       toast.error("请先添加至少一个操作步骤（点击、输入、滑动等），仅有控制流无法编译");
@@ -1887,7 +2006,10 @@ export function ScriptDetailPage() {
         if (forDepth <= 0) { toast.error("存在多余的「循环结束」，缺少对应的「循环开始」"); return false; }
         forDepth--;
       }
-      else if (step.operationType === "if_image" || step.operationType === "if_random") ifDepth++;
+      else if (step.operationType === "break_loop" || step.operationType === "continue_loop") {
+        if (forDepth <= 0) { toast.error("「跳出循环」和「继续循环」只能放在「循环开始」和「循环结束」之间"); return false; }
+      }
+      else if (step.operationType === "if_image" || step.operationType === "if_random" || step.operationType === "if_ai") ifDepth++;
       else if (step.operationType === "else") {
         // else 不影响深度计数，但需要校验前面有对应的 if
         if (ifDepth <= 0) { toast.error("存在多余的「否则」，缺少对应的条件开始"); return false; }
@@ -2315,6 +2437,7 @@ export function ScriptDetailPage() {
                       key={type}
                       onClick={() => handleAddStep(type)}
                       disabled={elseDisabled}
+                      title={OPERATION_HINTS[type]}
                       className={cn(
                         "rounded-lg border px-4 py-2 text-sm font-medium transition-colors",
                         OPERATION_COLORS[type],

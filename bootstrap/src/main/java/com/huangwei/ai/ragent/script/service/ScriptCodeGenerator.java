@@ -35,7 +35,7 @@ public class ScriptCodeGenerator {
      * 生成基于 ctypes 的轻量级 Python 脚本（不依赖 pyautogui，EXE 体积小，不触发杀毒）
      */
     public static String generate(List<ScriptStepDO> steps, String projectName, Integer targetWidth, Integer targetHeight) {
-        return generate(steps, projectName, targetWidth, targetHeight, false);
+        return generate(steps, projectName, targetWidth, targetHeight, false, "", "");
     }
 
     /**
@@ -44,6 +44,17 @@ public class ScriptCodeGenerator {
     public static String generate(List<ScriptStepDO> steps, String projectName,
                                   Integer targetWidth, Integer targetHeight,
                                   boolean guiEnabled) {
+        return generate(steps, projectName, targetWidth, targetHeight, guiEnabled, "", "");
+    }
+
+    /**
+     * 生成 Python 脚本，支持 GUI 控制面板和 AI 识别
+     * @param apiBase 后端 API 地址（用于 if_ai 图像识别）
+     * @param uploadToken 项目 token（用于 if_ai 鉴权）
+     */
+    public static String generate(List<ScriptStepDO> steps, String projectName,
+                                  Integer targetWidth, Integer targetHeight,
+                                  boolean guiEnabled, String apiBase, String uploadToken) {
         StringBuilder sb = new StringBuilder();
 
         // 头部：ctypes 基础设施
@@ -61,15 +72,88 @@ public class ScriptCodeGenerator {
         }
         sb.append("\n");
 
+        // AI 图像识别函数（仅在有 if_ai 步骤时生成）
+        boolean hasAiStep = steps.stream().anyMatch(s -> "if_ai".equals(s.getOperationType()));
+        if (hasAiStep) {
+            String safeApiBase = apiBase != null ? apiBase : "";
+            String safeToken = uploadToken != null ? uploadToken : "";
+            sb.append("# ============ AI 图像识别 ============\n");
+            sb.append("SCRIPT_API_BASE = '").append(escapePy(safeApiBase)).append("'\n");
+            sb.append("SCRIPT_TOKEN = '").append(escapePy(safeToken)).append("'\n\n");
+            sb.append("def ai_recognize(x1, y1, x2, y2, prompt):\n");
+            sb.append("    \"\"\"AI 图像识别：截取屏幕区域，发送到服务器判断\"\"\"\n");
+            sb.append("    def _log(m):\n");
+            sb.append("        try: log_msg(m)\n");
+            sb.append("        except NameError: print(m)\n");
+            sb.append("    _log(f'  AI识别: 截取区域({x1},{y1})-({x2},{y2})，判断: {prompt}')\n");
+            sb.append("    try:\n");
+            sb.append("        img = ImageGrab.grab(bbox=(x1, y1, x2, y2))\n");
+            sb.append("        if img.size[0] == 0 or img.size[1] == 0:\n");
+            sb.append("            _log('  AI识别异常: 截图区域为空，请检查坐标是否正确')\n");
+            sb.append("            return False\n");
+            sb.append("        import io, base64, urllib.request, json\n");
+            sb.append("        buf = io.BytesIO()\n");
+            sb.append("        img.save(buf, format='PNG')\n");
+            sb.append("        size_kb = len(buf.getvalue()) / 1024\n");
+            sb.append("        _log(f'  AI识别: 截图完成 {img.size[0]}x{img.size[1]} ({size_kb:.1f}KB)，发送请求...')\n");
+            sb.append("        img_b64 = base64.b64encode(buf.getvalue()).decode()\n");
+            sb.append("        boundary = '----FormBoundary7MA4YWxkTrZu0gW'\n");
+            sb.append("        body = (\n");
+            sb.append("            f'--{boundary}\\r\\n'\n");
+            sb.append("            f'Content-Disposition: form-data; name=\"token\"\\r\\n\\r\\n'\n");
+            sb.append("            f'{SCRIPT_TOKEN}\\r\\n'\n");
+            sb.append("            f'--{boundary}\\r\\n'\n");
+            sb.append("            f'Content-Disposition: form-data; name=\"prompt\"\\r\\n\\r\\n'\n");
+            sb.append("            f'{prompt}\\r\\n'\n");
+            sb.append("            f'--{boundary}\\r\\n'\n");
+            sb.append("            f'Content-Disposition: form-data; name=\"image\"; filename=\"screen.png\"\\r\\n'\n");
+            sb.append("            f'Content-Type: image/png\\r\\n\\r\\n'\n");
+            sb.append("        ).encode() + base64.b64decode(img_b64) + f'\\r\\n--{boundary}--\\r\\n'.encode()\n");
+            sb.append("        req = urllib.request.Request(\n");
+            sb.append("            f'{SCRIPT_API_BASE}/script/vision/analyze',\n");
+            sb.append("            data=body,\n");
+            sb.append("            headers={'Content-Type': f'multipart/form-data; boundary={boundary}'}\n");
+            sb.append("        )\n");
+            sb.append("        with urllib.request.urlopen(req, timeout=15) as resp:\n");
+            sb.append("            result = json.loads(resp.read())\n");
+            sb.append("            if result.get('code', '0') != '0':\n");
+            sb.append("                _log(f'  AI识别失败: {result.get(\"message\", \"未知错误\")}')\n");
+            sb.append("                return False\n");
+            sb.append("            data = result.get('data') or {}\n");
+            sb.append("            matched = data.get('result', False)\n");
+            sb.append("            _log(f'  AI识别结果: {\"是\" if matched else \"不是\"}')\n");
+            sb.append("            return matched\n");
+            sb.append("    except Exception as e:\n");
+            sb.append("        _log(f'  AI识别异常: {e}')\n");
+            sb.append("        return False\n\n");
+        }
+
         // Windows API 常量
         sb.append("user32 = ctypes.windll.user32\n\n");
 
-        // 鼠标操作函数
+        // 分辨率配置与坐标缩放
+        int refW = targetWidth != null ? targetWidth : 1920;
+        int refH = targetHeight != null ? targetHeight : 1080;
+        sb.append("# 标注时的参考分辨率\n");
+        sb.append("ANNOTATION_WIDTH = ").append(refW).append("\n");
+        sb.append("ANNOTATION_HEIGHT = ").append(refH).append("\n\n");
+
+        sb.append("def scale_x(x):\n");
+        sb.append("    \"\"\"将标注坐标 X 按实际屏幕分辨率缩放\"\"\"\n");
+        sb.append("    screen_w = user32.GetSystemMetrics(0)\n");
+        sb.append("    return int(x * screen_w / ANNOTATION_WIDTH)\n\n");
+
+        sb.append("def scale_y(y):\n");
+        sb.append("    \"\"\"将标注坐标 Y 按实际屏幕分辨率缩放\"\"\"\n");
+        sb.append("    screen_h = user32.GetSystemMetrics(1)\n");
+        sb.append("    return int(y * screen_h / ANNOTATION_HEIGHT)\n\n");
+
+        // 鼠标操作函数（带缩放）
         sb.append("def mouse_move(x, y):\n");
-        sb.append("    user32.SetCursorPos(int(x), int(y))\n\n");
+        sb.append("    user32.SetCursorPos(scale_x(x), scale_y(y))\n\n");
 
         sb.append("def mouse_click(x, y):\n");
-        sb.append("    user32.SetCursorPos(int(x), int(y))\n");
+        sb.append("    user32.SetCursorPos(scale_x(x), scale_y(y))\n");
         sb.append("    user32.mouse_event(0x0002, 0, 0, 0, 0)  # LEFTDOWN\n");
         sb.append("    time.sleep(0.02)\n");
         sb.append("    user32.mouse_event(0x0004, 0, 0, 0, 0)  # LEFTUP\n\n");
@@ -86,8 +170,11 @@ public class ScriptCodeGenerator {
         sb.append("def hscroll(amount):\n");
         sb.append("    user32.mouse_event(0x1000, 0, 0, int(amount * 120), 0)  # MOUSEEVENTF_HWHEEL\n\n");
 
-        // 图像匹配函数
+        // 图像匹配函数（带坐标缩放）
         sb.append("def match_image(rel_path, x1, y1, x2, y2, threshold=0.95):\n");
+        sb.append("    # 按实际分辨率缩放区域坐标\n");
+        sb.append("    sx1, sy1 = scale_x(x1), scale_y(y1)\n");
+        sb.append("    sx2, sy2 = scale_x(x2), scale_y(y2)\n");
         sb.append("    if getattr(sys, 'frozen', False):\n");
         sb.append("        base = os.path.dirname(os.path.abspath(sys.executable))\n");
         sb.append("    else:\n");
@@ -105,11 +192,25 @@ public class ScriptCodeGenerator {
         sb.append("        print(f'模板不存在: {tpl_path}')\n");
         sb.append("        return False\n");
         sb.append("    tpl = Image.open(tpl_path).convert('RGB')\n");
-        sb.append("    scr = ImageGrab.grab(bbox=(x1, y1, x2, y2)).convert('RGB')\n");
-        sb.append("    t_px = list(tpl.getdata())\n");
-        sb.append("    s_px = list(scr.getdata())\n");
+        sb.append("    # 模板也需要按比例缩放\n");
+        sb.append("    tpl_w, tpl_h = tpl.size\n");
+        sb.append("    screen_w = user32.GetSystemMetrics(0)\n");
+        sb.append("    screen_h = user32.GetSystemMetrics(1)\n");
+        sb.append("    new_w = int(tpl_w * screen_w / ANNOTATION_WIDTH)\n");
+        sb.append("    new_h = int(tpl_h * screen_h / ANNOTATION_HEIGHT)\n");
+        sb.append("    if new_w > 0 and new_h > 0:\n");
+        sb.append("        tpl = tpl.resize((new_w, new_h), Image.LANCZOS)\n");
+        sb.append("    scr = ImageGrab.grab(bbox=(sx1, sy1, sx2, sy2)).convert('RGB')\n");
+        sb.append("    import warnings\n");
+        sb.append("    with warnings.catch_warnings():\n");
+        sb.append("        warnings.simplefilter('ignore', DeprecationWarning)\n");
+        sb.append("        t_data = tpl.getdata()\n");
+        sb.append("        s_data = scr.getdata()\n");
+        sb.append("    # 展开为单通道值列表，兼容 RGB 和灰度\n");
+        sb.append("    t_px = [v for px in t_data for v in (px if isinstance(px, tuple) else (px,))]\n");
+        sb.append("    s_px = [v for px in s_data for v in (px if isinstance(px, tuple) else (px,))]\n");
         sb.append("    diff = sum((a - b) ** 2 for a, b in zip(t_px, s_px))\n");
-        sb.append("    max_diff = len(t_px) * 3 * 255 * 255\n");
+        sb.append("    max_diff = len(t_px) * 255 * 255\n");
         sb.append("    sim = 1.0 - diff / max_diff if max_diff > 0 else 1.0\n");
         sb.append("    return sim >= threshold\n\n");
 
@@ -158,8 +259,13 @@ public class ScriptCodeGenerator {
         appendStepCode(sb, steps, "    ");
 
         sb.append("    print('执行完毕')\n\n");
+
         sb.append("if __name__ == '__main__':\n");
-        sb.append("    run()\n");
+        sb.append("    try:\n");
+        sb.append("        run()\n");
+        sb.append("    except Exception as e:\n");
+        sb.append("        print(f'执行出错: {e}')\n");
+        sb.append("        sys.exit(1)\n");
     }
 
     /**
@@ -169,7 +275,23 @@ public class ScriptCodeGenerator {
                                         String projectName) {
         // 全局控制变量
         sb.append("_paused = False\n");
-        sb.append("_stopped = False\n\n");
+        sb.append("_stopped = False\n");
+        sb.append("_log_text = None\n");
+        sb.append("_log_root = None\n\n");
+
+        // 全局日志函数（GUI 启动后自动写入日志面板）
+        sb.append("def log_msg(msg):\n");
+        sb.append("    print(msg)\n");
+        sb.append("    if _log_text and _log_root:\n");
+        sb.append("        def _update():\n");
+        sb.append("            _log_text.config(state='normal')\n");
+        sb.append("            _log_text.insert('end', msg + '\\n')\n");
+        sb.append("            _log_text.see('end')\n");
+        sb.append("            _log_text.config(state='disabled')\n");
+        sb.append("        try:\n");
+        sb.append("            _log_root.after(0, _update)\n");
+        sb.append("        except Exception:\n");
+        sb.append("            pass\n\n");
 
         // 单次执行函数（带暂停检查）
         sb.append("def run_once():\n");
@@ -183,7 +305,9 @@ public class ScriptCodeGenerator {
         sb.append("def start_gui():\n");
         sb.append("    root = tk.Tk()\n");
         sb.append("    root.title('").append(escapePy(projectName)).append("')\n");
-        sb.append("    root.resizable(False, False)\n\n");
+        sb.append("    root.resizable(False, True)\n");
+        sb.append("    root.geometry('500x680')\n");
+        sb.append("    root.minsize(420, 400)\n\n");
 
         // 状态标签
         sb.append("    status_var = tk.StringVar(value='就绪')\n");
@@ -239,7 +363,7 @@ public class ScriptCodeGenerator {
         sb.append("        _stopped = True\n");
         sb.append("        status_var.set('已停止')\n");
         sb.append("        start_btn.config(state='normal')\n");
-        sb.append("        pause_btn.config(state='disabled', text='暂停')\n");
+        sb.append("        pause_btn.config(state='disabled', text='暂停(F6)')\n");
         sb.append("        stop_btn.config(state='disabled')\n\n");
 
         sb.append("    start_btn = tk.Button(btn_frame, text='开始(F5)', width=10, command=on_start)\n");
@@ -251,6 +375,16 @@ public class ScriptCodeGenerator {
         sb.append("    root.bind('<F5>', lambda e: on_start())\n");
         sb.append("    root.bind('<F6>', lambda e: on_pause())\n");
         sb.append("    root.bind('<F7>', lambda e: on_stop())\n\n");
+
+        // 日志区域
+        sb.append("    global _log_text, _log_root\n");
+        sb.append("    _log_root = root\n");
+        sb.append("    from tkinter import scrolledtext\n");
+        sb.append("    log_frame = tk.Frame(root)\n");
+        sb.append("    log_frame.pack(fill='both', expand=True, padx=8, pady=(5, 8))\n");
+        sb.append("    tk.Label(log_frame, text='运行日志', font=('Microsoft YaHei', 9), anchor='w').pack(fill='x')\n");
+        sb.append("    _log_text = scrolledtext.ScrolledText(log_frame, height=18, width=50, font=('Consolas', 9), state='disabled', wrap='word')\n");
+        sb.append("    _log_text.pack(fill='both', expand=True, pady=(2, 0))\n\n");
 
         sb.append("    def run_loop(total, interval_sec):\n");
         sb.append("        global _stopped\n");
@@ -274,7 +408,7 @@ public class ScriptCodeGenerator {
         sb.append("        if not _stopped:\n");
         sb.append("            status_var.set('全部执行完毕')\n");
         sb.append("        start_btn.config(state='normal')\n");
-        sb.append("        pause_btn.config(state='disabled', text='暂停')\n");
+        sb.append("        pause_btn.config(state='disabled', text='暂停(F6)')\n");
         sb.append("        stop_btn.config(state='disabled')\n\n");
 
         sb.append("    def on_close():\n");
@@ -319,12 +453,19 @@ public class ScriptCodeGenerator {
             String curIndent = indent + "    ".repeat(indentLevel);
 
             // 控制流标记不插入暂停检查
-            boolean isBlock = type.startsWith("for_") || type.startsWith("if_") || "else".equals(type);
+            boolean isBlock = type.startsWith("for_") || type.startsWith("if_") || "else".equals(type)
+                    || "break_loop".equals(type) || "continue_loop".equals(type);
             sb.append(curIndent).append("# step ").append(step.getStepOrder()).append(": ").append(type).append("\n");
 
             if (withPauseCheck && !isBlock) {
                 sb.append(curIndent).append("if _stopped: return\n");
                 sb.append(curIndent).append("while _paused and not _stopped: time.sleep(0.1)\n");
+            }
+
+            // GUI 日志：记录每步操作
+            if (withPauseCheck) {
+                String logDesc = buildLogDescription(type, params, step.getStepOrder());
+                sb.append(curIndent).append("log_msg('").append(escapePy(logDesc)).append("')\n");
             }
 
             switch (type) {
@@ -362,6 +503,20 @@ public class ScriptCodeGenerator {
                     sb.append(curIndent).append("if random.random() < ").append(probability).append(":\n");
                     indentLevel++;
                 }
+                case "if_ai" -> {
+                    String aiPrompt = StrUtil.nullToEmpty((String) params.get("prompt"));
+                    double aiSimilarity = getDouble(params, "similarity", 0.8);
+                    String fullPrompt = aiPrompt + "（置信度要求：" + aiSimilarity + "）";
+                    int ax1 = getInt(params, "x1", 0);
+                    int ay1 = getInt(params, "y1", 0);
+                    int ax2 = getInt(params, "x2", 100);
+                    int ay2 = getInt(params, "y2", 100);
+                    sb.append(curIndent).append("if ai_recognize(")
+                            .append(ax1).append(", ").append(ay1).append(", ")
+                            .append(ax2).append(", ").append(ay2)
+                            .append(", '").append(escapePy(fullPrompt)).append("'):\n");
+                    indentLevel++;
+                }
                 case "else" -> {
                     indentLevel = Math.max(0, indentLevel - 1);
                     String elseIndent = indent + "    ".repeat(indentLevel);
@@ -370,6 +525,12 @@ public class ScriptCodeGenerator {
                 }
                 case "if_end" -> {
                     indentLevel = Math.max(0, indentLevel - 1);
+                }
+                case "break_loop" -> {
+                    sb.append(curIndent).append("break\n");
+                }
+                case "continue_loop" -> {
+                    sb.append(curIndent).append("continue\n");
                 }
                 case "click" -> {
                     int x = getInt(params, "x", 0);
@@ -438,22 +599,24 @@ public class ScriptCodeGenerator {
                 }
                 case "scroll" -> {
                     if (params.containsKey("x1") && params.containsKey("y1")) {
-                        // 新版：坐标滑动（起点→终点）
+                        // 新版：坐标滑动（起点→终点，带缩放）
                         int x1 = getInt(params, "x1", 0);
                         int y1 = getInt(params, "y1", 0);
                         int x2 = getInt(params, "x2", 0);
                         int y2 = getInt(params, "y2", 0);
                         int duration = getInt(params, "duration", 500);
                         int moveSteps = Math.max(10, duration / 16);
-                        sb.append(curIndent).append("mouse_move(").append(x1).append(", ").append(y1).append(")\n");
+                        sb.append(curIndent).append("_sx1, _sy1 = scale_x(").append(x1).append("), scale_y(").append(y1).append(")\n");
+                        sb.append(curIndent).append("_sx2, _sy2 = scale_x(").append(x2).append("), scale_y(").append(y2).append(")\n");
+                        sb.append(curIndent).append("mouse_move(_sx1, _sy1)\n");
                         sb.append(curIndent).append("mouse_down()\n");
                         sb.append(curIndent).append("_dur = ").append(duration / 1000.0).append("\n");
                         sb.append(curIndent).append("_steps = ").append(moveSteps).append("\n");
                         sb.append(curIndent).append("_t0 = time.monotonic()\n");
                         sb.append(curIndent).append("for _i in range(1, _steps + 1):\n");
                         sb.append(curIndent).append("    _t = _i / _steps\n");
-                        sb.append(curIndent).append("    _cx = int(").append(x1).append(" + (").append(x2).append(" - ").append(x1).append(") * _t)\n");
-                        sb.append(curIndent).append("    _cy = int(").append(y1).append(" + (").append(y2).append(" - ").append(y1).append(") * _t)\n");
+                        sb.append(curIndent).append("    _cx = int(_sx1 + (_sx2 - _sx1) * _t)\n");
+                        sb.append(curIndent).append("    _cy = int(_sy1 + (_sy2 - _sy1) * _t)\n");
                         sb.append(curIndent).append("    mouse_move(_cx, _cy)\n");
                         sb.append(curIndent).append("    _elapsed = time.monotonic() - _t0\n");
                         sb.append(curIndent).append("    _target = _dur * _i / _steps\n");
@@ -501,6 +664,64 @@ public class ScriptCodeGenerator {
         if (v == null) return defaultVal;
         if (v instanceof Number n) return n.doubleValue();
         try { return Double.parseDouble(v.toString()); } catch (Exception e) { return defaultVal; }
+    }
+
+    /**
+     * 构建每步操作的日志描述
+     */
+    private static String buildLogDescription(String type, Map<String, Object> params, int stepOrder) {
+        return switch (type) {
+            case "click" -> String.format("[步骤%d] 点击 (%s, %s)",
+                    stepOrder, params.getOrDefault("x", 0), params.getOrDefault("y", 0));
+            case "double_click" -> String.format("[步骤%d] 双击 (%s, %s)",
+                    stepOrder, params.getOrDefault("x", 0), params.getOrDefault("y", 0));
+            case "mouse_move" -> String.format("[步骤%d] 移动鼠标 (%s, %s)",
+                    stepOrder, params.getOrDefault("x", 0), params.getOrDefault("y", 0));
+            case "area_click" -> String.format("[步骤%d] 区域点击 (%s,%s)-(%s,%s)",
+                    stepOrder, params.getOrDefault("x1", 0), params.getOrDefault("y1", 0),
+                    params.getOrDefault("x2", 0), params.getOrDefault("y2", 0));
+            case "long_press" -> String.format("[步骤%d] 长按 (%s, %s) %sms",
+                    stepOrder, params.getOrDefault("x", 0), params.getOrDefault("y", 0),
+                    params.getOrDefault("duration", 1000));
+            case "area_long_press" -> String.format("[步骤%d] 区域长按 (%s,%s)-(%s,%s) %sms",
+                    stepOrder, params.getOrDefault("x1", 0), params.getOrDefault("y1", 0),
+                    params.getOrDefault("x2", 0), params.getOrDefault("y2", 0),
+                    params.getOrDefault("duration", 1000));
+            case "key_press" -> String.format("[步骤%d] 按键 %s",
+                    stepOrder, params.getOrDefault("key", ""));
+            case "key_long_press" -> String.format("[步骤%d] 长按按键 %s %sms",
+                    stepOrder, params.getOrDefault("key", ""), params.getOrDefault("duration", 1000));
+            case "input_text" -> {
+                String text = StrUtil.nullToEmpty((String) params.get("text"));
+                String display = text.length() > 20 ? text.substring(0, 20) + "..." : text;
+                yield String.format("[步骤%d] 输入文字 \"%s\"", stepOrder, display);
+            }
+            case "wait_seconds" -> String.format("[步骤%d] 等待 %s 秒",
+                    stepOrder, params.getOrDefault("seconds", 3));
+            case "scroll" -> {
+                if (params.containsKey("x1")) {
+                    yield String.format("[步骤%d] 滑动 (%s,%s)->(%s,%s)",
+                            stepOrder, params.getOrDefault("x1", 0), params.getOrDefault("y1", 0),
+                            params.getOrDefault("x2", 0), params.getOrDefault("y2", 0));
+                } else {
+                    yield String.format("[步骤%d] 滚动 %s %s格",
+                            stepOrder, params.getOrDefault("direction", "down"), params.getOrDefault("amount", 3));
+                }
+            }
+            case "for_start" -> String.format("[步骤%d] 循环开始 (×%s)",
+                    stepOrder, params.getOrDefault("count", 1));
+            case "for_end" -> String.format("[步骤%d] 循环结束", stepOrder);
+            case "if_image" -> String.format("[步骤%d] 图像识别判断", stepOrder);
+            case "if_random" -> String.format("[步骤%d] 随机判断 (%s%%)",
+                    stepOrder, Math.round(getDouble(params, "probability", 0.5) * 100));
+            case "if_ai" -> String.format("[步骤%d] AI识别判断: %s",
+                    stepOrder, params.getOrDefault("prompt", ""));
+            case "else" -> String.format("[步骤%d] 否则", stepOrder);
+            case "if_end" -> String.format("[步骤%d] 条件结束", stepOrder);
+            case "break_loop" -> String.format("[步骤%d] 跳出循环", stepOrder);
+            case "continue_loop" -> String.format("[步骤%d] 继续循环", stepOrder);
+            default -> String.format("[步骤%d] %s", stepOrder, type);
+        };
     }
 
     private static String escapePy(String s) {

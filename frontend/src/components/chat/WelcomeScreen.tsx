@@ -161,7 +161,7 @@ export function WelcomeScreen() {
         >
           <span className="inline-flex items-center gap-2 rounded-full border border-[#EDE9FE] bg-white/70 px-3 py-1 text-xs font-medium text-[#7C3AED] shadow-sm">
             <Bot className="h-3.5 w-3.5" />
-            RAG 智能问答
+            灵效AI
           </span>
           <h1 className="mt-3 font-display text-4xl leading-tight tracking-tight text-[#111827] sm:text-5xl md:text-6xl">
             把问题变成

@@ -4,7 +4,7 @@ import { Bot, BookOpen, FileText, Wand2, ArrowRight, Github } from "lucide-react
 const FEATURES = [
   {
     icon: Bot,
-    title: "RAG 智能问答",
+    title: "灵效AI",
     desc: "检索增强生成，精准回答知识库问题",
     num: "01",
   },
@@ -39,7 +39,7 @@ export default function LandingPageC() {
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-900">
             <Bot className="h-5 w-5 text-white" />
           </div>
-          <span className="text-xl font-bold tracking-tight text-slate-900">智答客</span>
+          <span className="text-xl font-bold tracking-tight text-slate-900">灵效AI</span>
         </div>
         <div className="flex items-center gap-3">
           <a

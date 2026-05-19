@@ -4,7 +4,7 @@ import { Bot, BookOpen, FileText, Wand2, ArrowRight, Github } from "lucide-react
 const FEATURES = [
   {
     icon: Bot,
-    title: "RAG 智能问答",
+    title: "灵效AI",
     desc: "基于检索增强生成技术，精准理解知识库内容，给出可靠回答",
     color: "from-violet-500 to-purple-600",
     link: "/chat",
@@ -43,7 +43,7 @@ export default function LandingPageA() {
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-violet-500 to-purple-600">
             <Bot className="h-4 w-4 text-white" />
           </div>
-          <span className="text-lg font-bold text-slate-900">智答客</span>
+          <span className="text-lg font-bold text-slate-900">灵效AI</span>
         </div>
         <button
           onClick={() => navigate("/login")}
@@ -63,7 +63,7 @@ export default function LandingPageA() {
           <span className="bg-gradient-to-r from-violet-600 to-purple-500 bg-clip-text text-transparent"> 创作搭档</span>
         </h1>
         <p className="mx-auto max-w-2xl text-lg text-slate-500 leading-relaxed mb-10">
-          智答客集成智能问答、小说续写、文章仿写、自动化脚本生成四大功能，
+          灵效AI集成智能问答、小说续写、文章仿写、自动化脚本生成四大功能，
           帮你从信息检索到内容创作再到流程自动化，一站搞定。
         </p>
         <div className="flex items-center justify-center gap-4">

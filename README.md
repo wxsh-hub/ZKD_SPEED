@@ -2,7 +2,7 @@
 
 > **作者**：黄炜（汕头大学 2027 届）
 
-基于 **Java 17 + Spring Boot 3 + React 18** 构建的全栈 RAG 智能体平台，覆盖从文档入库到智能问答的全链路工程化落地，同时增加了小说续写和文章仿写的功能，目前在开发ai脚本开发。
+基于 **Java 17 + Spring Boot 3 + React 18** 构建的全栈 RAG 智能体平台，覆盖从文档入库到智能问答的全链路工程化落地，同时包含小说续写、文章仿写、**AI 可视化脚本生成器**等功能。
 
 ---
 
@@ -79,7 +79,38 @@ Tika 解析 → 文本分块 → 向量化 → 存入 Milvus
 
 - 支持附加自定义要求（更正式、更口语化等）
 
-### 2.5 管理后台
+### 2.5 AI 可视化脚本生成器
+
+零代码 UI 自动化脚本构建工具，通过截图标注生成 Python 脚本并编译为独立 EXE：
+
+```
+创建项目 → 上传截图（自动检测分辨率）→ Canvas 标注操作 → 保存 → 预览代码 → 编译（BAT/EXE）→ 下载运行
+```
+
+**支持 20 种操作类型**：
+
+| 类别 | 操作 |
+|------|------|
+| 鼠标 | click, double_click, area_click, long_press, area_long_press, mouse_move |
+| 键盘 | key_press, key_long_press（40+ 键位） |
+| 输入 | input_text（Unicode 中文输入） |
+| 等待 | wait_seconds |
+| 滚动 | scroll |
+| 循环 | for_start, for_end, break_loop, continue_loop |
+| 条件 | if_image（图像匹配）、if_ai（AI 识别）、if_random、else、if_end |
+
+**两种编译模式**：
+- **BAT 模式**（推荐）：打包 .py + .bat + 模板为 zip，速度快，需 Python 环境
+- **EXE 模式**：通过 GitHub Actions / Nuitka 编译为独立 EXE，免 Python 环境
+
+**技术亮点**：
+- 使用 Windows ctypes API 直接控制鼠标键盘（非 pyautogui），EXE 体积小、不易触发杀毒
+- 坐标自动缩放：标注分辨率 vs 运行时屏幕分辨率自适应
+- AI 视觉识别：`if_ai` 条件调用通义千问 Qwen-VL-Max 模型判断屏幕状态
+- 可选 tkinter GUI 控制面板（开始/暂停/停止，F5/F6/F7 热键）
+- 截图工具独立 EXE，支持通过 token 免认证上传截图
+
+### 2.6 管理后台
 
 React 管理后台，覆盖业务全流程：
 
@@ -119,6 +150,7 @@ ragent/
     ├── ingestion/      # 文档入库 Pipeline
     ├── novel/          # 小说续写
     ├── imitation/      # 文章仿写
+    ├── script/         # 脚本生成器（控制器/服务/代码生成/AI视觉）
     ├── knowledge/      # 知识库管理
     └── admin/          # 管理后台
 ```
@@ -128,18 +160,23 @@ ragent/
 ```
 frontend/src/
 ├── pages/
-│   ├── ChatPage.tsx        # 对话主页面
-│   ├── NovelPage.tsx       # 小说续写页
-│   ├── ImitationPage.tsx   # 文章仿写页
-│   ├── LoginPage.tsx       # 登录页
-│   └── admin/              # 管理后台（7 个子模块）
+│   ├── ChatPage.tsx           # 对话主页面
+│   ├── NovelPage.tsx          # 小说续写页
+│   ├── ImitationPage.tsx      # 文章仿写页
+│   ├── ScriptPage.tsx         # 脚本项目列表页
+│   ├── ScriptDetailPage.tsx   # 脚本编辑器（三栏布局：截图/Canvas/步骤）
+│   ├── LoginPage.tsx          # 登录页
+│   └── admin/                 # 管理后台（8 个子模块）
 ├── components/
-│   ├── chat/          # 对话组件（输入框、消息列表、Markdown 渲染等）
-│   ├── layout/        # 布局组件（Header、Sidebar、MainLayout）
-│   └── common/        # 通用组件（FlowTag、ModelSelector、Avatar）
-├── stores/            # Zustand 状态管理
-├── services/          # API 请求封装
-└── hooks/             # 自定义 Hooks
+│   ├── chat/             # 对话组件（输入框、消息列表、Markdown 渲染等）
+│   ├── layout/           # 布局组件（Header、Sidebar、MainLayout）
+│   ├── script/           # 脚本组件（Canvas标注、步骤列表、截图面板等）
+│   └── common/           # 通用组件（FlowTag、ModelSelector、Avatar）
+├── stores/               # Zustand 状态管理
+├── services/             # API 请求封装
+│   ├── api.ts            # axios 实例（含 bigint→string 转换）
+│   └── scriptService.ts  # 脚本模块 API（20种操作类型定义）
+└── hooks/                # 自定义 Hooks
 ```
 
 ### 3.3 技术栈
@@ -154,6 +191,7 @@ frontend/src/
 | 文档解析 | Apache Tika |
 | 对象存储 | 阿里云 OSS / S3 |
 | AI 模型 | 百炼（qwen 系列）、SiliconFlow、Ollama（本地） |
+| AI 视觉 | 阿里云 DashScope（通义千问 Qwen-VL-Max） |
 | 状态管理 | Zustand |
 | UI 组件 | shadcn/ui、Lucide Icons |
 
@@ -206,6 +244,15 @@ ai:
 - 文件拖拽上传
 - 字数选择、模型选择、自定义方向/要求
 - 流式输出 + 导出为 txt
+
+### 脚本生成器
+- 项目列表页：卡片网格展示，支持创建/删除/状态筛选
+- 编辑器页：三栏布局（截图列表 | Canvas 标注画布 | 步骤列表）
+- Canvas 标注：点击标记坐标、框选区域、绘制滚动路径
+- 步骤管理：拖拽排序、内联编辑参数、插入/删除步骤
+- 代码预览：实时查看生成的 Python 代码
+- 编译状态轮询：实时进度条 + 成功后自动下载
+- 引导向导：5 步新手教程、Python 安装指南、杀毒软件白名单指引
 
 ### 管理后台
 - Dashboard 数据面板（KPI 卡片、趋势图、性能指标）
@@ -282,6 +329,15 @@ bootstrap/src/main/java/com/huangwei/ai/ragent/
 │   └── domain/             # 领域模型与枚举
 ├── novel/                  # 小说续写模块
 ├── imitation/              # 文章仿写模块
+├── script/                 # 脚本生成器模块
+│   ├── controller/         # 控制器（ScriptController + ScriptVisionController）
+│   ├── service/            # 服务层（项目/代码生成/AI视觉）
+│   │   └── impl/           # 服务实现
+│   ├── dao/                # 数据层
+│   │   ├── entity/         # DO 实体（3张表）
+│   │   └── mapper/         # MyBatis-Plus Mapper
+│   ├── config/             # 编译线程池配置
+│   └── util/               # 文件名解析工具
 ├── knowledge/              # 知识库管理
 ├── user/                   # 用户认证
 └── admin/                  # 管理后台

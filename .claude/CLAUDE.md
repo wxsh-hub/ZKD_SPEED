@@ -1,5 +1,14 @@
-
 # 项目协作说明
+
+## 项目简介
+
+Ragent 是一个 AI 多功能平台，包含以下核心模块：
+- **对话** — AI 聊天（支持会话管理）
+- **小说** — AI 小说续写
+- **仿写** — 文章风格仿写
+- **脚本生成器** — 可视化 UI 自动化脚本构建工具（截图标注 → Python 代码 → 编译 EXE）
+- **知识库** — RAG 检索增强（文档摄入、向量检索、意图树）
+- **管理后台** — 数据看板、知识库管理、用户管理、系统设置
 
 ## Git Worktree 工作区
 
@@ -16,27 +25,74 @@ Desktop/11/
 
 ```
 ragent-main/
-├── frontend/                    ← 前端代码（React + TypeScript + Vite）
-│   ├── src/pages/               ← 页面
-│   ├── src/components/          ← 组件
-│   ├── src/services/            ← API 调用
-│   ├── src/stores/              ← 状态管理
-│   └── src/router.tsx           ← 路由
+├── frontend/                            ← 前端代码（React + TypeScript + Vite）
+│   ├── src/pages/
+│   │   ├── ChatPage.tsx                 ← 对话页
+│   │   ├── NovelPage.tsx                ← 小说续写页
+│   │   ├── ImitationPage.tsx            ← 仿写页
+│   │   ├── ScriptPage.tsx               ← 脚本项目列表页
+│   │   ├── ScriptDetailPage.tsx         ← 脚本编辑器页（核心）
+│   │   ├── LandingPageA/B/C.tsx         ← 落地页
+│   │   ├── LoginPage.tsx                ← 登录页
+│   │   └── admin/                       ← 管理后台页面
+│   │       ├── dashboard/               ← 数据看板
+│   │       ├── knowledge/               ← 知识库管理
+│   │       ├── intent-tree/             ← 意图树管理
+│   │       ├── ingestion/               ← 文档摄入
+│   │       ├── traces/                  ← RAG 追踪
+│   │       ├── settings/                ← 系统设置
+│   │       ├── sample-questions/        ← 示例问题
+│   │       └── users/                   ← 用户管理
+│   ├── src/components/
+│   │   ├── chat/                        ← 对话组件
+│   │   ├── layout/                      ← 布局组件（Sidebar 等）
+│   │   └── script/                      ← 脚本组件（8个：Canvas、步骤列表等）
+│   ├── src/services/
+│   │   ├── api.ts                       ← axios 实例（含 bigint 转 string）
+│   │   ├── scriptService.ts             ← 脚本 API 客户端（20种操作类型定义）
+│   │   └── ...
+│   ├── src/stores/
+│   │   ├── authStore.ts                 ← 认证状态
+│   │   ├── scriptStore.ts               ← 脚本状态（Zustand，备用方案）
+│   │   └── ...
+│   ├── src/types/
+│   │   └── script.ts                    ← 脚本类型定义
+│   └── src/router.tsx                   ← 路由配置
 │
-├── bootstrap/src/main/java/     ← 后端代码（Spring Boot）
+├── bootstrap/src/main/java/             ← 后端代码（Spring Boot）
 │   └── com/huangwei/ai/ragent/
-│       ├── novel/               ← 小说模块
-│       ├── imitation/           ← 仿写模块
-│       ├── screenshot/          ← 截图模块（待开发）
-│       ├── rag/                 ← RAG 核心
-│       ├── ingestion/           ← 文档摄入
-│       ├── knowledge/           ← 知识库管理
-│       └── user/                ← 用户认证
+│       ├── novel/                       ← 小说模块（参考模板）
+│       ├── imitation/                   ← 仿写模块
+│       ├── script/                      ← 脚本生成器模块
+│       │   ├── controller/
+│       │   │   ├── ScriptController.java        ← 主控制器（前端调用）
+│       │   │   ├── ScriptVisionController.java  ← AI 视觉分析（免认证）
+│       │   │   ├── ScriptProjectController.java ← 旧版项目控制器
+│       │   │   ├── ScriptStepController.java    ← 旧版步骤控制器
+│       │   │   ├── request/                     ← 请求 DTO
+│       │   │   └── vo/                          ← 响应 VO
+│       │   ├── service/
+│       │   │   ├── ScriptService.java / impl    ← 主服务（前端对应）
+│       │   │   ├── ScriptCodeGenerator.java     ← Python 代码生成器（ctypes）
+│       │   │   ├── ScriptVisionService.java     ← AI 视觉分析（通义千问）
+│       │   │   ├── ScriptProjectService.java    ← 旧版项目服务
+│       │   │   ├── ScriptStepService.java       ← 旧版步骤服务
+│       │   │   └── ScriptGeneratorService.java  ← 旧版代码生成器（pyautogui）
+│       │   ├── dao/
+│       │   │   ├── entity/              ← DO 实体（3张表）
+│       │   │   └── mapper/              ← MyBatis-Plus Mapper
+│       │   ├── config/                  ← 编译线程池配置
+│       │   └── util/                    ← 文件名解析工具
+│       ├── rag/                         ← RAG 核心
+│       ├── ingestion/                   ← 文档摄入管线
+│       ├── knowledge/                   ← 知识库管理
+│       ├── admin/                       ← 管理后台
+│       └── user/                        ← 用户认证
 │
-├── framework/                   ← 后端公共框架
-├── infra-ai/                    ← 后端 AI 基础设施
-├── resources/database/          ← 数据库 schema
-└── tools/                       ← 工具脚本（Python 截图工具等）
+├── framework/                           ← 后端公共框架
+├── infra-ai/                            ← 后端 AI 基础设施
+├── resources/database/                  ← 数据库 schema
+└── tools/                               ← 工具脚本
 ```
 
 **简单划分：`frontend/` 目录是前端，其余全是后端。**
@@ -127,6 +183,8 @@ git branch -d feature/frontend
 - 数据库：MySQL (库名 db1)
 - 向量库：Milvus
 - 缓存：Redis
+- AI 视觉：阿里云 DashScope（通义千问 Qwen-VL-Max）
+- 对象存储：OSS（截图/模板/编译产物）
 
 ## 后端开发约定
 
@@ -179,32 +237,131 @@ npm run dev
 # 访问 http://localhost:5173
 ```
 
-## 当前开发计划：AI 自动化脚本生成器
+---
 
-### 阶段一：截图上传
-- 1.1 后端：截图上传接口 POST /screenshot/upload
-- 1.2 后端：截图列表接口 GET /screenshot/list
-- 1.3 截图工具：集成上传功能（GUI 加 token 输入框）
-- 1.4 前端：截图管理页
+## 脚本生成器模块详细说明
 
-### 阶段二：标注编辑器
-- 2.1 前端：Canvas 标注画布（fabric.js/Konva.js）
-- 2.2 前端：操作类型面板（点击/长按/等待/输入/滚动）
-- 2.3 前端：步骤列表（拖拽排序、编辑、删除）
-- 2.4 后端：标注数据存储接口 POST /script/save
-- 2.5 前端：保存/加载标注
+### 功能概述
 
-### 阶段三：脚本生成
-- 3.1 后端：脚本生成引擎（标注 JSON → Python 代码）
-- 3.2 后端：脚本预览接口 GET /script/preview/{id}
-- 3.3 前端：脚本预览页（语法高亮）
-- 3.4 后端：PyInstaller 打包接口（异步编译为 exe）
-- 3.5 前端：打包下载页
+可视化 UI 自动化脚本构建工具。用户上传目标应用的截图，在截图上标注操作步骤（点击、输入、滚动等），系统自动生成 Python 脚本，可编译为独立 EXE。
 
-### 阶段四：完善体验
-- 4.1 前端：tkinter 菜单配置
-- 4.2 后端：AI 增强生成（可选，调 LLM 优化脚本）
-- 4.3 前端：任务模板
+### 核心工作流
+
+```
+创建项目 → 上传截图（自动检测分辨率）→ 在截图上标注操作 → 保存 → 预览 Python 代码 → 编译（BAT/EXE）→ 下载
+```
+
+### 支持的 20 种操作类型
+
+| 类别 | 操作 | 说明 |
+|------|------|------|
+| 鼠标 | click, double_click, area_click, long_press, area_long_press, mouse_move | 基础鼠标操作 |
+| 键盘 | key_press, key_long_press | 按键操作（支持 40+ 键位） |
+| 输入 | input_text | 文本输入（Unicode 支持） |
+| 等待 | wait_seconds | 固定等待 |
+| 滚动 | scroll | 滚动操作 |
+| 循环 | for_start, for_end, break_loop, continue_loop | 控制流 |
+| 条件 | if_image, if_ai, if_random, else, if_end | 条件分支 |
+
+### 两种编译模式
+
+- **BAT 模式**（推荐）：打包 .py + .bat + 模板为 zip，速度快，需要用户机器装 Python
+- **EXE 模式**：通过 GitHub Actions 或本地 Nuitka 编译为独立 EXE，慢但免 Python 环境
+
+### AI 视觉识别（if_ai）
+
+`if_ai` 条件会截取屏幕区域，发送到后端 `/script/vision/analyze` 接口，由阿里云通义千问 Qwen-VL-Max 模型判断条件是否成立（返回是/否）。
+
+### 代码生成技术方案
+
+- 使用 Windows ctypes API 直接控制鼠标键盘（非 pyautogui），生成的 EXE 体积更小、不易触发杀毒
+- 坐标自动缩放：标注分辨率 vs 实际屏幕分辨率
+- 图像匹配：PIL 像素比较（无 OpenCV 依赖）
+- GUI 模式：生成 tkinter 控制面板（开始/暂停/停止，F5/F6/F7 热键）
+
+### 前端路由
+
+| 路由 | 页面 | 说明 |
+|------|------|------|
+| `/script` | ScriptPage | 项目列表（卡片网格） |
+| `/script/:projectId` | ScriptDetailPage | 项目编辑器（三栏布局） |
+
+### 后端 API（主接口 ScriptController）
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | `/script/list` | 项目列表 |
+| GET | `/script/{projectId}` | 项目详情（含截图+步骤） |
+| POST | `/script/create` | 创建项目 |
+| DELETE | `/script/{projectId}` | 删除项目 |
+| POST | `/script/{projectId}/save` | 保存项目（截图顺序+步骤+GUI配置） |
+| POST | `/script/{projectId}/screenshot/upload` | 上传单张截图 |
+| POST | `/script/{projectId}/screenshot/batch-upload` | 批量上传截图 |
+| GET | `/script/{projectId}/preview` | 预览生成的 Python 代码 |
+| POST | `/script/{projectId}/build` | 编译（body: `{mode: "bat"\|"github"}`） |
+| GET | `/script/{projectId}/build/status` | 轮询编译状态 |
+| POST | `/script/{projectId}/template/upload` | 上传 if_image 模板图 |
+| POST | `/script/token/upload` | 截图工具通过 token 免认证上传 |
+
+### AI 视觉接口（ScriptVisionController，免认证）
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| POST | `/script/vision/analyze` | AI 图像分析（multipart: image + prompt） |
+
+### 数据库表
+
+| 表名 | 说明 | 关键字段 |
+|------|------|----------|
+| `t_script_project` | 脚本项目 | name, target_width, target_height, scale_pct, status, exe_path, gui_enabled, upload_token |
+| `t_script_screenshot` | 项目截图 | project_id, file_name, file_url, width, height, scale_pct, sort_order |
+| `t_script_step` | 操作步骤 | project_id, screenshot_id, step_order, operation_type, params_json, template_path |
+
+### 脚本编辑器页面布局（ScriptDetailPage）
+
+```
+┌─────────────────────────────────────────────────────────┐
+│ 顶部工具栏：保存 | 预览 | 编译 | 下载 | 帮助              │
+├──────────┬──────────────────────┬───────────────────────┤
+│ 左栏     │ 中栏                 │ 右栏                  │
+│ 截图列表  │ Canvas 标注画布       │ 步骤列表              │
+│ ·上传    │ ·点击标注             │ ·拖拽排序             │
+│ ·删除    │ ·框选区域             │ ·编辑参数             │
+│ ·选择    │ ·滚动路径             │ ·插入步骤             │
+│          │                      │ ·删除                 │
+├──────────┴──────────────────────┴───────────────────────┤
+│ 底部操作栏：20种操作类型按钮                               │
+└─────────────────────────────────────────────────────────┘
+```
+
+### 前后端代码对应关系
+
+| 前端 | 后端 | 说明 |
+|------|------|------|
+| `scriptService.ts` | `ScriptController.java` | API 调用 |
+| `scriptService.ts` 类型定义 | `request/` + `vo/` | 请求/响应 DTO |
+| `ScriptPage.tsx` | `ScriptController.list/create/delete` | 项目列表 |
+| `ScriptDetailPage.tsx` | `ScriptController.save/preview/build` | 编辑器 |
+| `types/script.ts` | `ScriptStatus.java` | 枚举定义 |
+| `stores/scriptStore.ts` | `ScriptServiceImpl.java` | 状态管理（备用） |
+
+### 代码生成器（ScriptCodeGenerator.java）
+
+这是脚本生成器的核心类，负责将前端保存的步骤数据转换为可执行的 Python 代码。
+
+输入：`ScriptProjectDetailVO`（项目+截图+步骤）
+输出：Python 代码字符串
+
+生成的 Python 脚本特性：
+- 使用 `ctypes.windll.user32` 直接调用 Windows API
+- 支持坐标缩放（标注分辨率 vs 运行时屏幕分辨率）
+- PIL 像素级图像匹配（wait_image, if_image）
+- SendInput + KEYEVENTF_UNICODE 实现中文输入
+- 完整控制流支持（for/while/break/continue/if-else）
+- AI 识别通过 HTTP 请求调用后端 vision 接口
+- 可选 tkinter GUI 控制面板
+
+---
 
 ## 分工
 
